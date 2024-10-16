@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"version-bump/console"
-	"version-bump/langs"
+	"version-bump/v2/console"
+	"version-bump/v2/langs"
 
 	semver "github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-billy/v5"

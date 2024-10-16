@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"version-bump/bump"
+	"version-bump/v2/bump"
 
 	"github.com/spf13/cobra"
 )

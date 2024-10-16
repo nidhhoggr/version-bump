@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 	"testing"
-	"version-bump/bump"
-	"version-bump/mocks"
+	"version-bump/v2/bump"
+	"version-bump/v2/mocks"
 
 	"github.com/pkg/errors"
 

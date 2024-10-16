@@ -1,4 +1,4 @@
-module version-bump
+module version-bump/v2
 
 go 1.23
 

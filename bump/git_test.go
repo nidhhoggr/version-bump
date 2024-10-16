@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
-	"version-bump/bump"
-	"version-bump/mocks"
+	"version-bump/v2/bump"
+	"version-bump/v2/mocks"
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"

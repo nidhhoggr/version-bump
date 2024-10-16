@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"version-bump/bump"
+	"version-bump/v2/bump"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
