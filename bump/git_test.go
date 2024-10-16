@@ -2,10 +2,10 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/bump"
+	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"testing"
 	"time"
-	"version-bump/v2/bump"
-	"version-bump/v2/mocks"
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"

@@ -3,13 +3,13 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/bump"
+	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"net"
 	"net/http"
 	"path"
 	"sync"
 	"time"
-	"version-bump/v2/bump"
-	"version-bump/v2/console"
 
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/pkg/errors"

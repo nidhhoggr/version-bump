@@ -2,10 +2,10 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/bump"
+	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"path"
 	"testing"
-	"version-bump/v2/bump"
-	"version-bump/v2/mocks"
 
 	"github.com/pkg/errors"
 

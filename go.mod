@@ -1,4 +1,4 @@
-module version-bump/v2
+module github.com/joe-at-startupmedia/version-bump/v2
 
 go 1.23
 
