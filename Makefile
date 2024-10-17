@@ -6,7 +6,7 @@ PROJECT_PATH=$(shell cd "$(dirname "$0")"; pwd)
 TEST_REGEX := $(or $(TEST_REGEX),"Test")
 DEFAULT_TEST_PACKAGES := "./..."
 TEST_PACKAGES := $(or $(TEST_PACKAGES),$(DEFAULT_TEST_PACKAGES))
-COVERAGE_OMISSION := "!/^(cmd|console|gpg|mocks)/"
+COVERAGE_OMISSION := '!/(v2\/cmd|v2\/console|v2\/gpg|v2\/mocks)/'
 
 all: help
 
@@ -72,7 +72,7 @@ test_cover: clean build ## run the tests and generate a coverage report
 codecov: ## process the coverage report and upload it
 	$(call print-target)
 	awk $(COVERAGE_OMISSION) coverage.txt > coverage.out
-	codecov -t $(CODECOV_TOKEN) --flags $(CODECOV_FLAG) --file coverage.out
+	codecov do-upload -t $(CODECOV_TOKEN) --disable-search --file coverage.out
 
 .PHONY: test_codecov
 test_codecov: test_cover codecov ## run the tests and process/upload the coverage reports
