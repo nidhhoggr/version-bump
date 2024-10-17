@@ -1,10 +1,10 @@
 # version-bump
 
-[![Release](https://img.shields.io/github/v/release/anton-yurchenko/version-bump)](https://github.com/anton-yurchenko/version-bump/releases/latest)
-[![Code Coverage](https://codecov.io/gh/anton-yurchenko/version-bump/branch/main/graph/badge.svg)](https://codecov.io/gh/anton-yurchenko/version-bump)
-[![Go Report Card](https://goreportcard.com/badge/github.com/anton-yurchenko/version-bump)](https://goreportcard.com/report/github.com/anton-yurchenko/version-bump)
-[![Release](https://github.com/anton-yurchenko/version-bump/actions/workflows/release.yml/badge.svg)](https://github.com/anton-yurchenko/version-bump/actions/workflows/release.yml)
-[![License](https://img.shields.io/github/license/anton-yurchenko/version-bump)](LICENSE.md)
+[![Release](https://img.shields.io/github/v/release/joe-at-startupmedia/version-bump)](https://github.com/joe-at-startupmedia/version-bump/releases/latest)
+[![Code Coverage](https://codecov.io/gh/joe-at-startupmedia/version-bump/branch/main/graph/badge.svg)](https://codecov.io/gh/joe-at-startupmedia/version-bump)
+[![Go Report Card](https://goreportcard.com/badge/github.com/joe-at-startupmedia/version-bump)](https://goreportcard.com/report/github.com/joe-at-startupmedia/version-bump)
+[![Release](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/release.yml/badge.svg)](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/joe-at-startupmedia/version-bump)](LICENSE.md)
 
 Have you ever made a mistake incrementing a project version?  
 Do you have multiple files to update the version at?  
@@ -23,7 +23,7 @@ This application allows easily incrementing a single/multi language project [Sem
 
 ## Installation
 
-Download [latest release](https://github.com/anton-yurchenko/version-bump/releases/latest) and move the file to one of the directories under your `PATH` environmental variable.
+Download [latest release](https://github.com/joe-at-startupmedia/version-bump/releases/latest) and move the file to one of the directories under your `PATH` environmental variable.
 
 ## Configuration
 

@@ -1,4 +1,4 @@
-package cmd
+package bump
 
 import (
 	"encoding/json"
@@ -10,14 +10,13 @@ import (
 	"time"
 
 	"github.com/go-git/go-billy/v5/osfs"
-	"github.com/joe-at-startupmedia/version-bump/v2/bump"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"golang.org/x/mod/semver"
 )
 
-func run(action int) {
+func Run(action int) {
 	// check for an update in parallel
 	updateVersion := make(chan string, 1)
 	updateVersionError := make(chan error, 1)
@@ -26,7 +25,7 @@ func run(action int) {
 	go getLatestVersion(&wg, updateVersion, updateVersionError)
 
 	dir := "."
-	p, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir, true)
+	p, err := New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir, true)
 	if err != nil {
 		console.Fatal(errors.Wrap(err, "error preparing project configuration"))
 	}
@@ -63,7 +62,7 @@ func getLatestVersion(wg *sync.WaitGroup, version chan string, resultErr chan er
 		},
 	}
 
-	res, err := cli.Get("https://api.github.com/repos/anton-yurchenko/version-bump/releases/latest")
+	res, err := cli.Get("https://api.github.com/repos/joe-at-startupmedia/version-bump/releases/latest")
 	if err != nil {
 		version <- ""
 		resultErr <- err
@@ -78,7 +77,7 @@ func getLatestVersion(wg *sync.WaitGroup, version chan string, resultErr chan er
 		return
 	}
 
-	if semver.Compare(d.TagName, fmt.Sprintf("v%v", bump.Version)) == 1 {
+	if semver.Compare(d.TagName, fmt.Sprintf("v%v", Version)) == 1 {
 		version <- d.TagName
 		resultErr <- nil
 		return

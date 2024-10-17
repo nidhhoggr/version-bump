@@ -56,7 +56,7 @@ mod: ## go mod tidy
 build: ENV_VARS=CGO_ENABLED=0
 build: mod fmt tools misspell betteralign
 	cd tools && $(GO) mod tidy
-	$(ENV_VARS) $(GO) build $(BUILD_FLAGS) -o bin/version-bump main.go
+	$(ENV_VARS) $(GO) build $(BUILD_FLAGS) -o bin/bump cmd/bump.go
 
 .PHONY: test
 test: clean build ## run the tests

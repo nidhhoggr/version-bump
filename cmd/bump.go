@@ -1,12 +1,10 @@
-package cmd
+package main
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +20,7 @@ for example in package.json and a Dockerfile.`,
 	Args:      cobra.OnlyValidArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {
-			run(bump.StringToVersion(args[0]))
+			bump.Run(bump.StringToVersion(args[0]))
 		} else {
 			cmd.Help()
 		}
@@ -30,18 +28,6 @@ for example in package.json and a Dockerfile.`,
 	Version: bump.Version,
 }
 
-func Execute() {
+func main() {
 	cobra.CheckErr(rootCmd.Execute())
-}
-
-func init() {
-	log.SetReportCaller(false)
-	log.SetFormatter(&log.TextFormatter{
-		ForceColors:            true,
-		FullTimestamp:          true,
-		DisableLevelTruncation: true,
-		DisableTimestamp:       true,
-	})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.DebugLevel)
 }

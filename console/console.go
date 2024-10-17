@@ -23,35 +23,35 @@ func CommittingChanges() {
 
 func Language(name string) {
 	fmt.Printf("  Updating %v%v%v files:\n",
-		string(colorCyan),
+		colorCyan,
 		name,
-		string(colorReset),
+		colorReset,
 	)
 }
 
 func VersionUpdate(oldVersion, newVersion, filepath string) {
 	fmt.Printf("    %v%v%v -> %v%v%v %v\n",
-		string(colorYellow), oldVersion, string(colorReset),
-		string(colorGreen), newVersion, string(colorReset),
+		colorYellow, oldVersion, colorReset,
+		colorGreen, newVersion, colorReset,
 		filepath,
 	)
 }
 
 func UpdateAvailable(version string) {
 	fmt.Printf("%vThe new version is available! Download from https://github.com/anton-yurchenko/version-bump/releases/tag/%v%v\n",
-		string(colorGreen), version, string(colorReset),
+		colorGreen, version, colorReset,
 	)
 }
 
 func ErrorCheckingForUpdate(msg interface{}) {
 	fmt.Printf("%vError checking for update: %v%v\n",
-		string(colorYellow), msg, string(colorReset),
+		colorYellow, msg, colorReset,
 	)
 }
 
 func Error(msg interface{}) {
 	fmt.Printf("%v%v%v\n",
-		string(colorRed), msg, string(colorReset),
+		colorRed, msg, colorReset,
 	)
 }
 
