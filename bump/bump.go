@@ -23,7 +23,7 @@ import (
 	"github.com/tidwall/sjson"
 )
 
-func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
+func New(fs afero.Fs, meta, data billy.Filesystem, dir string, shouldSignCommits bool) (*Bump, error) {
 	repo, err := git.Open(
 		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
 		data,
@@ -36,17 +36,20 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		return nil, errors.Wrap(err, "error retrieving global git configuration")
 	}
 
-	gpgSigningKey, err := gpg.GetSigningKeyFromConfig(localGitConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "error retrieving gpg configuration")
-	}
-
 	var gpgEntity *openpgp.Entity
 
-	if gpgSigningKey != "" {
-		gpgEntity, err = gpg.PromptForPassphrase(gpgSigningKey)
+	if shouldSignCommits {
+
+		gpgSigningKey, err := gpg.GetSigningKeyFromConfig(localGitConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not validate gpg signing key")
+			return nil, errors.Wrap(err, "error retrieving gpg configuration")
+		}
+
+		if gpgSigningKey != "" {
+			gpgEntity, err = gpg.PromptForPassphrase(gpgSigningKey)
+			if err != nil {
+				return nil, errors.Wrap(err, "could not validate gpg signing key")
+			}
 		}
 	}
 
@@ -60,27 +63,15 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	o := &Bump{
 		FS: fs,
 		Configuration: Configuration{
-			Docker: struct {
-				Enabled      bool
-				Directories  []string
-				ExcludeFiles []string `toml:"exclude_files"`
-			}{
+			Docker: Language{
 				Enabled:     true,
 				Directories: dirs,
 			},
-			Go: struct {
-				Enabled      bool
-				Directories  []string
-				ExcludeFiles []string `toml:"exclude_files"`
-			}{
+			Go: Language{
 				Enabled:     true,
 				Directories: dirs,
 			},
-			JavaScript: struct {
-				Enabled      bool
-				Directories  []string
-				ExcludeFiles []string `toml:"exclude_files"`
-			}{
+			JavaScript: Language{
 				Enabled:     true,
 				Directories: dirs,
 			},
@@ -112,27 +103,15 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	}
 
 	o.Configuration = Configuration{
-		Docker: struct {
-			Enabled      bool
-			Directories  []string
-			ExcludeFiles []string `toml:"exclude_files"`
-		}{
+		Docker: Language{
 			Enabled:     userConfig.Docker.Enabled,
 			Directories: dirs,
 		},
-		Go: struct {
-			Enabled      bool
-			Directories  []string
-			ExcludeFiles []string `toml:"exclude_files"`
-		}{
+		Go: Language{
 			Enabled:     userConfig.Go.Enabled,
 			Directories: dirs,
 		},
-		JavaScript: struct {
-			Enabled      bool
-			Directories  []string
-			ExcludeFiles []string `toml:"exclude_files"`
-		}{
+		JavaScript: Language{
 			Enabled:     userConfig.JavaScript.Enabled,
 			Directories: dirs,
 		},

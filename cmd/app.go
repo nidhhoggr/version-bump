@@ -26,7 +26,7 @@ func run(action int) {
 	go getLatestVersion(&wg, updateVersion, updateVersionError)
 
 	dir := "."
-	p, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir)
+	p, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir, true)
 	if err != nil {
 		console.Fatal(errors.Wrap(err, "error preparing project configuration"))
 	}

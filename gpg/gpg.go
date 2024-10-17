@@ -8,7 +8,6 @@ import (
 	"github.com/cqroot/prompt/input"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 func GetSigningKeyFromConfig(gitConfig *config.Config) (string, error) {
@@ -41,13 +40,13 @@ func getSigningKeyFromConfig(config *config.Config) (bool, string) {
 	shouldNotSign := false
 
 	commitSection := config.Raw.Section("commit")
-	logrus.Info(commitSection)
+	//logrus.Info(commitSection)
 	if commitSection != nil && commitSection.Options.Get("gpgsign") == "true" {
-		logrus.Info(commitSection.Options.Get("gpgsign"))
+		//logrus.Info(commitSection.Options.Get("gpgsign"))
 		userSection := config.Raw.Section("user")
-		logrus.Info(userSection)
+		//logrus.Info(userSection)
 		if userSection != nil {
-			logrus.Info(userSection.Options.Get("signingkey"))
+			//logrus.Info(userSection.Options.Get("signingkey"))
 			gpgVerificationKey = userSection.Options.Get("signingkey")
 		}
 	} else if commitSection != nil && commitSection.Options.Get("gpgsign") == "false" {

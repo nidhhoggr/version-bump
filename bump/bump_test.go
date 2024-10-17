@@ -222,7 +222,7 @@ exclude_files = [ 'client/test.js' ]`,
 			}
 		}
 
-		b, err := bump.New(fs, meta, data, ".")
+		b, err := bump.New(fs, meta, data, ".", false)
 		if test.ExpectedError != "" || err != nil {
 			a.EqualError(err, test.ExpectedError)
 			a.Equal(nil, b)

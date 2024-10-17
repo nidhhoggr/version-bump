@@ -21,11 +21,11 @@ type Bump struct {
 }
 
 type GitConfig struct {
-	UserName   string
-	UserEmail  string
 	Repository Repository
 	Worktree   Worktree
 	GpgEntity  *openpgp.Entity
+	UserName   string
+	UserEmail  string
 }
 
 type Repository interface {
@@ -45,7 +45,7 @@ type Configuration struct {
 }
 
 type Language struct {
-	Enabled      bool
 	Directories  []string
 	ExcludeFiles []string `toml:"exclude_files"`
+	Enabled      bool
 }

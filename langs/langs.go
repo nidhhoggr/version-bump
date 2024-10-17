@@ -7,10 +7,10 @@ const (
 )
 
 type Language struct {
-	Name       string
-	Files      []string
 	Regex      *[]string
 	JSONFields *[]string
+	Name       string
+	Files      []string
 }
 
 func New(name string) *Language {

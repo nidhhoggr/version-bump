@@ -1,42 +1,88 @@
-I := "⚪"
-E := "🔴"
+GO ?= go
+GOFMT ?= gofmt "-s"
+GOFILES := $(shell find . -name "*.go")
+PACKAGES ?= $(shell $(GO) list ./...)
+PROJECT_PATH=$(shell cd "$(dirname "$0")"; pwd)
+TEST_REGEX := $(or $(TEST_REGEX),"Test")
+DEFAULT_TEST_PACKAGES := "./..."
+TEST_PACKAGES := $(or $(TEST_PACKAGES),$(DEFAULT_TEST_PACKAGES))
+COVERAGE_OMISSION := "!/^(cmd|console|gpg|mocks)/"
+
+all: help
+
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: clean
+clean: ## remove files created during build pipeline
+	$(call print-target)
+	rm -f coverage.*
+	rm -f '"$(shell go env GOCACHE)/../golangci-lint"'
+	go clean -i -cache -testcache -fuzzcache -x
+
+.PHONY: fmt
+fmt: ## format files
+	$(call print-target)
+	$(GOFMT) -w $(GOFILES)
 
 .PHONY: lint
-lint: $(GO_LINTER)
-	@echo "$(I) installing dependencies..."
-	@go get ./... || (echo "$(E) 'go get' error"; exit 1)
-	@echo "$(I) updating imports..."
-	@go mod tidy || (echo "$(E) 'go mod tidy' error"; exit 1)
-	@echo "$(I) vendoring..."
-	@go mod vendor || (echo "$(E) 'go mod vendor' error"; exit 1)
-	@echo "$(I) linting..."
-	@golangci-lint run ./... || (echo "$(E) linter error"; exit 1)
-	$(MAKE) test
+lint: ## lint files
+	$(call print-target)
+	golangci-lint run --fix
 
-.PHONY: init
-init:
-	@echo "$(I) initializing..."
-	@mv .vscode/launch-template.json .vscode/launch.json 2>/dev/null || :
-	@rm -rf go.mod go.sum ./vendor ./mocks
-	@go mod init $$(pwd | awk -F'/' '{print $$NF}')
+.PHONY: misspell
+misspell: ## check for misspellings
+	$(call print-target)
+	misspell -error $(GOFILES)
 
-.PHONY: codecov
-codecov: test
-	@go tool cover -html=coverage.txt || (echo "$(E) 'go tool cover' error"; exit 1)
+.PHONY: betteralign
+betteralign: ## check for better aligned structs
+	$(call print-target)
+	betteralign ./...
 
-.PHONY: mock
-mock:
-	@echo "$(I) regenerating mocks package..."
-	@docker run -v "$(PWD)":/src -w /src vektra/mockery --name=Repository --dir=/src/bump/
-	@docker run -v "$(PWD)":/src -w /src vektra/mockery --name=Worktree --dir=/src/bump/
-	@sudo chown -R $(USER):$(id -gn) mocks
+.PHONY: tools
+tools: ## go install tools
+	$(call print-target)
+	cd tools && go install $(shell cd tools && $(GO) list -e -f '{{ join .Imports " " }}' -tags=tools)
+
+.PHONY: mod
+mod: ## go mod tidy
+	$(call print-target)
+	go mod tidy
+	cd tools && go mod tidy
+
+.PHONY: build
+build: ENV_VARS=CGO_ENABLED=0
+build: mod fmt tools misspell betteralign
+	cd tools && $(GO) mod tidy
+	$(ENV_VARS) $(GO) build $(BUILD_FLAGS) -o bin/version-bump main.go
 
 .PHONY: test
-test:
-	@echo "$(I) unit testing..."
-	@go test -v $$(go list ./... | grep -v vendor | grep -v mocks) -race -coverprofile=coverage.txt -covermode=atomic
+test: clean build ## run the tests
+	$(call print-target)
+	PROJECT_PATH=$(PROJECT_PATH) $(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 ./...
 
-GO_LINTER := $(GOPATH)/bin/golangci-lint
-$(GO_LINTER):
-	@echo "installing linter..."
-	@go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+.PHONY: test_cover
+test_cover: clean build ## run the tests and generate a coverage report
+	$(call print-target)
+	PROJECT_PATH=$(PROJECT_PATH) $(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 -coverprofile=coverage.txt -coverpkg=$(TEST_PACKAGES) ./...
+
+.PHONY: codecov
+codecov: ## process the coverage report and upload it
+	$(call print-target)
+	awk $(COVERAGE_OMISSION) coverage.txt > coverage.out
+	codecov -t $(CODECOV_TOKEN) --flags $(CODECOV_FLAG) --file coverage.out
+
+.PHONY: test_codecov
+test_codecov: test_cover codecov ## run the tests and process/upload the coverage reports
+	$(call print-target)
+
+.PHONY: install
+install: ## install the binary in the systems executable path
+	$(call print-target)
+	cp -R bin/* /usr/local/bin/
+
+define print-target
+    @printf "Executing target: \033[36m$@\033[0m\n"
+endef
