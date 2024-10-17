@@ -1,6 +1,7 @@
 package bump
 
 import (
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/spf13/afero"
@@ -24,6 +25,7 @@ type GitConfig struct {
 	UserEmail  string
 	Repository Repository
 	Worktree   Worktree
+	GpgEntity  *openpgp.Entity
 }
 
 type Repository interface {
