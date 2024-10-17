@@ -2,6 +2,8 @@ package bump
 
 import (
 	"fmt"
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"path"
 	"regexp"
 	"strings"
@@ -9,13 +11,13 @@ import (
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 
-	semver "github.com/Masterminds/semver/v3"
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-billy/v5"
-	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
-	toml "github.com/pelletier/go-toml/v2"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/tidwall/gjson"
@@ -35,9 +37,23 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		return nil, errors.Wrap(err, "error retrieving global git configuration")
 	}
 
+	gpgSigningKey, err := gpg.GetSigningKeyFromConfig(localGitConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "error retrieving gpg configuration")
+	}
+
+	var gpgEntity *openpgp.Entity
+
+	if gpgSigningKey != "" {
+		gpgEntity, err = gpg.PromptForPassphrase(gpgSigningKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not validate gpg signing key")
+		}
+	}
+
 	worktree, err := repo.Worktree()
 	if err != nil {
-		return nil, errors.Wrap(err, "error retreiving git worktree")
+		return nil, errors.Wrap(err, "error retrieving git worktree")
 	}
 
 	// NOTE: default config
@@ -75,6 +91,7 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 			UserEmail:  localGitConfig.User.Email,
 			Repository: repo,
 			Worktree:   worktree,
+			GpgEntity:  gpgEntity,
 		},
 	}
 

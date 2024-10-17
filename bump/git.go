@@ -2,6 +2,7 @@ package bump
 
 import (
 	"fmt"
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"time"
 
 	git "github.com/go-git/go-git/v5"
@@ -18,7 +19,7 @@ func (g *GitConfig) Save(files []string, version string) error {
 		When:  tm,
 	}
 
-	hash, err := Commit(files, version, sign, g.Worktree)
+	hash, err := Commit(files, version, sign, g.Worktree, g.GpgEntity)
 	if err != nil {
 		return err
 	}
@@ -34,7 +35,7 @@ func (g *GitConfig) Save(files []string, version string) error {
 	return nil
 }
 
-func Commit(files []string, version string, sign *object.Signature, worktree Worktree) (plumbing.Hash, error) {
+func Commit(files []string, version string, sign *object.Signature, worktree Worktree, entity *openpgp.Entity) (plumbing.Hash, error) {
 	for _, f := range files {
 		_, err := worktree.Add(f)
 		if err != nil {
@@ -46,6 +47,7 @@ func Commit(files []string, version string, sign *object.Signature, worktree Wor
 		All:       true,
 		Author:    sign,
 		Committer: sign,
+		SignKey:   entity,
 	})
 	if err != nil {
 		return plumbing.Hash{}, errors.Wrap(err, "error committing changes")
