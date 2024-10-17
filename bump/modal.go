@@ -9,10 +9,25 @@ import (
 
 const (
 	Version string = "2.0.1"
-	Patch   int    = 3
-	Minor   int    = 2
-	Major   int    = 1
 )
+
+const (
+	Major int = iota + 1
+	Minor
+	Patch
+)
+
+func StringToVersion(s string) int {
+	switch s {
+	case "major":
+		return Major
+	case "minor":
+		return Minor
+	case "patch":
+		return Patch
+	}
+	return 0
+}
 
 type Bump struct {
 	FS            afero.Fs
