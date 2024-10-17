@@ -27,6 +27,7 @@ func (g *GitConfig) Save(files []string, version string) error {
 	_, err = g.Repository.CreateTag(fmt.Sprintf("v%v", version), hash, &git.CreateTagOptions{
 		Tagger:  sign,
 		Message: version,
+		SignKey: g.GpgEntity,
 	})
 	if err != nil {
 		return errors.Wrap(err, "error tagging changes")
