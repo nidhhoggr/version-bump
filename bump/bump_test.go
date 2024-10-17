@@ -2,18 +2,17 @@ package bump_test
 
 import (
 	"fmt"
-	"github.com/joe-at-startupmedia/version-bump/v2/bump"
-	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"path"
 	"testing"
-
-	"github.com/pkg/errors"
 
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
+	"github.com/joe-at-startupmedia/version-bump/v2/bump"
+	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
+	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

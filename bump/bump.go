@@ -2,21 +2,20 @@ package bump
 
 import (
 	"fmt"
-	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"path"
 	"regexp"
 	"strings"
 
-	"github.com/joe-at-startupmedia/version-bump/v2/console"
-	"github.com/joe-at-startupmedia/version-bump/v2/langs"
-
 	"github.com/Masterminds/semver/v3"
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
+	"github.com/joe-at-startupmedia/version-bump/v2/console"
+	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"

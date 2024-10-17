@@ -2,14 +2,14 @@ package bump_test
 
 import (
 	"fmt"
-	"github.com/joe-at-startupmedia/version-bump/v2/bump"
-	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"testing"
 	"time"
 
-	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/joe-at-startupmedia/version-bump/v2/bump"
+	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -169,7 +169,7 @@ func TestCommit(t *testing.T) {
 			Committer: s,
 		}).Return(plumbing.NewHash(test.MockCommitHash), test.MockCommitError).Once()
 
-		h, err := bump.Commit(test.Files, test.Version, s, m)
+		h, err := bump.Commit(test.Files, test.Version, s, m, nil)
 		if test.ExpectedError != "" || err != nil {
 			a.EqualError(err, test.ExpectedError)
 			a.Equal(plumbing.NewHash(""), h)

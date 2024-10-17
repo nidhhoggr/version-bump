@@ -1,14 +1,14 @@
 package gpg
 
 import (
+	"strings"
+
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/cqroot/prompt"
+	"github.com/cqroot/prompt/input"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"strings"
-
-	"github.com/cqroot/prompt"
-	"github.com/cqroot/prompt/input"
 )
 
 func GetSigningKeyFromConfig(gitConfig *config.Config) (string, error) {

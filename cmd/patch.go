@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
-
 	"github.com/spf13/cobra"
 )
 

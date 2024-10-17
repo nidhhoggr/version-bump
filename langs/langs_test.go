@@ -3,9 +3,9 @@ package langs_test
 import (
 	"fmt"
 	"testing"
-	"version-bump/langs"
 
-	changelog "github.com/anton-yurchenko/go-changelog"
+	"github.com/anton-yurchenko/go-changelog"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/stretchr/testify/assert"
 )
 

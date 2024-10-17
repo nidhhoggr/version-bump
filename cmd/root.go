@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

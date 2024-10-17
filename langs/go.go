@@ -3,7 +3,7 @@ package langs
 import (
 	"fmt"
 
-	changelog "github.com/anton-yurchenko/go-changelog"
+	"github.com/anton-yurchenko/go-changelog"
 )
 
 var golangRegex = []string{

@@ -3,8 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/joe-at-startupmedia/version-bump/v2/bump"
-	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"net"
 	"net/http"
 	"path"
@@ -12,6 +10,8 @@ import (
 	"time"
 
 	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/joe-at-startupmedia/version-bump/v2/bump"
+	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"golang.org/x/mod/semver"

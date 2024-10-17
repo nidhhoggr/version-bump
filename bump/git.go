@@ -2,10 +2,10 @@ package bump
 
 import (
 	"fmt"
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"time"
 
-	git "github.com/go-git/go-git/v5"
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/pkg/errors"
