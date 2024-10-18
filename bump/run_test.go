@@ -33,7 +33,7 @@ func getBumpInstance() *bump.Bump {
 
 import "fmt"
 
-const Version string = "1.2.3"
+const Version string = "1.2.4"
 
 func main() {
 	fmt.Println(Version)

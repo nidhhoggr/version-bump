@@ -1,4 +1,4 @@
 [go]
 enabled = true
 directories = [ 'bump' ]
-exclude_files = [ 'bump/bump_test.go' ]
+exclude_files = [ 'bump/bump_test.go', 'bump/run_test.go' ]
