@@ -1,0 +1,13 @@
+version: 1
+
+env:
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+
+main: cmd/bump.go
+
+goos: windows
+
+goarch: amd64
+
+binary: bump

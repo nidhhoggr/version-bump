@@ -67,12 +67,12 @@ test: clean build ## run the tests
 test_cover: clean build ## run the tests and generate a coverage report
 	$(call print-target)
 	PROJECT_PATH=$(PROJECT_PATH) $(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 -coverprofile=coverage.txt -coverpkg=$(TEST_PACKAGES) ./...
+	awk $(COVERAGE_OMISSION) coverage.txt > coverage.out
+	rm -f coverage.txt
 
 .PHONY: codecov
 codecov: ## process the coverage report and upload it
 	$(call print-target)
-	awk $(COVERAGE_OMISSION) coverage.txt > coverage.out
-	rm -f coverage.txt
 	codecov upload-process -t $(CODECOV_TOKEN)
 
 .PHONY: test_codecov
