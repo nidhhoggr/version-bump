@@ -72,7 +72,8 @@ test_cover: clean build ## run the tests and generate a coverage report
 codecov: ## process the coverage report and upload it
 	$(call print-target)
 	awk $(COVERAGE_OMISSION) coverage.txt > coverage.out
-	codecov do-upload -t $(CODECOV_TOKEN) --disable-search --file coverage.out
+	rm -f coverage.txt
+	codecov upload-process -t $(CODECOV_TOKEN)
 
 .PHONY: test_codecov
 test_codecov: test_cover codecov ## run the tests and process/upload the coverage reports
