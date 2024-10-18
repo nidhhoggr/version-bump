@@ -54,7 +54,7 @@ mod: ## go mod tidy
 
 .PHONY: build
 build: ENV_VARS=CGO_ENABLED=0
-build: mod fmt tools misspell betteralign
+build: mod fmt tools vuln misspell betteralign
 	cd tools && $(GO) mod tidy
 	$(ENV_VARS) $(GO) build $(BUILD_FLAGS) -o bin/version-bump cmd/version-bump/version-bump.go
 
@@ -78,6 +78,11 @@ codecov: ## process the coverage report and upload it
 .PHONY: test_codecov
 test_codecov: test_cover codecov ## run the tests and process/upload the coverage reports
 	$(call print-target)
+
+.PHONY: vuln
+vuln: ## govulncheck
+	$(call print-target)
+	govulncheck ./...
 
 .PHONY: install
 install: ## install the binary in the systems executable path
