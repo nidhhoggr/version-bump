@@ -1,10 +1,10 @@
 # version-bump
 
-[![Release](https://img.shields.io/github/v/release/joe-at-startupmedia/version-bump)](https://github.com/joe-at-startupmedia/version-bump/releases/latest)
+[![CI](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/ci.yml/badge.svg)](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/joe-at-startupmedia/version-bump/graph/badge.svg?token=HHRUHCX1EJ)](https://codecov.io/gh/joe-at-startupmedia/version-bump)
 [![Code Coverage](https://codecov.io/gh/joe-at-startupmedia/version-bump/branch/main/graph/badge.svg)](https://codecov.io/gh/joe-at-startupmedia/version-bump)
 [![Go Report Card](https://goreportcard.com/badge/github.com/joe-at-startupmedia/version-bump)](https://goreportcard.com/report/github.com/joe-at-startupmedia/version-bump)
-[![Release](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/release.yml/badge.svg)](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/release.yml)
+[![Release](https://img.shields.io/github/v/release/joe-at-startupmedia/version-bump)](https://github.com/joe-at-startupmedia/version-bump/releases/latest)
 [![License](https://img.shields.io/github/license/joe-at-startupmedia/version-bump)](LICENSE.md)
 
 Have you ever made a mistake incrementing a project version?  

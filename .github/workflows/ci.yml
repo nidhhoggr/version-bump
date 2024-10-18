@@ -55,7 +55,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - mac-os-latest
+          - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
