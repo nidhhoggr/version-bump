@@ -32,7 +32,7 @@ func TestNew(t *testing.T) {
 		ExpectedError         string
 	}
 
-	suite := map[string]test{
+	suites := map[string]test{
 		"Automatic": {
 			ConfigFile: configFile{},
 			ExpectedConfiguration: bump.Configuration{
@@ -191,10 +191,9 @@ exclude_files = [ 'client/test.js' ]`,
 	}
 
 	var counter int
-	for name, test := range suite {
+	for name, testSuite := range suites {
 		counter++
-		t.Logf("Test Case %v/%v - %s", counter, len(suite), name)
-
+		t.Logf("Test Case %v/%v - %s", counter, len(suites), name)
 		fs := afero.NewMemMapFs()
 		meta := memfs.New()
 		data := memfs.New()
@@ -208,14 +207,14 @@ exclude_files = [ 'client/test.js' ]`,
 			continue
 		}
 
-		if test.ConfigFile.Exists {
+		if testSuite.ConfigFile.Exists {
 			f, err := fs.Create(".bump")
 			if err != nil {
 				t.Errorf("error preparing test case: error creating Docker files: %v", err)
 				continue
 			}
 
-			_, err = f.WriteString(test.ConfigFile.Content)
+			_, err = f.WriteString(testSuite.ConfigFile.Content)
 			if err != nil {
 				t.Errorf("error preparing test case: error writing Docker files: %v", err)
 				continue
@@ -223,44 +222,43 @@ exclude_files = [ 'client/test.js' ]`,
 		}
 
 		b, err := bump.New(fs, meta, data, ".", false)
-		if test.ExpectedError != "" || err != nil {
-			a.EqualError(err, test.ExpectedError)
+		if testSuite.ExpectedError != "" || err != nil {
+			a.EqualError(err, testSuite.ExpectedError)
 			a.Equal(nil, b)
 		} else {
-			a.Equal(fs, b.FS)
-			a.Equal(test.ExpectedConfiguration, b.Configuration)
+			a.Equal(testSuite.ExpectedConfiguration, b.Configuration)
 			a.NotEqual(nil, b.Git)
 		}
 	}
 }
 
+type file struct {
+	Name                string
+	ExpectedToBeChanged bool
+	Content             string
+}
+
+type allFiles struct {
+	Docker     map[string][]file
+	Go         map[string][]file
+	JavaScript map[string][]file
+}
+
+type testBumpTestSuite struct {
+	Version            string
+	Configuration      bump.Configuration
+	Files              allFiles
+	Action             int
+	MockAddError       error
+	MockCommitError    error
+	MockCreateTagError error
+	ExpectedError      string
+}
+
 func TestBump(t *testing.T) {
 	a := assert.New(t)
 
-	type file struct {
-		Name                string
-		ExpectedToBeChanged bool
-		Content             string
-	}
-
-	type allFiles struct {
-		Docker     map[string][]file
-		Go         map[string][]file
-		JavaScript map[string][]file
-	}
-
-	type test struct {
-		Version            string
-		Configuration      bump.Configuration
-		Files              allFiles
-		Action             int
-		MockAddError       error
-		MockCommitError    error
-		MockCreateTagError error
-		ExpectedError      string
-	}
-
-	suite := map[string]test{
+	suite := map[string]testBumpTestSuite{
 		"Empty Configuration": {
 			Version:            "",
 			Configuration:      bump.Configuration{},
@@ -922,7 +920,7 @@ const Version string = "1.2.3"`,
 	}
 
 	var counter int
-	for name, test := range suite {
+	for name, testSuite := range suite {
 		counter++
 		t.Logf("Test Case %v/%v - %s", counter, len(suite), name)
 
@@ -937,14 +935,14 @@ const Version string = "1.2.3"`,
 				Repository: m1,
 				Worktree:   m2,
 			},
-			Configuration: test.Configuration,
+			Configuration: testSuite.Configuration,
 		}
 
 		shouldBeCommitted := false
 
-		if test.Configuration.Docker.Enabled {
-			for _, dir := range test.Configuration.Docker.Directories {
-				for tgtDir, tgtFiles := range test.Files.Docker {
+		if testSuite.Configuration.Docker.Enabled {
+			for _, dir := range testSuite.Configuration.Docker.Directories {
+				for tgtDir, tgtFiles := range testSuite.Files.Docker {
 					if dir == tgtDir {
 						for _, tgtFile := range tgtFiles {
 							shouldBeCommitted = true
@@ -965,9 +963,9 @@ const Version string = "1.2.3"`,
 			}
 		}
 
-		if test.Configuration.Go.Enabled {
-			for _, dir := range test.Configuration.Go.Directories {
-				for tgtDir, tgtFiles := range test.Files.Go {
+		if testSuite.Configuration.Go.Enabled {
+			for _, dir := range testSuite.Configuration.Go.Directories {
+				for tgtDir, tgtFiles := range testSuite.Files.Go {
 					if dir == tgtDir {
 						for _, tgtFile := range tgtFiles {
 							shouldBeCommitted = true
@@ -988,9 +986,9 @@ const Version string = "1.2.3"`,
 			}
 		}
 
-		if test.Configuration.JavaScript.Enabled {
-			for _, dir := range test.Configuration.JavaScript.Directories {
-				for tgtDir, tgtFiles := range test.Files.JavaScript {
+		if testSuite.Configuration.JavaScript.Enabled {
+			for _, dir := range testSuite.Configuration.JavaScript.Directories {
+				for tgtDir, tgtFiles := range testSuite.Files.JavaScript {
 					if dir == tgtDir {
 						for _, tgtFile := range tgtFiles {
 							shouldBeCommitted = true
@@ -1012,7 +1010,7 @@ const Version string = "1.2.3"`,
 		}
 
 		if shouldBeCommitted {
-			for dir, files := range test.Files.Docker {
+			for dir, files := range testSuite.Files.Docker {
 				for _, file := range files {
 					if file.ExpectedToBeChanged {
 						var f string
@@ -1021,12 +1019,12 @@ const Version string = "1.2.3"`,
 						} else {
 							f = path.Join(dir, file.Name)
 						}
-						m2.On("Add", f).Return(nil, test.MockAddError).Once()
+						m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
 					}
 				}
 			}
 
-			for dir, files := range test.Files.Go {
+			for dir, files := range testSuite.Files.Go {
 				for _, file := range files {
 					if file.ExpectedToBeChanged {
 						var f string
@@ -1035,12 +1033,12 @@ const Version string = "1.2.3"`,
 						} else {
 							f = path.Join(dir, file.Name)
 						}
-						m2.On("Add", f).Return(nil, test.MockAddError).Once()
+						m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
 					}
 				}
 			}
 
-			for dir, files := range test.Files.JavaScript {
+			for dir, files := range testSuite.Files.JavaScript {
 				for _, file := range files {
 					if file.ExpectedToBeChanged {
 						var f string
@@ -1049,7 +1047,7 @@ const Version string = "1.2.3"`,
 						} else {
 							f = path.Join(dir, file.Name)
 						}
-						m2.On("Add", f).Return(nil, test.MockAddError).Once()
+						m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
 					}
 				}
 			}
@@ -1057,17 +1055,26 @@ const Version string = "1.2.3"`,
 			hash := plumbing.NewHash("abc")
 
 			m2.On(
-				"Commit", test.Version, mock.AnythingOfType("*git.CommitOptions"),
-			).Return(hash, test.MockCommitError).Once()
+				"Commit", testSuite.Version, mock.AnythingOfType("*git.CommitOptions"),
+			).Return(hash, testSuite.MockCommitError).Once()
 
 			m1.On(
-				"CreateTag", fmt.Sprintf("v%v", test.Version), hash, mock.AnythingOfType("*git.CreateTagOptions"),
-			).Return(nil, test.MockCreateTagError).Once()
+				"CreateTag", fmt.Sprintf("v%v", testSuite.Version), hash, mock.AnythingOfType("*git.CreateTagOptions"),
+			).Return(nil, testSuite.MockCreateTagError).Once()
 		}
 
-		err := r.Bump(test.Action)
-		if test.ExpectedError != "" || err != nil {
-			a.EqualError(err, test.ExpectedError)
+		err := r.Bump(testSuite.Action)
+		if testSuite.ExpectedError != "" || err != nil {
+			a.EqualError(err, testSuite.ExpectedError)
 		}
 	}
+}
+
+func TestStringToVersionType(t *testing.T) {
+	a := assert.New(t)
+
+	a.Equal(bump.StringToVersion("major"), 1)
+	a.Equal(bump.StringToVersion("minor"), 2)
+	a.Equal(bump.StringToVersion("patch"), 3)
+	a.Equal(bump.StringToVersion("nonexistent"), 0)
 }

@@ -2,6 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/joe-at-startupmedia/version-bump/v2/console"
+	"github.com/pkg/errors"
+	"github.com/spf13/afero"
+	"path"
 	"strings"
 
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
@@ -20,9 +25,14 @@ for example in package.json and a Dockerfile.`,
 	Args:      cobra.OnlyValidArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {
-			bump.Run(bump.StringToVersion(args[0]))
+			dir := "."
+			b, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir, true)
+			if err != nil {
+				console.Fatal(errors.Wrap(err, "error preparing project configuration"))
+			}
+			_ = b.Run(bump.StringToVersion(args[0]))
 		} else {
-			cmd.Help()
+			_ = cmd.Help()
 		}
 	},
 	Version: bump.Version,

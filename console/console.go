@@ -37,9 +37,9 @@ func VersionUpdate(oldVersion, newVersion, filepath string) {
 	)
 }
 
-func UpdateAvailable(version string) {
-	fmt.Printf("%vThe new version is available! Download from https://github.com/anton-yurchenko/version-bump/releases/tag/%v%v\n",
-		colorGreen, version, colorReset,
+func UpdateAvailable(version string, repoName string) {
+	fmt.Printf("%vThe new version is available! Download from https://github.com/%s/releases/tag/%v%v\n",
+		colorGreen, repoName, version, colorReset,
 	)
 }
 

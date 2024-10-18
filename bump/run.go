@@ -5,48 +5,41 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"path"
-	"sync"
 	"time"
 
-	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/pkg/errors"
-	"github.com/spf13/afero"
 	"golang.org/x/mod/semver"
 )
 
-func Run(action int) {
+var GhRepoName = "joe-at-startupmedia/version-bump"
+
+func (b *Bump) Run(action int) error {
 	// check for an update in parallel
 	updateVersion := make(chan string, 1)
 	updateVersionError := make(chan error, 1)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go getLatestVersion(&wg, updateVersion, updateVersionError)
 
-	dir := "."
-	p, err := New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir, true)
-	if err != nil {
-		console.Fatal(errors.Wrap(err, "error preparing project configuration"))
-	}
+	go getLatestVersion(updateVersion, updateVersionError, GhRepoName)
 
-	if err := p.Bump(action); err != nil {
+	if err := b.Bump(action); err != nil {
 		console.Fatal(errors.Wrap(err, "error bumping a version"))
 	}
 
-	// notify user about an update
-	wg.Wait()
-	err = <-updateVersionError
-	v := <-updateVersion
+	err := <-updateVersionError
+
 	if err != nil {
 		console.ErrorCheckingForUpdate(err)
-	} else if v != "" {
-		console.UpdateAvailable(v)
+	} else {
+		v := <-updateVersion
+		if v != "" {
+			console.UpdateAvailable(v, GhRepoName)
+		}
 	}
+
+	return err
 }
 
-func getLatestVersion(wg *sync.WaitGroup, version chan string, resultErr chan error) {
-	defer wg.Done()
+func getLatestVersion(version chan string, resultErr chan error, repoName string) {
 
 	type response struct {
 		TagName string `json:"tag_name"`
@@ -62,27 +55,32 @@ func getLatestVersion(wg *sync.WaitGroup, version chan string, resultErr chan er
 		},
 	}
 
-	res, err := cli.Get("https://api.github.com/repos/joe-at-startupmedia/version-bump/releases/latest")
+	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repoName)
+
+	res, err := cli.Get(apiUrl)
 	if err != nil {
-		version <- ""
 		resultErr <- err
 		return
 	}
 	defer res.Body.Close()
 
-	d := new(response)
-	if err = json.NewDecoder(res.Body).Decode(d); err != nil {
-		version <- ""
-		resultErr <- err
-		return
-	}
+	if res.StatusCode != 200 {
+		resultErr <- fmt.Errorf("status code was not success: %d", res.StatusCode)
 
-	if semver.Compare(d.TagName, fmt.Sprintf("v%v", Version)) == 1 {
-		version <- d.TagName
-		resultErr <- nil
-		return
+	} else {
+		d := new(response)
+		if err = json.NewDecoder(res.Body).Decode(d); err != nil {
+			resultErr <- err
+			return
+		}
+		if d.TagName == "" {
+			resultErr <- fmt.Errorf("tag name from request was empty")
+		} else if semver.Compare(d.TagName, fmt.Sprintf("v%v", Version)) == 1 {
+			resultErr <- nil
+			version <- d.TagName
+			return
+		}
 	}
-
-	version <- ""
 	resultErr <- nil
+	version <- "" // no new updates
 }
