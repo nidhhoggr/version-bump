@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	Version string = "2.0.5"
+	Version string = "2.0.6"
 )
 
 const (
