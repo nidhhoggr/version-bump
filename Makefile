@@ -8,7 +8,7 @@ DEFAULT_TEST_PACKAGES := "./..."
 TEST_PACKAGES := $(or $(TEST_PACKAGES),$(DEFAULT_TEST_PACKAGES))
 COVERAGE_OMISSION := '!/(v2\/cmd|v2\/console|v2\/gpg|v2\/mocks)/'
 
-all: help
+all: build
 
 .PHONY: help
 help:
