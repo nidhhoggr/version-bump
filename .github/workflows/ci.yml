@@ -39,7 +39,7 @@ jobs:
         shell: bash
 
       - name: TestUbuntuCoverage
-        run:  make test_cover
+        run:  TEST_REGEX=${{inputs.run_regex}} TEST_PACKAGES=${{inputs.cover_packages}} make test_cover
         shell: bash
 
       - name: Upload coverage reports to Codecov
