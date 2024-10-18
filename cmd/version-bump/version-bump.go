@@ -16,7 +16,7 @@ import (
 var acceptedArgs = []string{"major", "minor", "patch"}
 
 var rootCmd = &cobra.Command{
-	Use:   fmt.Sprintf("bump [%s]", strings.Join(acceptedArgs, "|")),
+	Use:   fmt.Sprintf("version-bump [%s]", strings.Join(acceptedArgs, "|")),
 	Short: "Bump a semantic version of the project",
 	Long: `This application helps incrementing a semantic version of a project.
 It can bump the version in multiple different files at once,

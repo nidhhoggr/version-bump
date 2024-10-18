@@ -42,7 +42,7 @@ But some languages are leaving that decision to a developer, thus **version-bump
 
 ### Automatic
 
-Run **version-bump** in a root of the project: `version-bump <major/minor/patch>`
+Run **version-bump** in a root of the project: `version-bump [major|minor|patch]>`
 
 ### Manual
 
@@ -61,7 +61,7 @@ Run **version-bump** in a root of the project: `version-bump <major/minor/patch>
     - `directories` - default `['.']`
     - `exclude_files` - default `[]`
 
-3. Run **version-bump** in a root of the project: `version-bump <major/minor/patch>`
+3. Run **version-bump** in a root of the project: `version-bump [major|minor|patch]`
 
 *Configuration Example:*
 
@@ -84,7 +84,3 @@ directories = [ 'client' ]
 
 - Versions are expected to be consistent across all files
 - In automatic mode, **version-bump** has all languages enabled
-
-## License
-
-[MIT](LICENSE.md) © 2021-present Anton Yurchenko
