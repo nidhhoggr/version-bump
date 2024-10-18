@@ -52,7 +52,7 @@ jobs:
       - name: Go Vulnerability Check
         uses: Templum/govulncheck-action@v1
         with:
-          go-version-input: 1.23.2
+          go-version: 1.23.2
 
   # ========================================================================================================================================
   #     Prerequisite: Create a .slsa-goreleaser.yml in the root directory of your project.
