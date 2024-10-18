@@ -10,4 +10,4 @@ goos: windows
 
 goarch: amd64
 
-binary: bump
+binary: bump-windows-amd64

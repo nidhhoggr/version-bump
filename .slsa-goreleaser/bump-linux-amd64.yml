@@ -10,4 +10,4 @@ goos: linux
 
 goarch: amd64
 
-binary: bump
+binary: bump-linux-amd64

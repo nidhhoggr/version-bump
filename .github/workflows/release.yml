@@ -50,7 +50,7 @@ jobs:
           category: "/language:go"
 
       - name: Go Vulnerability Check
-        uses: golang/govulncheck-action@v1
+        uses: Templum/govulncheck-action@v1
         with:
           go-version-input: 1.23.2
 

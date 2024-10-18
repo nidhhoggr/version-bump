@@ -10,4 +10,4 @@ goos: darwin
 
 goarch: amd64
 
-binary: bump
+binary: bump-darwin-amd64
