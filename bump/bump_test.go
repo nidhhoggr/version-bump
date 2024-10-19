@@ -350,7 +350,7 @@ ENTRYPOINT [ "/app" ]`,
 			ExpectedError:      "",
 		},
 		"Docker - Multiple, with Quotes": {
-			Version: "2.0.0",
+			Version: "4.0.0",
 			Configuration: bump.Configuration{
 				Docker: bump.Language{
 					Enabled:     true,
@@ -372,7 +372,7 @@ RUN groupadd -g 1000 appuser &&\
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
 LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
-LABEL "repository"="https://github.com/anton-yurchenko/git-release" "org.opencontainers.image.version"="V1.2.3"
+LABEL "repository"="https://github.com/anton-yurchenko/git-release" "org.opencontainers.image.version"="V3.4.7"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY LICENSE.md /LICENSE.md

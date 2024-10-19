@@ -7,7 +7,6 @@ toolchain go1.23.2
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/ProtonMail/go-crypto v1.0.0
-	github.com/anton-yurchenko/go-changelog v1.1.0
 	github.com/cqroot/prompt v0.9.4
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0

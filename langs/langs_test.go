@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/anton-yurchenko/go-changelog"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,14 +13,14 @@ func TestNew(t *testing.T) {
 	a := assert.New(t)
 
 	var dockerRegex = []string{
-		fmt.Sprintf("^LABEL .*org.opencontainers.image.version['\"= ]*[vV]?(?P<version>%v)['\"]?.*", changelog.SemVerRegex),
-		fmt.Sprintf("^\\s*['\"]?org.opencontainers.image.version['\"= ]*[vV]?(?P<version>%v)['\"]?.*", changelog.SemVerRegex),
+		fmt.Sprintf("^LABEL .*org.opencontainers.image.version['\"= ]*(?P<version>%v)['\"]?.*", version.Regex),
+		fmt.Sprintf("^\\s*['\"]?org.opencontainers.image.version['\"= ]*(?P<version>%v)['\"]?.*", version.Regex),
 	}
 
 	var golangRegex = []string{
-		fmt.Sprintf("^const [vV]ersion\\s*string = \"[vV]?(?P<version>%v)\"", changelog.SemVerRegex),
-		fmt.Sprintf("^const [vV]ersion := \"[vV]?(?P<version>%v)\"", changelog.SemVerRegex),
-		fmt.Sprintf("^\\s*[vV]ersion\\s*string = \"[vV]?(?P<version>%v)\"", changelog.SemVerRegex),
+		fmt.Sprintf("^const [vV]ersion\\s*string = \"(?P<version>%v)\"", version.Regex),
+		fmt.Sprintf("^const [vV]ersion := \"(?P<version>%v)\"", version.Regex),
+		fmt.Sprintf("^\\s*[vV]ersion\\s*string = \"(?P<version>%v)\"", version.Regex),
 	}
 
 	var javaScriptJSONFields = []string{

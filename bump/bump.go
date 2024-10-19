@@ -2,11 +2,11 @@ package bump
 
 import (
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
 	"regexp"
 	"strings"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
@@ -229,7 +229,7 @@ func (b *Bump) bumpComponent(name string, l Language, action int, versions map[s
 	return files, nil
 }
 
-func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language, action int, versions map[string]int, version *string) ([]string, error) {
+func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language, action int, versionMap map[string]int, versionString *string) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
 
@@ -239,8 +239,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 		if err != nil {
 			return []string{}, errors.Wrapf(err, "error reading a file %v", file)
 		}
-		var oldVersion *semver.Version
-
+		var oldVersion *version.Version
 		// get current version
 		if lang.Regex != nil {
 		outer:
@@ -248,9 +247,9 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 				for _, expression := range *lang.Regex {
 					regex := regexp.MustCompile(expression)
 					if regex.MatchString(line) {
-						oldVersion, err = semver.StrictNewVersion(regex.ReplaceAllString(line, "${1}"))
+						oldVersion, err = version.NewFromRegex(line, regex)
 						if err != nil {
-							return []string{}, errors.Wrapf(err, "error parsing semantic version at file %v", filepath)
+							return []string{}, errors.Wrapf(err, "error parsing semantic version at file %v from version: %s", filepath, oldVersion)
 						}
 						break outer
 					}
@@ -260,7 +259,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 
 		if lang.JSONFields != nil {
 			for _, field := range *lang.JSONFields {
-				oldVersion, err = semver.StrictNewVersion(gjson.Get(strings.Join(fileContent, ""), field).String())
+				oldVersion, err = version.New(gjson.Get(strings.Join(fileContent, ""), field).String())
 				if err != nil {
 					return []string{}, errors.Wrapf(err, "error parsing semantic version at file %v", filepath)
 				}
@@ -269,21 +268,12 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 		}
 
 		if oldVersion != nil {
-			var newVersion semver.Version
 
-			switch action {
-			case 1:
-				newVersion = oldVersion.IncMajor()
-			case 2:
-				newVersion = oldVersion.IncMinor()
-			case 3:
-				newVersion = oldVersion.IncPatch()
-			}
-
-			console.VersionUpdate(oldVersion.String(), newVersion.String(), filepath)
-			*version = newVersion.String()
+			newVersionStr := oldVersion.Increment(action).String()
+			*versionString = newVersionStr
+			console.VersionUpdate(oldVersion.String(), newVersionStr, filepath)
 			identified = true
-			versions[oldVersion.String()]++
+			versionMap[oldVersion.String()]++
 
 			// set future version
 			if lang.Regex != nil {
@@ -294,7 +284,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 					for _, expression := range *lang.Regex {
 						regex := regexp.MustCompile(expression)
 						if regex.MatchString(line) {
-							l := strings.ReplaceAll(line, oldVersion.String(), newVersion.String())
+							l := strings.ReplaceAll(line, oldVersion.String(), newVersionStr)
 							newContent = append(newContent, l)
 							added = true
 						}
@@ -316,7 +306,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 			if lang.JSONFields != nil {
 				for _, field := range *lang.JSONFields {
 					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
-						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, newVersion.String())
+						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, newVersionStr)
 						if err != nil {
 							return []string{}, errors.Wrapf(err, "error setting new version on content of a file %v", file)
 						}
