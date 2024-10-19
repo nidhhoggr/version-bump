@@ -148,11 +148,11 @@ func (b *Bump) Bump(action int) error {
 	console.IncrementProjectVersion()
 
 	versions := make(map[string]int)
-	var version string
+	var newVersionStr string
 	files := make([]string, 0)
 
 	if b.Configuration.Docker.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.Docker, b.Configuration.Docker, action, versions, &version)
+		modifiedFiles, err := b.bumpComponent(langs.Docker, b.Configuration.Docker, action, versions, &newVersionStr)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in Docker project")
 		}
@@ -161,7 +161,7 @@ func (b *Bump) Bump(action int) error {
 	}
 
 	if b.Configuration.Go.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.Go, b.Configuration.Go, action, versions, &version)
+		modifiedFiles, err := b.bumpComponent(langs.Go, b.Configuration.Go, action, versions, &newVersionStr)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in Go project")
 		}
@@ -170,7 +170,7 @@ func (b *Bump) Bump(action int) error {
 	}
 
 	if b.Configuration.JavaScript.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.JavaScript, b.Configuration.JavaScript, action, versions, &version)
+		modifiedFiles, err := b.bumpComponent(langs.JavaScript, b.Configuration.JavaScript, action, versions, &newVersionStr)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in JavaScript project")
 		}
@@ -188,7 +188,7 @@ func (b *Bump) Bump(action int) error {
 		// TODO: update changelog
 		console.CommittingChanges()
 
-		if err := b.Git.Save(files, version); err != nil {
+		if err := b.Git.Save(files, newVersionStr); err != nil {
 			return errors.Wrap(err, "error committing changes")
 		}
 	}
