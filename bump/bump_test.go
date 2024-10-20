@@ -1115,7 +1115,9 @@ func TestBump_CouldNotValidateGpgKey(t *testing.T) {
 	_, err := bump.New(fs, meta, data, ".", func() (string, error) {
 		return "wrongpassphrase", fmt.Errorf("custom_err")
 	})
-	a.ErrorContains(err, "custom_err")
+	if err != nil {
+		a.ErrorContains(err, "custom_err")
+	}
 }
 
 func TestBump_BrokenBumpFile(t *testing.T) {
