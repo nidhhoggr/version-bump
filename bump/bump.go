@@ -55,6 +55,9 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string, passphrasePrompt 
 
 		if gpgSigningKey != "" {
 			keyPassphrase, err := passphrasePrompt()
+			if err != nil {
+				return nil, err
+			}
 			gpgEntity, err = gpg.GetGpgEntity(keyPassphrase, gpgSigningKey)
 			if err != nil {
 				return nil, errors.Wrap(err, "could not validate gpg signing key")
