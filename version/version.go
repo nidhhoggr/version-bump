@@ -33,8 +33,7 @@ func FromString(s string) Type {
 }
 
 type Version struct {
-	semverPtr  *semver.Version
-	preRelease *PreRelease
+	semverPtr *semver.Version
 }
 
 func (v *Version) SetSemverPtr(semverPtr *semver.Version) {
@@ -48,7 +47,6 @@ func New(versionString string) (*Version, error) {
 	//fmt.Printf("Got version from string %s \n", semverPtr)
 	return &Version{
 		semverPtr,
-		nil,
 	}, err
 }
 
@@ -62,7 +60,7 @@ func NewFromRegex(versionString string, regex *regexp.Regexp) (*Version, error) 
 	return New(replaced)
 }
 
-func (v *Version) Increment(versionType Type, preReleaseType PreReleaseType) error {
+func (v *Version) Increment(versionType Type, preReleaseType PreReleaseType, preReleaseMetadata string) error {
 	var newVersion semver.Version
 
 	isVersionBumping := versionType > NotAVersion
@@ -93,7 +91,7 @@ func (v *Version) Increment(versionType Type, preReleaseType PreReleaseType) err
 	}
 
 	if isPreReleasing {
-		err := v.PreRelease(preReleaseType)
+		err := v.PreRelease(preReleaseType, preReleaseMetadata)
 		if err != nil {
 			console.Error(err)
 			return err
@@ -107,7 +105,7 @@ func (v *Version) IsPreRelease() bool {
 	return len(v.semverPtr.Prerelease()) > 0
 }
 
-func (v *Version) PreRelease(preReleaseType PreReleaseType) error {
+func (v *Version) PreRelease(preReleaseType PreReleaseType, preReleaseMetadata string) error {
 	if preReleaseType == NotAPreRelease {
 		return fmt.Errorf("cannot prerelease and empty type")
 	}
@@ -154,7 +152,16 @@ func (v *Version) PreRelease(preReleaseType PreReleaseType) error {
 		}
 	}
 	err := v.IncrementPreRelease()
-	return err
+	if err != nil {
+		return err
+	}
+	if preReleaseMetadata != "" {
+		err = v.SetPreReleaseMetadata(preReleaseMetadata)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (v *Version) String() string {
@@ -171,6 +178,16 @@ func (v *Version) GetPreReleaseString() string {
 func (v *Version) SetPreReleaseString(preReleaseStr string) error {
 	//fmt.Printf("setting prerelease string: %s\n", preReleaseStr)
 	setPrerelease, err := v.semverPtr.SetPrerelease(preReleaseStr)
+	if err != nil {
+		return err
+	}
+	v.semverPtr = &setPrerelease
+	return nil
+}
+
+func (v *Version) SetPreReleaseMetadata(metadataStr string) error {
+	//fmt.Printf("setting prerelease string: %s\n", preReleaseStr)
+	setPrerelease, err := v.semverPtr.SetMetadata(metadataStr)
 	if err != nil {
 		return err
 	}

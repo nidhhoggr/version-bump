@@ -1083,11 +1083,10 @@ const Version string = "1.2.3"`,
 			).Return(nil, testSuite.MockCreateTagError).Once()
 		}
 
-		err := r.Bump(bump.NewRunArgs(
-			testSuite.VersionType,
-			testSuite.PreReleaseType,
-			nil,
-		))
+		err := r.Bump(&bump.RunArgs{
+			VersionType:    testSuite.VersionType,
+			PreReleaseType: testSuite.PreReleaseType,
+		})
 		if testSuite.ExpectedError != "" || err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 		}
@@ -1170,13 +1169,13 @@ func main() {
 		ExpectedError:      "",
 	}
 
-	_, err := runBumpTest(testSuite, bump.NewRunArgs(
-		testSuite.VersionType,
-		testSuite.PreReleaseType,
-		func(_ string) (bool, error) {
+	_, err := runBumpTest(testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		ConfirmationPrompt: func(_ string) (bool, error) {
 			return true, fmt.Errorf("confirmation_error")
 		},
-	))
+	})
 	a.ErrorContains(err, "error during confirmation prompt: confirmation_error")
 }
 
@@ -1215,13 +1214,13 @@ func main() {
 		ExpectedError:      "",
 	}
 
-	_, err := runBumpTest(testSuite, bump.NewRunArgs(
-		testSuite.VersionType,
-		testSuite.PreReleaseType,
-		func(_ string) (bool, error) {
+	_, err := runBumpTest(testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		ConfirmationPrompt: func(_ string) (bool, error) {
 			return false, nil
 		},
-	))
+	})
 	a.ErrorContains(err, "proposed version was denied")
 }
 

@@ -49,7 +49,8 @@ type Language struct {
 }
 
 type RunArgs struct {
-	confirmationPrompt func(string) (bool, error)
-	versionType        version.Type
-	preReleaseType     version.PreReleaseType
+	ConfirmationPrompt func(string) (bool, error)
+	PreReleaseMetadata string
+	VersionType        version.Type
+	PreReleaseType     version.PreReleaseType
 }

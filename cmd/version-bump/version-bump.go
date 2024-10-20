@@ -55,11 +55,11 @@ for example in package.json and a Dockerfile.`,
 				}
 			}
 
-			err = b.Run(bump.NewRunArgs(
-				versionType,
-				preReleaseType,
-				confirmationPrompt,
-			))
+			err = b.Run(&bump.RunArgs{
+				ConfirmationPrompt: confirmationPrompt,
+				VersionType:        versionType,
+				PreReleaseType:     preReleaseType,
+			})
 			if err != nil {
 				console.Fatal(err)
 			}

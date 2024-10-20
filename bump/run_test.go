@@ -107,11 +107,10 @@ func TestBumpRun(t *testing.T) {
 
 	bump.GhRepoName = "anton-yurchenko/version-bump"
 	b := getBumpInstance()
-	err := b.Run(bump.NewRunArgs(
-		version.Minor,
-		version.NotAPreRelease,
-		nil,
-	))
+	err := b.Run(&bump.RunArgs{
+		VersionType:    version.Minor,
+		PreReleaseType: version.NotAPreRelease,
+	})
 	a.Nil(err)
 }
 
@@ -120,10 +119,9 @@ func TestBumpRunWithFailingUrl(t *testing.T) {
 
 	bump.GhRepoName = "nonexistent-user/nonexistent-package"
 	b := getBumpInstance()
-	err := b.Run(bump.NewRunArgs(
-		version.Minor,
-		version.NotAPreRelease,
-		nil,
-	))
+	err := b.Run(&bump.RunArgs{
+		VersionType:    version.Minor,
+		PreReleaseType: version.NotAPreRelease,
+	})
 	a.ErrorContains(err, "status code was not success: 404")
 }

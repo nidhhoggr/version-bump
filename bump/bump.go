@@ -23,12 +23,11 @@ import (
 	"github.com/tidwall/sjson"
 )
 
-type VersionBumpData struct {
-	bump           *Bump
-	versionMap     map[string]int
-	versionStr     *string
-	versionType    version.Type
-	preReleaseType version.PreReleaseType
+type versionBumpData struct {
+	bump       *Bump
+	versionMap map[string]int
+	versionStr *string
+	runArgs    *RunArgs
 }
 
 func New(fs afero.Fs, meta, data billy.Filesystem, dir string, passphrasePrompt func() (string, error)) (*Bump, error) {
@@ -163,12 +162,11 @@ func (b *Bump) Bump(ra *RunArgs) error {
 	var newVersionStr string
 	files := make([]string, 0)
 
-	vbd := &VersionBumpData{
+	vbd := &versionBumpData{
 		b,
 		versionMap,
 		&newVersionStr,
-		ra.versionType,
-		ra.preReleaseType,
+		ra,
 	}
 
 	if b.Configuration.Docker.Enabled {
@@ -203,12 +201,12 @@ func (b *Bump) Bump(ra *RunArgs) error {
 
 	if len(files) != 0 {
 		console.CommittingChanges()
-		if ra.confirmationPrompt != nil {
-			confirmed, err := ra.confirmationPrompt(newVersionStr)
+		if ra.ConfirmationPrompt != nil {
+			confirmed, err := ra.ConfirmationPrompt(newVersionStr)
 			if err != nil {
 				return errors.Wrap(err, "error during confirmation prompt")
 			} else if !confirmed {
-				return fmt.Errorf("proposed version was denied")
+				return errors.New("proposed version was denied")
 			}
 		}
 		if err := b.Git.Save(files, newVersionStr); err != nil {
@@ -219,7 +217,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 	return nil
 }
 
-func (vbd *VersionBumpData) bumpComponent(langName string, lang Language) ([]string, error) {
+func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]string, error) {
 	console.Language(langName)
 	files := make([]string, 0)
 
@@ -249,7 +247,7 @@ func (vbd *VersionBumpData) bumpComponent(langName string, lang Language) ([]str
 	return files, nil
 }
 
-func (vbd *VersionBumpData) incrementVersion(dir string, files []string, lang langs.Language) ([]string, error) {
+func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang langs.Language) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
 
@@ -290,7 +288,7 @@ func (vbd *VersionBumpData) incrementVersion(dir string, files []string, lang la
 		if oldVersion != nil {
 
 			oldVersionStr := oldVersion.String()
-			err = oldVersion.Increment(vbd.versionType, vbd.preReleaseType)
+			err = oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PreReleaseType, vbd.runArgs.PreReleaseMetadata)
 			if err != nil {
 				return []string{}, errors.Wrapf(err, "error bumping version %v", filepath)
 			}

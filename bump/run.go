@@ -3,7 +3,6 @@ package bump
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"net"
 	"net/http"
 	"time"
@@ -14,14 +13,6 @@ import (
 )
 
 var GhRepoName = "joe-at-startupmedia/version-bump"
-
-func NewRunArgs(versionType version.Type, preReleaseType version.PreReleaseType, confirmationPrompt func(string) (bool, error)) *RunArgs {
-	return &RunArgs{
-		confirmationPrompt,
-		versionType,
-		preReleaseType,
-	}
-}
 
 func (b *Bump) Run(ra *RunArgs) error {
 	// check for an update in parallel
@@ -55,10 +46,10 @@ func getLatestVersion(version chan string, resultErr chan error, repoName string
 	}
 
 	cli := &http.Client{
-		Timeout: time.Second * 3,
+		Timeout: time.Second * 5,
 		Transport: &http.Transport{
 			Dial: (&net.Dialer{
-				Timeout: 2 * time.Second,
+				Timeout: 3 * time.Second,
 			}).Dial,
 			TLSHandshakeTimeout: 5 * time.Second,
 		},
