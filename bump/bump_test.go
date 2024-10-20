@@ -2,6 +2,7 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
 	"testing"
@@ -19,7 +20,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestNew(t *testing.T) {
+func TestBump_New(t *testing.T) {
 	a := assert.New(t)
 
 	type configFile struct {
@@ -257,7 +258,7 @@ type testBumpTestSuite struct {
 	ExpectedError      string
 }
 
-func TestBump(t *testing.T) {
+func TestBump_Bump(t *testing.T) {
 	a := assert.New(t)
 
 	suite := map[string]testBumpTestSuite{
@@ -1093,10 +1094,212 @@ const Version string = "1.2.3"`,
 	}
 }
 
-func TestStringToVersionType(t *testing.T) {
+func TestBump_WithVanillaFsRepoDoesntExist(t *testing.T) {
+	a := assert.New(t)
+	fs := afero.NewMemMapFs()
+	meta := memfs.New()
+	data := memfs.New()
+	_, err := bump.New(fs, meta, data, ".", nil)
+	a.ErrorContains(err, "error opening repository: repository does not exist")
+}
+
+func TestBump_CouldNotValidateGpgKey(t *testing.T) {
+	a := assert.New(t)
+	fs := afero.NewMemMapFs()
+	meta := memfs.New()
+	data := memfs.New()
+	_, _ = git.Init(
+		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
+		data,
+	)
+	_, err := bump.New(fs, meta, data, ".", func() (string, error) {
+		return "wrongpassphrase", nil
+	})
+	a.ErrorContains(err, "could not validate gpg signing key")
+}
+
+func TestBump_BrokenBumpFile(t *testing.T) {
+	a := assert.New(t)
+	fs := afero.NewMemMapFs()
+	meta := memfs.New()
+	data := memfs.New()
+	_, _ = git.Init(
+		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
+		data,
+	)
+	f, err := fs.Create(".bump")
+	_, err = f.WriteString("brokenbump-contents")
+	_, err = bump.New(fs, meta, data, ".", nil)
+	a.ErrorContains(err, "error parsing project config file")
+}
+
+func TestBump_ConfirmationError(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testBumpTestSuite{
+		Version: "1.3.0",
+		Configuration: bump.Configuration{
+			Go: bump.Language{
+				Enabled:     true,
+				Directories: []string{"."},
+			},
+		},
+		Files: allFiles{
+			Go: map[string][]file{
+				".": {
+					{
+						Name:                "main.go",
+						ExpectedToBeChanged: true,
+						Content: `package main
+import "fmt"
+const Version string = "1.2.3"
+func main() {
+	fmt.Println(Version)
+}`,
+					},
+				},
+			},
+		},
+		VersionType:        version.Minor,
+		PreReleaseType:     version.NotAPreRelease,
+		MockAddError:       nil,
+		MockCommitError:    nil,
+		MockCreateTagError: nil,
+		ExpectedError:      "",
+	}
+
+	_, err := runBumpTest(testSuite, bump.NewRunArgs(
+		testSuite.VersionType,
+		testSuite.PreReleaseType,
+		func(_ string) (bool, error) {
+			return true, fmt.Errorf("confirmation_error")
+		},
+	))
+	a.ErrorContains(err, "error during confirmation prompt: confirmation_error")
+}
+
+func TestBump_ConfirmationDenied(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testBumpTestSuite{
+		Version: "1.3.0",
+		Configuration: bump.Configuration{
+			Go: bump.Language{
+				Enabled:     true,
+				Directories: []string{"."},
+			},
+		},
+		Files: allFiles{
+			Go: map[string][]file{
+				".": {
+					{
+						Name:                "main.go",
+						ExpectedToBeChanged: true,
+						Content: `package main
+import "fmt"
+const Version string = "1.2.3"
+func main() {
+	fmt.Println(Version)
+}`,
+					},
+				},
+			},
+		},
+		VersionType:        version.Minor,
+		PreReleaseType:     version.NotAPreRelease,
+		MockAddError:       nil,
+		MockCommitError:    nil,
+		MockCreateTagError: nil,
+		ExpectedError:      "",
+	}
+
+	_, err := runBumpTest(testSuite, bump.NewRunArgs(
+		testSuite.VersionType,
+		testSuite.PreReleaseType,
+		func(_ string) (bool, error) {
+			return false, nil
+		},
+	))
+	a.ErrorContains(err, "proposed version was denied")
+}
+
+func TestBump_StringToVersionType(t *testing.T) {
 	a := assert.New(t)
 	a.Equal(version.FromString("major"), version.Major)
 	a.Equal(version.FromString("minor"), version.Minor)
 	a.Equal(version.FromString("patch"), version.Patch)
 	a.Equal(version.FromString("nonexistent"), version.NotAVersion)
+}
+
+func runBumpTest(testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {
+
+	m1 := new(mocks.Repository)
+	m2 := new(mocks.Worktree)
+
+	r := bump.Bump{
+		FS: afero.NewMemMapFs(),
+		Git: bump.GitConfig{
+			UserName:   username,
+			UserEmail:  email,
+			Repository: m1,
+			Worktree:   m2,
+		},
+		Configuration: testSuite.Configuration,
+	}
+
+	shouldBeCommitted := false
+
+	if testSuite.Configuration.Go.Enabled {
+		for _, dir := range testSuite.Configuration.Go.Directories {
+			for tgtDir, tgtFiles := range testSuite.Files.Go {
+				if dir == tgtDir {
+					for _, tgtFile := range tgtFiles {
+						shouldBeCommitted = true
+						f, err := r.FS.Create(path.Join(dir, tgtFile.Name))
+						if err != nil {
+							console.Error(fmt.Sprintf("error preparing test case: error creating Go files: %v", err))
+							continue
+						}
+
+						_, err = f.WriteString(tgtFile.Content)
+						if err != nil {
+							console.Error(fmt.Sprintf("error preparing test case: error writing Go files: %v", err))
+							continue
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if shouldBeCommitted {
+
+		for dir, files := range testSuite.Files.Go {
+			for _, file := range files {
+				if file.ExpectedToBeChanged {
+					var f string
+					if dir == "." {
+						f = file.Name
+					} else {
+						f = path.Join(dir, file.Name)
+					}
+					m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
+				}
+			}
+		}
+
+		hash := plumbing.NewHash("abc")
+
+		m2.On(
+			"Commit", testSuite.Version, mock.AnythingOfType("*git.CommitOptions"),
+		).Return(hash, testSuite.MockCommitError).Once()
+
+		m1.On(
+			"CreateTag", fmt.Sprintf("v%v", testSuite.Version), hash, mock.AnythingOfType("*git.CreateTagOptions"),
+		).Return(nil, testSuite.MockCreateTagError).Once()
+	}
+
+	err := r.Bump(ra)
+
+	return &r, err
 }
