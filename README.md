@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/ci.yml/badge.svg)](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/joe-at-startupmedia/version-bump/graph/badge.svg?token=HHRUHCX1EJ)](https://codecov.io/gh/joe-at-startupmedia/version-bump)
-[![Go Report Card](https://goreportcard.com/badge/github.com/joe-at-startupmedia/version-bump)](https://goreportcard.com/report/github.com/joe-at-startupmedia/version-bump)
+[![Go Report Card](https://goreportcard.com/badge/github.com/joe-at-startupmedia/version-bump/v2)](https://goreportcard.com/report/github.com/joe-at-startupmedia/version-bump/v2)
 [![Release](https://img.shields.io/github/v/release/joe-at-startupmedia/version-bump)](https://github.com/joe-at-startupmedia/version-bump/releases/latest)
 [![License](https://img.shields.io/github/license/joe-at-startupmedia/version-bump)](LICENSE.md)
 

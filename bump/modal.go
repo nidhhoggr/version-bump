@@ -11,24 +11,6 @@ const (
 	Version string = "2.0.6"
 )
 
-const (
-	Major int = iota + 1
-	Minor
-	Patch
-)
-
-func StringToVersion(s string) int {
-	switch s {
-	case "major":
-		return Major
-	case "minor":
-		return Minor
-	case "patch":
-		return Patch
-	}
-	return 0
-}
-
 type Bump struct {
 	FS            afero.Fs
 	Git           GitConfig

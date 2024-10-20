@@ -2,6 +2,7 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
 	"testing"
 
@@ -248,7 +249,7 @@ type testBumpTestSuite struct {
 	Version            string
 	Configuration      bump.Configuration
 	Files              allFiles
-	Action             int
+	VersionType        version.Type
 	MockAddError       error
 	MockCommitError    error
 	MockCreateTagError error
@@ -263,7 +264,7 @@ func TestBump(t *testing.T) {
 			Version:            "",
 			Configuration:      bump.Configuration{},
 			Files:              allFiles{},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -303,7 +304,7 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -343,7 +344,7 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -382,7 +383,7 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -421,7 +422,7 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -461,7 +462,7 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -501,7 +502,7 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -534,7 +535,7 @@ func main() {
 					},
 				},
 			},
-			Action:             bump.Minor,
+			VersionType:        version.Minor,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -567,7 +568,7 @@ func main() {
 					},
 				},
 			},
-			Action:             bump.Patch,
+			VersionType:        version.Patch,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -603,7 +604,7 @@ func main() {
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -626,7 +627,7 @@ func main() {
 							Content: `{
 	"name": "git-release",
 	"version": "1.2.3",
-	"description": "A GitHub Action for creating a GitHub Release with Assets and Changelog whenever a new Tag is pushed to the repository.",
+	"description": "A GitHub VersionType for creating a GitHub Release with Assets and Changelog whenever a new Tag is pushed to the repository.",
 	"main": "wrapper.js",
 	"directories": {
 	  "doc": "docs"
@@ -683,7 +684,7 @@ func main() {
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -698,7 +699,7 @@ func main() {
 				},
 			},
 			Files:              allFiles{},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -713,7 +714,7 @@ func main() {
 				},
 			},
 			Files:              allFiles{},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -728,7 +729,7 @@ func main() {
 				},
 			},
 			Files:              allFiles{},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -789,7 +790,7 @@ func main() {
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -829,7 +830,7 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    errors.New("reason"),
 			MockCreateTagError: nil,
@@ -911,7 +912,7 @@ const Version string = "1.2.3"`,
 					},
 				},
 			},
-			Action:             bump.Major,
+			VersionType:        version.Major,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -1063,7 +1064,7 @@ const Version string = "1.2.3"`,
 			).Return(nil, testSuite.MockCreateTagError).Once()
 		}
 
-		err := r.Bump(testSuite.Action)
+		err := r.Bump(testSuite.VersionType)
 		if testSuite.ExpectedError != "" || err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 		}
@@ -1072,9 +1073,8 @@ const Version string = "1.2.3"`,
 
 func TestStringToVersionType(t *testing.T) {
 	a := assert.New(t)
-
-	a.Equal(bump.StringToVersion("major"), 1)
-	a.Equal(bump.StringToVersion("minor"), 2)
-	a.Equal(bump.StringToVersion("patch"), 3)
-	a.Equal(bump.StringToVersion("nonexistent"), 0)
+	a.Equal(version.FromString("major"), version.Major)
+	a.Equal(version.FromString("minor"), version.Minor)
+	a.Equal(version.FromString("patch"), version.Patch)
+	a.Equal(version.FromString("nonexistent"), version.NotAVersion)
 }

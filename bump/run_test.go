@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/mock"
 	"path"
@@ -42,7 +43,7 @@ func main() {
 				},
 			},
 		},
-		Action:             bump.Minor,
+		VersionType:        version.Minor,
 		MockAddError:       nil,
 		MockCommitError:    nil,
 		MockCreateTagError: nil,
@@ -106,7 +107,7 @@ func TestBumpRun(t *testing.T) {
 
 	bump.GhRepoName = "anton-yurchenko/version-bump"
 	b := getBumpInstance()
-	err := b.Run(bump.Minor)
+	err := b.Run(version.Minor)
 	a.Nil(err)
 }
 
@@ -115,6 +116,6 @@ func TestBumpRunWithFailingUrl(t *testing.T) {
 
 	bump.GhRepoName = "nonexistent-user/nonexistent-package"
 	b := getBumpInstance()
-	err := b.Run(bump.Minor)
+	err := b.Run(version.Minor)
 	a.ErrorContains(err, "status code was not success: 404")
 }

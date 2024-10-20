@@ -3,6 +3,7 @@ package bump
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"net"
 	"net/http"
 	"time"
@@ -14,14 +15,14 @@ import (
 
 var GhRepoName = "joe-at-startupmedia/version-bump"
 
-func (b *Bump) Run(action int) error {
+func (b *Bump) Run(versionType version.Type) error {
 	// check for an update in parallel
 	updateVersion := make(chan string, 1)
 	updateVersionError := make(chan error, 1)
 
 	go getLatestVersion(updateVersion, updateVersionError, GhRepoName)
 
-	if err := b.Bump(action); err != nil {
+	if err := b.Bump(versionType); err != nil {
 		console.Fatal(errors.Wrap(err, "error bumping a version"))
 	}
 

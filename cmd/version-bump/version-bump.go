@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"path"
@@ -30,7 +31,7 @@ for example in package.json and a Dockerfile.`,
 			if err != nil {
 				console.Fatal(errors.Wrap(err, "error preparing project configuration"))
 			}
-			_ = b.Run(bump.StringToVersion(args[0]))
+			_ = b.Run(version.FromString(args[0]))
 		} else {
 			_ = cmd.Help()
 		}

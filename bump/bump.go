@@ -144,7 +144,7 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string, shouldSignCommits
 	return o, nil
 }
 
-func (b *Bump) Bump(action int) error {
+func (b *Bump) Bump(versionType version.Type) error {
 	console.IncrementProjectVersion()
 
 	versions := make(map[string]int)
@@ -152,7 +152,7 @@ func (b *Bump) Bump(action int) error {
 	files := make([]string, 0)
 
 	if b.Configuration.Docker.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.Docker, b.Configuration.Docker, action, versions, &newVersionStr)
+		modifiedFiles, err := b.bumpComponent(langs.Docker, b.Configuration.Docker, versionType, versions, &newVersionStr)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in Docker project")
 		}
@@ -161,7 +161,7 @@ func (b *Bump) Bump(action int) error {
 	}
 
 	if b.Configuration.Go.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.Go, b.Configuration.Go, action, versions, &newVersionStr)
+		modifiedFiles, err := b.bumpComponent(langs.Go, b.Configuration.Go, versionType, versions, &newVersionStr)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in Go project")
 		}
@@ -170,7 +170,7 @@ func (b *Bump) Bump(action int) error {
 	}
 
 	if b.Configuration.JavaScript.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.JavaScript, b.Configuration.JavaScript, action, versions, &newVersionStr)
+		modifiedFiles, err := b.bumpComponent(langs.JavaScript, b.Configuration.JavaScript, versionType, versions, &newVersionStr)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in JavaScript project")
 		}
@@ -196,7 +196,7 @@ func (b *Bump) Bump(action int) error {
 	return nil
 }
 
-func (b *Bump) bumpComponent(name string, l Language, action int, versions map[string]int, version *string) ([]string, error) {
+func (b *Bump) bumpComponent(name string, l Language, versionType version.Type, versions map[string]int, version *string) ([]string, error) {
 	console.Language(name)
 	files := make([]string, 0)
 
@@ -215,7 +215,7 @@ func (b *Bump) bumpComponent(name string, l Language, action int, versions map[s
 			dir,
 			filterFiles(langSettings.Files, f),
 			*langSettings,
-			action,
+			versionType,
 			versions,
 			version,
 		)
@@ -229,7 +229,7 @@ func (b *Bump) bumpComponent(name string, l Language, action int, versions map[s
 	return files, nil
 }
 
-func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language, action int, versionMap map[string]int, versionString *string) ([]string, error) {
+func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language, versionType version.Type, versionMap map[string]int, versionString *string) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
 
@@ -269,11 +269,15 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 
 		if oldVersion != nil {
 
-			newVersionStr := oldVersion.Increment(action).String()
-			*versionString = newVersionStr
-			console.VersionUpdate(oldVersion.String(), newVersionStr, filepath)
+			oldVersionStr := oldVersion.String()
+			err := oldVersion.Increment(versionType, version.NotAPreRelease)
+			if err != nil {
+				return []string{}, errors.Wrapf(err, "error bumping version %v", filepath)
+			}
+			*versionString = oldVersion.String()
+			console.VersionUpdate(oldVersionStr, *versionString, filepath)
 			identified = true
-			versionMap[oldVersion.String()]++
+			versionMap[oldVersionStr]++
 
 			// set future version
 			if lang.Regex != nil {
@@ -284,7 +288,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 					for _, expression := range *lang.Regex {
 						regex := regexp.MustCompile(expression)
 						if regex.MatchString(line) {
-							l := strings.ReplaceAll(line, oldVersion.String(), newVersionStr)
+							l := strings.ReplaceAll(line, oldVersionStr, *versionString)
 							newContent = append(newContent, l)
 							added = true
 						}
@@ -306,7 +310,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 			if lang.JSONFields != nil {
 				for _, field := range *lang.JSONFields {
 					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
-						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, newVersionStr)
+						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, *versionString)
 						if err != nil {
 							return []string{}, errors.Wrapf(err, "error setting new version on content of a file %v", file)
 						}
