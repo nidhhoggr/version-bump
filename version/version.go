@@ -37,6 +37,10 @@ type Version struct {
 	preRelease *PreRelease
 }
 
+func (v *Version) SetSemverPtr(semverPtr *semver.Version) {
+	v.semverPtr = semverPtr
+}
+
 func New(versionString string) (*Version, error) {
 	versionString = strings.TrimLeft(versionString, "vV")
 	//fmt.Printf("Get version from string %s \n", versionString)

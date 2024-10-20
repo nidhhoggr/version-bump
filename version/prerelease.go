@@ -41,10 +41,6 @@ func (v *Version) GetPreRelease() (*PreRelease, error) {
 	if err != nil {
 		return nil, errors.WithMessage(err, "Could not parse pre-release tag")
 	}
-	//err = v.SetPreReleaseString(preRelease.String())
-	if err != nil {
-		return nil, err
-	}
 	return preRelease, nil
 }
 

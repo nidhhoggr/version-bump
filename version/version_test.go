@@ -1,6 +1,7 @@
 package version_test
 
 import (
+	"github.com/Masterminds/semver/v3"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -371,4 +372,13 @@ func TestVersion_PreReleaseWithNotAVersion(t *testing.T) {
 	a.Equal(true, v.IsPreRelease())
 	err = v.Increment(version.Patch, version.AlphaPreRelease)
 	a.Equal("1.0.1-alpha.0", v.String())
+}
+
+func TestVersion_GetPreReleaseError(t *testing.T) {
+	a := assert.New(t)
+	v := &version.Version{}
+	v.SetSemverPtr(&semver.Version{})
+	pr, err := v.GetPreRelease()
+	a.Empty(err)
+	a.Empty(pr)
 }

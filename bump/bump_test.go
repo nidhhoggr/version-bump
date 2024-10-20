@@ -1231,6 +1231,14 @@ func TestBump_StringToVersionType(t *testing.T) {
 	a.Equal(version.FromString("nonexistent"), version.NotAVersion)
 }
 
+func TestBump_PreReleaseString(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(version.PreReleaseString(version.AlphaPreRelease), "alpha")
+	a.Equal(version.PreReleaseString(version.BetaPreRelease), "beta")
+	a.Equal(version.PreReleaseString(version.ReleaseCandidate), "rc")
+	a.Equal(version.PreReleaseString(version.NotAPreRelease), "")
+}
+
 func runBumpTest(testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {
 
 	m1 := new(mocks.Repository)
