@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/cqroot/prompt"
+	"github.com/cqroot/prompt/input"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
@@ -14,6 +16,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var preReleaseTypeAlpha bool
+var preReleaseTypeBeta bool
+var preReleaseTypeRc bool
 var acceptedArgs = []string{"major", "minor", "patch"}
 
 var rootCmd = &cobra.Command{
@@ -25,13 +30,39 @@ for example in package.json and a Dockerfile.`,
 	ValidArgs: []string{"major", "minor", "patch"},
 	Args:      cobra.OnlyValidArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 1 {
+		hasPreRelease := preReleaseTypeAlpha || preReleaseTypeBeta || preReleaseTypeRc
+		if len(args) == 1 || hasPreRelease {
 			dir := "."
-			b, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir, true)
+			b, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(dir, ".git")), osfs.New(dir), dir, passphrasePrompt)
 			if err != nil {
 				console.Fatal(errors.Wrap(err, "error preparing project configuration"))
 			}
-			_ = b.Run(version.FromString(args[0]))
+
+			versionType := version.NotAVersion
+			preReleaseType := version.NotAPreRelease
+
+			if len(args) == 1 {
+				versionType = version.FromString(args[0])
+			}
+
+			if hasPreRelease {
+				if preReleaseTypeAlpha {
+					preReleaseType = version.AlphaPreRelease
+				} else if preReleaseTypeBeta {
+					preReleaseType = version.BetaPreRelease
+				} else if preReleaseTypeRc {
+					preReleaseType = version.ReleaseCandidate
+				}
+			}
+
+			err = b.Run(bump.NewRunArgs(
+				versionType,
+				preReleaseType,
+				confirmationPrompt,
+			))
+			if err != nil {
+				console.Fatal(err)
+			}
 		} else {
 			_ = cmd.Help()
 		}
@@ -40,5 +71,22 @@ for example in package.json and a Dockerfile.`,
 }
 
 func main() {
+	rootCmd.PersistentFlags().BoolVar(&preReleaseTypeAlpha, "alpha", false, "alpha prerelease")
+	rootCmd.PersistentFlags().BoolVar(&preReleaseTypeBeta, "beta", false, "beta prerelease")
+	rootCmd.PersistentFlags().BoolVar(&preReleaseTypeRc, "rc", false, "release candidate prerelease")
 	cobra.CheckErr(rootCmd.Execute())
+}
+
+func passphrasePrompt() (string, error) {
+	return prompt.New().Ask("Input your passphrase:").
+		Input("", input.WithEchoMode(input.EchoPassword))
+}
+
+func confirmationPrompt(proposedVersion string) (bool, error) {
+	s, err := prompt.New().Ask(fmt.Sprintf("continue with new version: %s", proposedVersion)).Choose([]string{"Yes", "No"})
+	if err != nil {
+		return false, err
+	} else {
+		return s == "Yes", nil
+	}
 }

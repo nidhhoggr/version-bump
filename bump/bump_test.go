@@ -222,7 +222,7 @@ exclude_files = [ 'client/test.js' ]`,
 			}
 		}
 
-		b, err := bump.New(fs, meta, data, ".", false)
+		b, err := bump.New(fs, meta, data, ".", nil)
 		if testSuite.ExpectedError != "" || err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 			a.Equal(nil, b)
@@ -250,6 +250,7 @@ type testBumpTestSuite struct {
 	Configuration      bump.Configuration
 	Files              allFiles
 	VersionType        version.Type
+	PreReleaseType     version.PreReleaseType
 	MockAddError       error
 	MockCommitError    error
 	MockCreateTagError error
@@ -265,6 +266,7 @@ func TestBump(t *testing.T) {
 			Configuration:      bump.Configuration{},
 			Files:              allFiles{},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -305,6 +307,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -345,6 +348,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -384,6 +388,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -423,6 +428,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -463,6 +469,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -503,6 +510,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -536,6 +544,7 @@ func main() {
 				},
 			},
 			VersionType:        version.Minor,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -569,6 +578,7 @@ func main() {
 				},
 			},
 			VersionType:        version.Patch,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -605,6 +615,7 @@ func main() {
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -685,6 +696,7 @@ func main() {
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -700,6 +712,7 @@ func main() {
 			},
 			Files:              allFiles{},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -715,6 +728,7 @@ func main() {
 			},
 			Files:              allFiles{},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -730,6 +744,7 @@ func main() {
 			},
 			Files:              allFiles{},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -791,6 +806,7 @@ func main() {
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -831,6 +847,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    errors.New("reason"),
 			MockCreateTagError: nil,
@@ -913,6 +930,7 @@ const Version string = "1.2.3"`,
 				},
 			},
 			VersionType:        version.Major,
+			PreReleaseType:     version.NotAPreRelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -1064,7 +1082,11 @@ const Version string = "1.2.3"`,
 			).Return(nil, testSuite.MockCreateTagError).Once()
 		}
 
-		err := r.Bump(testSuite.VersionType)
+		err := r.Bump(bump.NewRunArgs(
+			testSuite.VersionType,
+			testSuite.PreReleaseType,
+			nil,
+		))
 		if testSuite.ExpectedError != "" || err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 		}

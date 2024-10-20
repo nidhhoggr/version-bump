@@ -4,8 +4,6 @@ import (
 	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/cqroot/prompt"
-	"github.com/cqroot/prompt/input"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/pkg/errors"
 )
@@ -25,13 +23,27 @@ func GetSigningKeyFromConfig(gitConfig *config.Config) (string, error) {
 	return gpgVerificationKey, nil
 }
 
-func PromptForPassphrase(signingKey string) (*openpgp.Entity, error) {
-	keyPassphrase, err := prompt.New().Ask("Input your passphrase:").
-		Input("", input.WithEchoMode(input.EchoPassword))
+func GetGpgEntity(keyPassphrase string, signingKey string) (*openpgp.Entity, error) {
+
+	privateKeyString, err := getPrivateKey(keyPassphrase, signingKey)
 	if err != nil {
 		return nil, err
 	}
-	return getGpgEntity(keyPassphrase, signingKey)
+
+	s := strings.NewReader(privateKeyString)
+	es, err := openpgp.ReadArmoredKeyRing(s)
+	if err != nil {
+		return nil, err
+	}
+	key := es[0]
+
+	// double-checking but probably unnecessary
+	err = key.PrivateKey.Decrypt([]byte(keyPassphrase))
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
 }
 
 func getSigningKeyFromConfig(config *config.Config) (bool, string) {
@@ -54,27 +66,4 @@ func getSigningKeyFromConfig(config *config.Config) (bool, string) {
 	}
 
 	return shouldNotSign, gpgVerificationKey
-}
-
-func getGpgEntity(keyPassphrase string, signingKey string) (*openpgp.Entity, error) {
-
-	privateKeyString, err := getPrivateKey(keyPassphrase, signingKey)
-	if err != nil {
-		return nil, err
-	}
-
-	s := strings.NewReader(privateKeyString)
-	es, err := openpgp.ReadArmoredKeyRing(s)
-	if err != nil {
-		return nil, err
-	}
-	key := es[0]
-
-	// double-checking but probably unnecessary
-	err = key.PrivateKey.Decrypt([]byte(keyPassphrase))
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
 }

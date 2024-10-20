@@ -15,14 +15,22 @@ import (
 
 var GhRepoName = "joe-at-startupmedia/version-bump"
 
-func (b *Bump) Run(versionType version.Type) error {
+func NewRunArgs(versionType version.Type, preReleaseType version.PreReleaseType, confirmationPrompt func(string) (bool, error)) *RunArgs {
+	return &RunArgs{
+		confirmationPrompt,
+		versionType,
+		preReleaseType,
+	}
+}
+
+func (b *Bump) Run(ra *RunArgs) error {
 	// check for an update in parallel
 	updateVersion := make(chan string, 1)
 	updateVersionError := make(chan error, 1)
 
 	go getLatestVersion(updateVersion, updateVersionError, GhRepoName)
 
-	if err := b.Bump(versionType); err != nil {
+	if err := b.Bump(ra); err != nil {
 		console.Fatal(errors.Wrap(err, "error bumping a version"))
 	}
 

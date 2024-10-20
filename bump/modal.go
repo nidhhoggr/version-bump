@@ -4,6 +4,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
 )
 
@@ -45,4 +46,10 @@ type Language struct {
 	Directories  []string
 	ExcludeFiles []string `toml:"exclude_files"`
 	Enabled      bool
+}
+
+type RunArgs struct {
+	confirmationPrompt func(string) (bool, error)
+	versionType        version.Type
+	preReleaseType     version.PreReleaseType
 }

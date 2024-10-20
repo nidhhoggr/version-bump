@@ -23,7 +23,15 @@ import (
 	"github.com/tidwall/sjson"
 )
 
-func New(fs afero.Fs, meta, data billy.Filesystem, dir string, shouldSignCommits bool) (*Bump, error) {
+type VersionBumpData struct {
+	bump           *Bump
+	versionMap     map[string]int
+	versionStr     *string
+	versionType    version.Type
+	preReleaseType version.PreReleaseType
+}
+
+func New(fs afero.Fs, meta, data billy.Filesystem, dir string, passphrasePrompt func() (string, error)) (*Bump, error) {
 	repo, err := git.Open(
 		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
 		data,
@@ -38,7 +46,7 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string, shouldSignCommits
 
 	var gpgEntity *openpgp.Entity
 
-	if shouldSignCommits {
+	if passphrasePrompt != nil {
 
 		gpgSigningKey, err := gpg.GetSigningKeyFromConfig(localGitConfig)
 		if err != nil {
@@ -46,7 +54,8 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string, shouldSignCommits
 		}
 
 		if gpgSigningKey != "" {
-			gpgEntity, err = gpg.PromptForPassphrase(gpgSigningKey)
+			keyPassphrase, err := passphrasePrompt()
+			gpgEntity, err = gpg.GetGpgEntity(keyPassphrase, gpgSigningKey)
 			if err != nil {
 				return nil, errors.Wrap(err, "could not validate gpg signing key")
 			}
@@ -144,50 +153,61 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string, shouldSignCommits
 	return o, nil
 }
 
-func (b *Bump) Bump(versionType version.Type) error {
+func (b *Bump) Bump(ra *RunArgs) error {
 	console.IncrementProjectVersion()
 
-	versions := make(map[string]int)
+	versionMap := make(map[string]int)
 	var newVersionStr string
 	files := make([]string, 0)
 
+	vbd := &VersionBumpData{
+		b,
+		versionMap,
+		&newVersionStr,
+		ra.versionType,
+		ra.preReleaseType,
+	}
+
 	if b.Configuration.Docker.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.Docker, b.Configuration.Docker, versionType, versions, &newVersionStr)
+		modifiedFiles, err := vbd.bumpComponent(langs.Docker, b.Configuration.Docker)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in Docker project")
 		}
-
 		files = append(files, modifiedFiles...)
 	}
 
 	if b.Configuration.Go.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.Go, b.Configuration.Go, versionType, versions, &newVersionStr)
+		modifiedFiles, err := vbd.bumpComponent(langs.Go, b.Configuration.Go)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in Go project")
 		}
-
 		files = append(files, modifiedFiles...)
 	}
 
 	if b.Configuration.JavaScript.Enabled {
-		modifiedFiles, err := b.bumpComponent(langs.JavaScript, b.Configuration.JavaScript, versionType, versions, &newVersionStr)
+		modifiedFiles, err := vbd.bumpComponent(langs.JavaScript, b.Configuration.JavaScript)
 		if err != nil {
 			return errors.Wrap(err, "error incrementing version in JavaScript project")
 		}
-
 		files = append(files, modifiedFiles...)
 	}
 
-	if len(versions) > 1 {
+	if len(versionMap) > 1 {
 		return errors.New("inconsistent versioning")
-	} else if len(versions) == 0 {
+	} else if len(versionMap) == 0 {
 		return errors.New("0 files updated")
 	}
 
 	if len(files) != 0 {
-		// TODO: update changelog
 		console.CommittingChanges()
-
+		if ra.confirmationPrompt != nil {
+			confirmed, err := ra.confirmationPrompt(newVersionStr)
+			if err != nil {
+				return errors.Wrap(err, "error during confirmation prompt")
+			} else if !confirmed {
+				return fmt.Errorf("proposed version was denied")
+			}
+		}
 		if err := b.Git.Save(files, newVersionStr); err != nil {
 			return errors.Wrap(err, "error committing changes")
 		}
@@ -196,28 +216,25 @@ func (b *Bump) Bump(versionType version.Type) error {
 	return nil
 }
 
-func (b *Bump) bumpComponent(name string, l Language, versionType version.Type, versions map[string]int, version *string) ([]string, error) {
-	console.Language(name)
+func (vbd *VersionBumpData) bumpComponent(langName string, lang Language) ([]string, error) {
+	console.Language(langName)
 	files := make([]string, 0)
 
-	for _, dir := range l.Directories {
-		f, err := getFiles(b.FS, dir, l.ExcludeFiles)
+	for _, dir := range lang.Directories {
+		f, err := getFiles(vbd.bump.FS, dir, lang.ExcludeFiles)
 		if err != nil {
 			return []string{}, errors.Wrap(err, "error listing directory files")
 		}
 
-		langSettings := langs.New(name)
+		langSettings := langs.New(langName)
 		if langSettings == nil {
-			return []string{}, errors.New(fmt.Sprintf("not supported language: %v", name))
+			return []string{}, errors.New(fmt.Sprintf("not supported language: %v", langName))
 		}
 
-		modifiedFiles, err := b.incrementVersion(
+		modifiedFiles, err := vbd.incrementVersion(
 			dir,
 			filterFiles(langSettings.Files, f),
 			*langSettings,
-			versionType,
-			versions,
-			version,
 		)
 		if err != nil {
 			return []string{}, err
@@ -229,13 +246,13 @@ func (b *Bump) bumpComponent(name string, l Language, versionType version.Type, 
 	return files, nil
 }
 
-func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language, versionType version.Type, versionMap map[string]int, versionString *string) ([]string, error) {
+func (vbd *VersionBumpData) incrementVersion(dir string, files []string, lang langs.Language) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
 
 	for _, file := range files {
 		filepath := path.Join(dir, file)
-		fileContent, err := readFile(b.FS, filepath)
+		fileContent, err := readFile(vbd.bump.FS, filepath)
 		if err != nil {
 			return []string{}, errors.Wrapf(err, "error reading a file %v", file)
 		}
@@ -270,14 +287,14 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 		if oldVersion != nil {
 
 			oldVersionStr := oldVersion.String()
-			err := oldVersion.Increment(versionType, version.NotAPreRelease)
+			err = oldVersion.Increment(vbd.versionType, vbd.preReleaseType)
 			if err != nil {
 				return []string{}, errors.Wrapf(err, "error bumping version %v", filepath)
 			}
-			*versionString = oldVersion.String()
-			console.VersionUpdate(oldVersionStr, *versionString, filepath)
+			*vbd.versionStr = oldVersion.String()
+			console.VersionUpdate(oldVersionStr, *vbd.versionStr, filepath)
 			identified = true
-			versionMap[oldVersionStr]++
+			vbd.versionMap[oldVersionStr]++
 
 			// set future version
 			if lang.Regex != nil {
@@ -288,7 +305,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 					for _, expression := range *lang.Regex {
 						regex := regexp.MustCompile(expression)
 						if regex.MatchString(line) {
-							l := strings.ReplaceAll(line, oldVersionStr, *versionString)
+							l := strings.ReplaceAll(line, oldVersionStr, *vbd.versionStr)
 							newContent = append(newContent, l)
 							added = true
 						}
@@ -300,7 +317,7 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 				}
 
 				newContent = append(newContent, "")
-				if err := writeFile(b.FS, filepath, strings.Join(newContent, "\n")); err != nil {
+				if err = writeFile(vbd.bump.FS, filepath, strings.Join(newContent, "\n")); err != nil {
 					return []string{}, errors.Wrapf(err, "error writing to file %v", filepath)
 				}
 
@@ -310,12 +327,12 @@ func (b *Bump) incrementVersion(dir string, files []string, lang langs.Language,
 			if lang.JSONFields != nil {
 				for _, field := range *lang.JSONFields {
 					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
-						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, *versionString)
+						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, *vbd.versionStr)
 						if err != nil {
 							return []string{}, errors.Wrapf(err, "error setting new version on content of a file %v", file)
 						}
 
-						if err := writeFile(b.FS, filepath, newContent); err != nil {
+						if err := writeFile(vbd.bump.FS, filepath, newContent); err != nil {
 							return []string{}, errors.Wrapf(err, "error writing to file %v", filepath)
 						}
 

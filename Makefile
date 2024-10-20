@@ -59,12 +59,12 @@ build: mod fmt tools vuln misspell betteralign
 	$(ENV_VARS) $(GO) build $(BUILD_FLAGS) -o bin/version-bump cmd/version-bump/version-bump.go
 
 .PHONY: test
-test: clean build ## run the tests
+test: build ## run the tests
 	$(call print-target)
 	PROJECT_PATH=$(PROJECT_PATH) $(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 ./...
 
 .PHONY: test_cover
-test_cover: clean build ## run the tests and generate a coverage report
+test_cover: build ## run the tests and generate a coverage report
 	$(call print-target)
 	PROJECT_PATH=$(PROJECT_PATH) $(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 -coverprofile=coverage.txt -coverpkg=$(TEST_PACKAGES) ./...
 	awk $(COVERAGE_OMISSION) coverage.txt > coverage.out
