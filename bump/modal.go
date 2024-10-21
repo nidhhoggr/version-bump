@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Version string = "2.0.6"
+	Version string = "2.1.0"
 )
 
 type Bump struct {
