@@ -17,17 +17,25 @@ const (
 	ReleaseCandidate
 )
 
+var PreReleaseTypeStrings = []string{"alpha", "beta", "rc"}
+
 func PreReleaseString(ptr PreReleaseType) string {
-	switch ptr {
-	case AlphaPreRelease:
-		return "alpha"
-	case BetaPreRelease:
-		return "beta"
-	case ReleaseCandidate:
-		return "rc"
-	default:
+	if ptr == NotAPreRelease {
 		return ""
 	}
+	return PreReleaseTypeStrings[ptr-1]
+}
+
+func FromPreReleaseTypeString(s string) PreReleaseType {
+	switch s {
+	case PreReleaseTypeStrings[0]:
+		return AlphaPreRelease
+	case PreReleaseTypeStrings[1]:
+		return BetaPreRelease
+	case PreReleaseTypeStrings[2]:
+		return ReleaseCandidate
+	}
+	return NotAPreRelease
 }
 
 type PreRelease struct {

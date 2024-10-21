@@ -2,6 +2,7 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
@@ -53,11 +54,14 @@ func main() {
 	m1 := new(mocks.Repository)
 	m2 := new(mocks.Worktree)
 
+	gitConfig := &config.Config{}
+	gitConfig.User.Name = username
+	gitConfig.User.Email = email
+
 	r := bump.Bump{
 		FS: afero.NewMemMapFs(),
 		Git: bump.GitConfig{
-			UserName:   username,
-			UserEmail:  email,
+			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,
 		},

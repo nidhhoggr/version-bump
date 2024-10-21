@@ -13,6 +13,8 @@ const Regex = `[vV]?([0-9]*)\.([0-9]*)\.([0-9]*)(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A
 
 type Type int
 
+var TypeStrings = []string{"major", "minor", "patch"}
+
 const (
 	NotAVersion Type = iota
 	Major
@@ -22,11 +24,11 @@ const (
 
 func FromString(s string) Type {
 	switch s {
-	case "major":
+	case TypeStrings[0]:
 		return Major
-	case "minor":
+	case TypeStrings[1]:
 		return Minor
-	case "patch":
+	case TypeStrings[2]:
 		return Patch
 	}
 	return NotAVersion
@@ -155,7 +157,7 @@ func (v *Version) PreRelease(preReleaseType PreReleaseType, preReleaseMetadata s
 	if err != nil {
 		return err
 	}
-	if preReleaseMetadata != "" {
+	if preReleaseMetadata != "" || v.GetMetaData() != "" {
 		err = v.SetPreReleaseMetadata(preReleaseMetadata)
 		if err != nil {
 			return err

@@ -29,8 +29,8 @@ func Language(name string) {
 	)
 }
 
-func VersionUpdate(oldVersion, newVersion, filepath string) {
-	fmt.Printf("    %v%v%v -> %v%v%v %v\n",
+func VersionUpdate(oldVersion, newVersion, filepath string) string {
+	return fmt.Sprintf("    %v%v%v -> %v%v%v %v\n",
 		colorYellow, oldVersion, colorReset,
 		colorGreen, newVersion, colorReset,
 		filepath,

@@ -382,3 +382,27 @@ func TestVersion_SetPrereleaseWithEmptyVersion(t *testing.T) {
 	a.Empty(err)
 	a.Empty(pr)
 }
+
+func TestBump_StringToVersionType(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(version.FromString("major"), version.Major)
+	a.Equal(version.FromString("minor"), version.Minor)
+	a.Equal(version.FromString("patch"), version.Patch)
+	a.Equal(version.FromString("nonexistent"), version.NotAVersion)
+}
+
+func TestBump_PreReleaseString(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(version.PreReleaseString(version.AlphaPreRelease), "alpha")
+	a.Equal(version.PreReleaseString(version.BetaPreRelease), "beta")
+	a.Equal(version.PreReleaseString(version.ReleaseCandidate), "rc")
+	a.Equal(version.PreReleaseString(version.NotAPreRelease), "")
+}
+
+func TestBump_FromPreReleaseString(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(version.FromPreReleaseTypeString("alpha"), version.AlphaPreRelease)
+	a.Equal(version.FromPreReleaseTypeString("beta"), version.BetaPreRelease)
+	a.Equal(version.FromPreReleaseTypeString("rc"), version.ReleaseCandidate)
+	a.Equal(version.FromPreReleaseTypeString(""), version.NotAPreRelease)
+}

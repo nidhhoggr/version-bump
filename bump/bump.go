@@ -2,19 +2,19 @@ package bump
 
 import (
 	"fmt"
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
 	"regexp"
 	"strings"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
-	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"
@@ -30,7 +30,7 @@ type versionBumpData struct {
 	runArgs    *RunArgs
 }
 
-func New(fs afero.Fs, meta, data billy.Filesystem, dir string, passphrasePrompt func() (string, error)) (*Bump, error) {
+func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	repo, err := git.Open(
 		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
 		data,
@@ -41,27 +41,6 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string, passphrasePrompt 
 	localGitConfig, err := repo.ConfigScoped(config.GlobalScope)
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving global git configuration")
-	}
-
-	var gpgEntity *openpgp.Entity
-
-	if passphrasePrompt != nil {
-
-		gpgSigningKey, err := gpg.GetSigningKeyFromConfig(localGitConfig)
-		if err != nil {
-			return nil, errors.Wrap(err, "error retrieving gpg configuration")
-		}
-
-		if gpgSigningKey != "" {
-			keyPassphrase, err := passphrasePrompt()
-			if err != nil {
-				return nil, err
-			}
-			gpgEntity, err = gpg.GetGpgEntity(keyPassphrase, gpgSigningKey)
-			if err != nil {
-				return nil, errors.Wrap(err, "could not validate gpg signing key")
-			}
-		}
 	}
 
 	worktree, err := repo.Worktree()
@@ -88,11 +67,9 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string, passphrasePrompt 
 			},
 		},
 		Git: GitConfig{
-			UserName:   localGitConfig.User.Name,
-			UserEmail:  localGitConfig.User.Email,
 			Repository: repo,
 			Worktree:   worktree,
-			GpgEntity:  gpgEntity,
+			Config:     localGitConfig,
 		},
 	}
 
@@ -201,20 +178,46 @@ func (b *Bump) Bump(ra *RunArgs) error {
 
 	if len(files) != 0 {
 		console.CommittingChanges()
-		if ra.ConfirmationPrompt != nil {
-			confirmed, err := ra.ConfirmationPrompt(newVersionStr)
+
+		var gpgEntity *openpgp.Entity
+
+		if ra.PassphrasePrompt != nil {
+			gpgSigningKey, err := gpg.GetSigningKeyFromConfig(b.Git.Config)
 			if err != nil {
-				return errors.Wrap(err, "error during confirmation prompt")
-			} else if !confirmed {
-				return errors.New("proposed version was denied")
+				return errors.Wrap(err, "error retrieving gpg configuration")
+			}
+			if gpgSigningKey != "" {
+				gpgEntity, err = vbd.passphrasePromptWithRetries(gpgSigningKey, 3, 0)
+				if err != nil {
+					return err
+				}
 			}
 		}
-		if err := b.Git.Save(files, newVersionStr); err != nil {
+
+		if err := b.Git.Save(files, newVersionStr, gpgEntity); err != nil {
 			return errors.Wrap(err, "error committing changes")
 		}
 	}
 
 	return nil
+}
+
+// +gocover:ignore:block
+func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, retryLimit int, retryCount int) (*openpgp.Entity, error) {
+	if retryCount < retryLimit {
+		keyPassphrase, err := vbd.runArgs.PassphrasePrompt()
+		if err != nil {
+			return nil, err
+		}
+		gpgEntity, err := gpg.GetGpgEntity(keyPassphrase, gpgSigningKey)
+		if err != nil {
+			return vbd.passphrasePromptWithRetries(gpgSigningKey, retryLimit, retryCount+1)
+		} else {
+			return gpgEntity, nil
+		}
+	} else {
+		return nil, errors.New("could not validate gpg signing key")
+	}
 }
 
 func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]string, error) {
@@ -293,8 +296,24 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 				return []string{}, errors.Wrapf(err, "error bumping version %v", filepath)
 			}
 			*vbd.versionStr = oldVersion.String()
-			console.VersionUpdate(oldVersionStr, *vbd.versionStr, filepath)
+
+			if strings.Compare(oldVersionStr, *vbd.versionStr) == 0 {
+				//no changes in version
+				continue
+			}
+
 			identified = true
+			if vbd.runArgs.ConfirmationPrompt != nil {
+				confirmed, err := vbd.runArgs.ConfirmationPrompt(oldVersionStr, *vbd.versionStr, file)
+				if err != nil {
+					return []string{}, errors.Wrap(err, "error during confirmation prompt")
+				} else if !confirmed {
+					//return []string{}, errors.New("proposed version was denied")
+					//continue allows scenarios where denying changes in specific file(s) is necessary
+					continue
+				}
+			}
+
 			vbd.versionMap[oldVersionStr]++
 
 			// set future version
@@ -340,6 +359,10 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 						modifiedFiles = append(modifiedFiles, filepath)
 					}
 				}
+			}
+
+			if len(modifiedFiles) > 0 {
+				fmt.Printf("Modified:%s\n", console.VersionUpdate(oldVersionStr, *vbd.versionStr, filepath))
 			}
 		}
 	}

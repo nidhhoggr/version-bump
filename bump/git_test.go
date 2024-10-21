@@ -2,6 +2,7 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/go-git/go-git/v5/config"
 	"testing"
 	"time"
 
@@ -86,14 +87,17 @@ func TestSave(t *testing.T) {
 
 		m1.On("CreateTag", fmt.Sprintf("v%v", test.Version), test.MockCommitOutput, mock.AnythingOfType("*git.CreateTagOptions")).Return(nil, test.MockCreateTagError).Once()
 
+		gitConfig := &config.Config{}
+		gitConfig.User.Name = username
+		gitConfig.User.Email = email
+
 		receiver := &bump.GitConfig{
-			UserName:   username,
-			UserEmail:  email,
+			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,
 		}
 
-		err := receiver.Save(test.Files, test.Version)
+		err := receiver.Save(test.Files, test.Version, nil)
 		if test.ExpectedError != "" || err != nil {
 			a.EqualError(err, test.ExpectedError)
 		}

@@ -11,15 +11,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (g *GitConfig) Save(files []string, version string) error {
+func (g *GitConfig) Save(files []string, version string, gpgEntity *openpgp.Entity) error {
 	tm := time.Now()
 	sign := &object.Signature{
-		Name:  g.UserName,
-		Email: g.UserEmail,
+		Name:  g.Config.User.Name,
+		Email: g.Config.User.Email,
 		When:  tm,
 	}
 
-	hash, err := Commit(files, version, sign, g.Worktree, g.GpgEntity)
+	hash, err := Commit(files, version, sign, g.Worktree, gpgEntity)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func (g *GitConfig) Save(files []string, version string) error {
 	_, err = g.Repository.CreateTag(fmt.Sprintf("v%v", version), hash, &git.CreateTagOptions{
 		Tagger:  sign,
 		Message: version,
-		SignKey: g.GpgEntity,
+		SignKey: gpgEntity,
 	})
 	if err != nil {
 		return errors.Wrap(err, "error tagging changes")
@@ -43,7 +43,6 @@ func Commit(files []string, version string, sign *object.Signature, worktree Wor
 			return plumbing.Hash{}, errors.Wrapf(err, "error staging a file %v", f)
 		}
 	}
-
 	hash, err := worktree.Commit(version, &git.CommitOptions{
 		All:       true,
 		Author:    sign,

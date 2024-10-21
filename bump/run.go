@@ -22,7 +22,7 @@ func (b *Bump) Run(ra *RunArgs) error {
 	go getLatestVersion(updateVersion, updateVersionError, GhRepoName)
 
 	if err := b.Bump(ra); err != nil {
-		console.Fatal(errors.Wrap(err, "error bumping a version"))
+		console.Fatal(errors.Wrap(err, "error bumping version"))
 	}
 
 	err := <-updateVersionError

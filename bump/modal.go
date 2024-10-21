@@ -1,8 +1,8 @@
 package bump
 
 import (
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
@@ -21,9 +21,7 @@ type Bump struct {
 type GitConfig struct {
 	Repository Repository
 	Worktree   Worktree
-	GpgEntity  *openpgp.Entity
-	UserName   string
-	UserEmail  string
+	Config     *config.Config
 }
 
 type Repository interface {
@@ -49,7 +47,8 @@ type Language struct {
 }
 
 type RunArgs struct {
-	ConfirmationPrompt func(string) (bool, error)
+	ConfirmationPrompt func(string, string, string) (bool, error)
+	PassphrasePrompt   func() (string, error)
 	PreReleaseMetadata string
 	VersionType        version.Type
 	PreReleaseType     version.PreReleaseType

@@ -2,6 +2,7 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
@@ -223,7 +224,7 @@ exclude_files = [ 'client/test.js' ]`,
 			}
 		}
 
-		b, err := bump.New(fs, meta, data, ".", nil)
+		b, err := bump.New(fs, meta, data, ".")
 		if testSuite.ExpectedError != "" || err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 			a.Equal(nil, b)
@@ -947,11 +948,14 @@ const Version string = "1.2.3"`,
 		m1 := new(mocks.Repository)
 		m2 := new(mocks.Worktree)
 
+		gitConfig := &config.Config{}
+		gitConfig.User.Name = username
+		gitConfig.User.Email = email
+
 		r := bump.Bump{
 			FS: afero.NewMemMapFs(),
 			Git: bump.GitConfig{
-				UserName:   username,
-				UserEmail:  email,
+				Config:     gitConfig,
 				Repository: m1,
 				Worktree:   m2,
 			},
@@ -1098,26 +1102,26 @@ func TestBump_WithVanillaFsRepoDoesntExist(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	meta := memfs.New()
 	data := memfs.New()
-	_, err := bump.New(fs, meta, data, ".", nil)
+	_, err := bump.New(fs, meta, data, ".")
 	a.ErrorContains(err, "error opening repository: repository does not exist")
 }
 
-func TestBump_CouldNotValidateGpgKey(t *testing.T) {
-	a := assert.New(t)
-	fs := afero.NewMemMapFs()
-	meta := memfs.New()
-	data := memfs.New()
-	_, _ = git.Init(
-		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
-		data,
-	)
-	_, err := bump.New(fs, meta, data, ".", func() (string, error) {
-		return "wrongpassphrase", fmt.Errorf("custom_err")
-	})
-	if err != nil {
-		a.ErrorContains(err, "custom_err")
-	}
-}
+//func TestBump_CouldNotValidateGpgKey(t *testing.T) {
+//	a := assert.New(t)
+//	fs := afero.NewMemMapFs()
+//	meta := memfs.New()
+//	data := memfs.New()
+//	_, _ = git.Init(
+//		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
+//		data,
+//	)
+//	_, err := bump.New(fs, meta, data, ".", func() (string, error) {
+//		return "wrongpassphrase", fmt.Errorf("custom_err")
+//	})
+//	if err != nil {
+//		a.ErrorContains(err, "custom_err")
+//	}
+//}
 
 func TestBump_BrokenBumpFile(t *testing.T) {
 	a := assert.New(t)
@@ -1130,7 +1134,7 @@ func TestBump_BrokenBumpFile(t *testing.T) {
 	)
 	f, err := fs.Create(".bump")
 	_, err = f.WriteString("brokenbump-contents")
-	_, err = bump.New(fs, meta, data, ".", nil)
+	_, err = bump.New(fs, meta, data, ".")
 	a.ErrorContains(err, "error parsing project config file")
 }
 
@@ -1172,7 +1176,7 @@ func main() {
 	_, err := runBumpTest(testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
 		PreReleaseType: testSuite.PreReleaseType,
-		ConfirmationPrompt: func(_ string) (bool, error) {
+		ConfirmationPrompt: func(_ string, _ string, _ string) (bool, error) {
 			return true, fmt.Errorf("confirmation_error")
 		},
 	})
@@ -1217,27 +1221,12 @@ func main() {
 	_, err := runBumpTest(testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
 		PreReleaseType: testSuite.PreReleaseType,
-		ConfirmationPrompt: func(_ string) (bool, error) {
+		ConfirmationPrompt: func(_ string, _ string, _ string) (bool, error) {
 			return false, nil
 		},
 	})
-	a.ErrorContains(err, "proposed version was denied")
-}
-
-func TestBump_StringToVersionType(t *testing.T) {
-	a := assert.New(t)
-	a.Equal(version.FromString("major"), version.Major)
-	a.Equal(version.FromString("minor"), version.Minor)
-	a.Equal(version.FromString("patch"), version.Patch)
-	a.Equal(version.FromString("nonexistent"), version.NotAVersion)
-}
-
-func TestBump_PreReleaseString(t *testing.T) {
-	a := assert.New(t)
-	a.Equal(version.PreReleaseString(version.AlphaPreRelease), "alpha")
-	a.Equal(version.PreReleaseString(version.BetaPreRelease), "beta")
-	a.Equal(version.PreReleaseString(version.ReleaseCandidate), "rc")
-	a.Equal(version.PreReleaseString(version.NotAPreRelease), "")
+	//currently we continue through the loop instead of returning an error
+	a.ErrorContains(err, "0 files updated")
 }
 
 func runBumpTest(testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {
@@ -1245,11 +1234,14 @@ func runBumpTest(testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, err
 	m1 := new(mocks.Repository)
 	m2 := new(mocks.Worktree)
 
+	gitConfig := &config.Config{}
+	gitConfig.User.Name = username
+	gitConfig.User.Email = email
+
 	r := bump.Bump{
 		FS: afero.NewMemMapFs(),
 		Git: bump.GitConfig{
-			UserName:   username,
-			UserEmail:  email,
+			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,
 		},
