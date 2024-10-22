@@ -2,20 +2,20 @@ package bump
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/go-git/go-billy/v5/osfs"
-	"github.com/joe-at-startupmedia/version-bump/v2/git"
-	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
-	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
 	"reflect"
 	"regexp"
 	"strings"
 
+	"github.com/BurntSushi/toml"
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
+	"github.com/joe-at-startupmedia/version-bump/v2/git"
+	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/tidwall/gjson"
@@ -27,6 +27,12 @@ type versionBumpData struct {
 	versionMap *map[string]int
 	runArgs    *RunArgs
 	versionStr string
+}
+
+var ConfigParser git.ConfigParserInterface
+
+func init() {
+	ConfigParser = new(git.ConfigParser)
 }
 
 func New(dir string) (*Bump, error) {
@@ -129,7 +135,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		var gpgEntity *openpgp.Entity
 
 		if ra.PassphrasePrompt != nil {
-			gpgSigningKey, err := b.Git.GetSigningKeyFromConfig()
+			gpgSigningKey, err := b.Git.GetSigningKeyFromConfig(ConfigParser)
 			if err != nil {
 				return errors.Wrap(err, "error retrieving gpg configuration")
 			}

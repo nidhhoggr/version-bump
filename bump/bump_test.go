@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var testSuites map[string]testBumpTestSuite
+
 func TestBump_New(t *testing.T) {
 	a := assert.New(t)
 
@@ -260,7 +262,7 @@ type testBumpTestSuite struct {
 func TestBump_Bump(t *testing.T) {
 	a := assert.New(t)
 
-	suite := map[string]testBumpTestSuite{
+	testSuites = map[string]testBumpTestSuite{
 		"Empty Configuration": {
 			Version:            "",
 			Configuration:      bump.Configuration{},
@@ -939,9 +941,9 @@ const Version string = "1.2.3"`,
 	}
 
 	var counter int
-	for name, testSuite := range suite {
+	for name, testSuite := range testSuites {
 		counter++
-		t.Logf("Test Case %v/%v - %s", counter, len(suite), name)
+		t.Logf("Test Case %v/%v - %s", counter, len(testSuites), name)
 
 		_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 			VersionType:    testSuite.VersionType,
@@ -956,29 +958,9 @@ const Version string = "1.2.3"`,
 
 func TestBump_WithVanillaFsRepoDoesntExist(t *testing.T) {
 	a := assert.New(t)
-	fs := afero.NewMemMapFs()
-	meta := memfs.New()
-	data := memfs.New()
-	_, err := bump.From(fs, meta, data, ".")
+	_, err := bump.New(".")
 	a.ErrorContains(err, "error opening repository: repository does not exist")
 }
-
-//func TestBump_CouldNotValidateGpgKey(t *testing.T) {
-//	a := assert.New(t)
-//	fs := afero.NewMemMapFs()
-//	meta := memfs.New()
-//	data := memfs.New()
-//	_, _ = git.Init(
-//		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
-//		data,
-//	)
-//	_, err := bump.New(fs, meta, data, ".", func() (string, error) {
-//		return "wrongpassphrase", fmt.Errorf("custom_err")
-//	})
-//	if err != nil {
-//		a.ErrorContains(err, "custom_err")
-//	}
-//}
 
 func TestBump_BrokenBumpFile(t *testing.T) {
 	a := assert.New(t)
@@ -995,37 +977,7 @@ func TestBump_BrokenBumpFile(t *testing.T) {
 func TestBump_ConfirmationError(t *testing.T) {
 	a := assert.New(t)
 
-	testSuite := testBumpTestSuite{
-		Version: "1.3.0",
-		Configuration: bump.Configuration{
-			Go: bump.Language{
-				Enabled:     true,
-				Directories: []string{"."},
-			},
-		},
-		Files: allFiles{
-			Go: map[string][]file{
-				".": {
-					{
-						Name:                "main.go",
-						ExpectedToBeChanged: true,
-						Content: `package main
-import "fmt"
-const Version string = "1.2.3"
-func main() {
-	fmt.Println(Version)
-}`,
-					},
-				},
-			},
-		},
-		VersionType:        version.Minor,
-		PreReleaseType:     version.NotAPreRelease,
-		MockAddError:       nil,
-		MockCommitError:    nil,
-		MockCreateTagError: nil,
-		ExpectedError:      "",
-	}
+	testSuite := testSuites["Go - Single Constant #2"]
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
@@ -1040,37 +992,7 @@ func main() {
 func TestBump_ConfirmationDenied(t *testing.T) {
 	a := assert.New(t)
 
-	testSuite := testBumpTestSuite{
-		Version: "1.3.0",
-		Configuration: bump.Configuration{
-			Go: bump.Language{
-				Enabled:     true,
-				Directories: []string{"."},
-			},
-		},
-		Files: allFiles{
-			Go: map[string][]file{
-				".": {
-					{
-						Name:                "main.go",
-						ExpectedToBeChanged: true,
-						Content: `package main
-import "fmt"
-const Version string = "1.2.3"
-func main() {
-	fmt.Println(Version)
-}`,
-					},
-				},
-			},
-		},
-		VersionType:        version.Minor,
-		PreReleaseType:     version.NotAPreRelease,
-		MockAddError:       nil,
-		MockCommitError:    nil,
-		MockCreateTagError: nil,
-		ExpectedError:      "",
-	}
+	testSuite := testSuites["Go - Single Constant #2"]
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
@@ -1081,6 +1003,46 @@ func main() {
 	})
 	//currently we continue through the loop instead of returning an error
 	a.ErrorContains(err, "0 files updated")
+}
+
+type ConfigParserMock struct {
+	Config *config.Config
+}
+
+func (cp *ConfigParserMock) SetConfig(config *config.Config) {
+	cp.Config = config
+}
+
+func (cp *ConfigParserMock) GetSectionOption(section string, option string) (bool, string) {
+	switch section {
+	case "commit":
+		if option == "gpgsign" {
+			return true, "true"
+		}
+	case "user":
+		if option == "signingkey" {
+			return true, "ACB2CCCDA93C90BF"
+		}
+	}
+	return false, ""
+}
+
+func TestBump_PassphraseDenied(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	bump.ConfigParser = new(ConfigParserMock)
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "wrongpassphrase", fmt.Errorf("custom_passphrase_err")
+		},
+	})
+	//currently we continue through the loop instead of returning an error
+	a.ErrorContains(err, "custom_passphrase_err")
 }
 
 func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {

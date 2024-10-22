@@ -108,16 +108,17 @@ func (i *Instance) Commit(files []string, version string, sign *object.Signature
 	return hash, nil
 }
 
-func (i *Instance) GetSigningKeyFromConfig() (string, error) {
-
-	shouldNotSign, gpgVerificationKey := getSigningKeyFromConfig(i.Config)
+func (i *Instance) GetSigningKeyFromConfig(configParser ConfigParserInterface) (string, error) {
+	configParser.SetConfig(i.Config)
+	shouldNotSign, gpgVerificationKey := getSigningKeyFromConfig(configParser)
 
 	if !shouldNotSign && gpgVerificationKey == "" {
 		gitConfig, err := config.LoadConfig(config.GlobalScope)
 		if err != nil {
 			return "", errors.Wrap(err, "error loading git configuration from global scope")
 		}
-		_, gpgVerificationKey = getSigningKeyFromConfig(gitConfig)
+		configParser.SetConfig(gitConfig)
+		_, gpgVerificationKey = getSigningKeyFromConfig(configParser)
 	}
 
 	return gpgVerificationKey, nil
@@ -131,18 +132,15 @@ func Init(meta billy.Filesystem, data billy.Filesystem) error {
 	return err
 }
 
-func getSigningKeyFromConfig(config *config.Config) (bool, string) {
+func getSigningKeyFromConfig(configParser ConfigParserInterface) (bool, string) {
 
 	var gpgVerificationKey string
 	shouldNotSign := false
 
-	commitSection := config.Raw.Section("commit")
-	if commitSection != nil && commitSection.Options.Get("gpgsign") == "true" {
-		userSection := config.Raw.Section("user")
-		if userSection != nil {
-			gpgVerificationKey = userSection.Options.Get("signingkey")
-		}
-	} else if commitSection != nil && commitSection.Options.Get("gpgsign") == "false" {
+	_, shouldGpgsign := configParser.GetSectionOption("commit", "gpgsign")
+	if shouldGpgsign == "true" {
+		_, gpgVerificationKey = configParser.GetSectionOption("user", "signingkey")
+	} else if shouldGpgsign == "false" {
 		shouldNotSign = true
 	}
 
