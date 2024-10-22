@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/ProtonMail/go-crypto/openpgp"
-	git2 "github.com/joe-at-startupmedia/version-bump/v2/git"
+	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/joe-at-startupmedia/version-bump/v2/git"
 	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
@@ -13,10 +14,6 @@ import (
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing/cache"
-	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/pkg/errors"
@@ -27,13 +24,53 @@ import (
 
 type versionBumpData struct {
 	bump       *Bump
-	versionMap map[string]int
-	versionStr *string
+	versionMap *map[string]int
+	versionStr string
 	runArgs    *RunArgs
 }
 
-func newConfiguration(dirs []string, enabledByDefault bool) Configuration {
-	return Configuration{
+func New(dir string) (*Bump, error) {
+	fs := afero.NewOsFs()
+	meta := osfs.New(path.Join(dir, ".git"))
+	data := osfs.New(dir)
+	return From(fs, meta, data, dir)
+}
+
+func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
+
+	gitInstance, err := git.New(meta, data)
+	if err != nil {
+		return nil, err
+	}
+
+	// NOTE: default config
+	dirs := []string{dir}
+	o := &Bump{
+		FS:  fs,
+		Git: gitInstance,
+	}
+
+	// check for config file
+	content, err := readFile(fs, ".bump")
+	if err != nil {
+		// NOTE: return default settings if config file not found
+		if strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "file does not exist") {
+			return o.withConfiguration(dirs, true), nil
+		} else {
+			return nil, errors.Wrap(err, "error reading project config file")
+		}
+	}
+
+	_, err = toml.Decode(strings.Join(content, "\n"), &o.withConfiguration(dirs, false).Configuration)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing project config file")
+	}
+
+	return o, nil
+}
+
+func (b *Bump) withConfiguration(dirs []string, enabledByDefault bool) *Bump {
+	b.Configuration = Configuration{
 		Docker: Language{
 			Enabled:     enabledByDefault,
 			Directories: dirs,
@@ -47,74 +84,24 @@ func newConfiguration(dirs []string, enabledByDefault bool) Configuration {
 			Directories: dirs,
 		},
 	}
-}
-
-func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
-	repo, err := git.Open(
-		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
-		data,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "error opening repository")
-	}
-	localGitConfig, err := repo.ConfigScoped(config.GlobalScope)
-	if err != nil {
-		return nil, errors.Wrap(err, "error retrieving global git configuration")
-	}
-
-	worktree, err := repo.Worktree()
-	if err != nil {
-		return nil, errors.Wrap(err, "error retrieving git worktree")
-	}
-
-	// NOTE: default config
-	dirs := []string{dir}
-	o := &Bump{
-		FS:            fs,
-		Configuration: newConfiguration(dirs, true),
-		Git: git2.Config{
-			Repository: repo,
-			Worktree:   worktree,
-			Config:     localGitConfig,
-		},
-	}
-
-	// check for config file
-	content, err := readFile(fs, ".bump")
-	if err != nil {
-		// NOTE: return default settings if config file not found
-		if strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "file does not exist") {
-			return o, nil
-		} else {
-			return nil, errors.Wrap(err, "error reading project config file")
-		}
-	}
-
-	o.Configuration = newConfiguration([]string{dir}, false)
-	_, err = toml.Decode(strings.Join(content, "\n"), &o.Configuration)
-	if err != nil {
-		return nil, errors.Wrap(err, "error parsing project config file")
-	}
-
-	return o, nil
+	return b
 }
 
 func (b *Bump) Bump(ra *RunArgs) error {
 	console.IncrementProjectVersion()
 
 	versionMap := make(map[string]int)
-	var newVersionStr string
-	files := make([]string, 0)
 
 	vbd := &versionBumpData{
-		b,
-		versionMap,
-		&newVersionStr,
-		ra,
+		bump:       b,
+		versionMap: &versionMap,
+		runArgs:    ra,
 	}
 
 	bcr := reflect.ValueOf(b.Configuration)
 	bcrType := bcr.Type()
+
+	files := make([]string, 0)
 
 	for i := 0; i < bcr.NumField(); i++ {
 		langI := bcr.Field(i).Interface()
@@ -130,9 +117,9 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		}
 	}
 
-	if len(versionMap) > 1 {
+	if len(*vbd.versionMap) > 1 {
 		return errors.New("inconsistent versioning")
-	} else if len(versionMap) == 0 {
+	} else if len(*vbd.versionMap) == 0 {
 		return errors.New("0 files updated")
 	}
 
@@ -142,7 +129,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		var gpgEntity *openpgp.Entity
 
 		if ra.PassphrasePrompt != nil {
-			gpgSigningKey, err := git2.GetSigningKeyFromConfig(b.Git.Config)
+			gpgSigningKey, err := b.Git.GetSigningKeyFromConfig()
 			if err != nil {
 				return errors.Wrap(err, "error retrieving gpg configuration")
 			}
@@ -154,7 +141,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 			}
 		}
 
-		if err := b.Git.Save(files, newVersionStr, gpgEntity); err != nil {
+		if err := b.Git.Save(files, vbd.versionStr, gpgEntity); err != nil {
 			return errors.Wrap(err, "error committing changes")
 		}
 	}
@@ -261,16 +248,16 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 			if err != nil {
 				return []string{}, errors.Wrapf(err, "error bumping version %v", filepath)
 			}
-			*vbd.versionStr = oldVersion.String()
+			vbd.versionStr = oldVersion.String()
 
-			if strings.Compare(oldVersionStr, *vbd.versionStr) == 0 {
+			if strings.Compare(oldVersionStr, vbd.versionStr) == 0 {
 				//no changes in version
 				continue
 			}
 
 			identified = true
 			if vbd.runArgs.ConfirmationPrompt != nil {
-				confirmed, err := vbd.runArgs.ConfirmationPrompt(oldVersionStr, *vbd.versionStr, file)
+				confirmed, err := vbd.runArgs.ConfirmationPrompt(oldVersionStr, vbd.versionStr, file)
 				if err != nil {
 					return []string{}, errors.Wrap(err, "error during confirmation prompt")
 				} else if !confirmed {
@@ -280,7 +267,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 				}
 			}
 
-			vbd.versionMap[oldVersionStr]++
+			(*vbd.versionMap)[oldVersionStr]++
 
 			// set future version
 			if lang.Regex != nil {
@@ -291,7 +278,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 					for _, expression := range *lang.Regex {
 						regex := regexp.MustCompile(expression)
 						if regex.MatchString(line) {
-							l := strings.ReplaceAll(line, oldVersionStr, *vbd.versionStr)
+							l := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
 							newContent = append(newContent, l)
 							added = true
 						}
@@ -313,7 +300,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 			if lang.JSONFields != nil {
 				for _, field := range *lang.JSONFields {
 					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
-						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, *vbd.versionStr)
+						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, vbd.versionStr)
 						if err != nil {
 							return []string{}, errors.Wrapf(err, "error setting new version on content of a file %v", file)
 						}
@@ -328,7 +315,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 			}
 
 			if len(modifiedFiles) > 0 {
-				fmt.Printf("Modified:%s\n", console.VersionUpdate(oldVersionStr, *vbd.versionStr, filepath))
+				fmt.Printf("Modified:%s\n", console.VersionUpdate(oldVersionStr, vbd.versionStr, filepath))
 			}
 		}
 	}

@@ -21,7 +21,7 @@ const (
 	Email    string = "username@domain.com"
 )
 
-type Config struct {
+type Instance struct {
 	Repository Repository
 	Worktree   Worktree
 	Config     *config.Config
@@ -37,20 +37,46 @@ type Worktree interface {
 	Commit(string, *git.CommitOptions) (plumbing.Hash, error)
 }
 
-func (g *Config) Save(files []string, version string, gpgEntity *openpgp.Entity) error {
+func New(meta billy.Filesystem, data billy.Filesystem) (*Instance, error) {
+	repo, err := git.Open(
+		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
+		data,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "error opening repository")
+	}
+
+	gitConfig, err := repo.ConfigScoped(config.GlobalScope)
+	if err != nil {
+		return nil, errors.Wrap(err, "error retrieving global git configuration")
+	}
+
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return nil, errors.Wrap(err, "error retrieving git worktree")
+	}
+
+	return &Instance{
+		Repository: repo,
+		Worktree:   worktree,
+		Config:     gitConfig,
+	}, nil
+}
+
+func (i *Instance) Save(files []string, version string, gpgEntity *openpgp.Entity) error {
 	tm := time.Now()
 	sign := &object.Signature{
-		Name:  g.Config.User.Name,
-		Email: g.Config.User.Email,
+		Name:  i.Config.User.Name,
+		Email: i.Config.User.Email,
 		When:  tm,
 	}
 
-	hash, err := Commit(files, version, sign, g.Worktree, gpgEntity)
+	hash, err := i.Commit(files, version, sign, gpgEntity)
 	if err != nil {
 		return err
 	}
 
-	_, err = g.Repository.CreateTag(fmt.Sprintf("v%v", version), hash, &git.CreateTagOptions{
+	_, err = i.Repository.CreateTag(fmt.Sprintf("v%v", version), hash, &git.CreateTagOptions{
 		Tagger:  sign,
 		Message: version,
 		SignKey: gpgEntity,
@@ -62,14 +88,14 @@ func (g *Config) Save(files []string, version string, gpgEntity *openpgp.Entity)
 	return nil
 }
 
-func Commit(files []string, version string, sign *object.Signature, worktree Worktree, entity *openpgp.Entity) (plumbing.Hash, error) {
+func (i *Instance) Commit(files []string, version string, sign *object.Signature, entity *openpgp.Entity) (plumbing.Hash, error) {
 	for _, f := range files {
-		_, err := worktree.Add(f)
+		_, err := i.Worktree.Add(f)
 		if err != nil {
 			return plumbing.Hash{}, errors.Wrapf(err, "error staging a file %v", f)
 		}
 	}
-	hash, err := worktree.Commit(version, &git.CommitOptions{
+	hash, err := i.Worktree.Commit(version, &git.CommitOptions{
 		All:       true,
 		Author:    sign,
 		Committer: sign,
@@ -82,9 +108,9 @@ func Commit(files []string, version string, sign *object.Signature, worktree Wor
 	return hash, nil
 }
 
-func GetSigningKeyFromConfig(gitConfig *config.Config) (string, error) {
+func (i *Instance) GetSigningKeyFromConfig() (string, error) {
 
-	shouldNotSign, gpgVerificationKey := getSigningKeyFromConfig(gitConfig)
+	shouldNotSign, gpgVerificationKey := getSigningKeyFromConfig(i.Config)
 
 	if !shouldNotSign && gpgVerificationKey == "" {
 		gitConfig, err := config.LoadConfig(config.GlobalScope)

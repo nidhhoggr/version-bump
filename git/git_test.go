@@ -87,7 +87,7 @@ func TestSave(t *testing.T) {
 		gitConfig.User.Name = git.Username
 		gitConfig.User.Email = git.Email
 
-		receiver := &git.Config{
+		receiver := &git.Instance{
 			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,
@@ -156,20 +156,29 @@ func TestCommit(t *testing.T) {
 			Email: git.Email,
 			When:  time.Now(),
 		}
-
-		m := new(mocks.Worktree)
+		m1 := new(mocks.Repository)
+		m2 := new(mocks.Worktree)
 
 		for _, f := range test.Files {
-			m.On("Add", f).Return(nil, test.MockAddError).Once()
+			m2.On("Add", f).Return(nil, test.MockAddError).Once()
 		}
 
-		m.On("Commit", test.Version, &gogit.CommitOptions{
+		m2.On("Commit", test.Version, &gogit.CommitOptions{
 			All:       true,
 			Author:    s,
 			Committer: s,
 		}).Return(plumbing.NewHash(test.MockCommitHash), test.MockCommitError).Once()
 
-		h, err := git.Commit(test.Files, test.Version, s, m, nil)
+		gitConfig := &config.Config{}
+		gitConfig.User.Name = git.Username
+		gitConfig.User.Email = git.Email
+		gitInstance := &git.Instance{
+			Config:     gitConfig,
+			Repository: m1,
+			Worktree:   m2,
+		}
+
+		h, err := gitInstance.Commit(test.Files, test.Version, s, nil)
 		if test.ExpectedError != "" || err != nil {
 			a.EqualError(err, test.ExpectedError)
 			a.Equal(plumbing.NewHash(""), h)

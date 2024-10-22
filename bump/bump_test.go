@@ -220,7 +220,7 @@ exclude_files = [ 'client/test.js' ]`,
 			}
 		}
 
-		b, err := bump.New(fs, meta, data, ".")
+		b, err := bump.From(fs, meta, data, ".")
 		if testSuite.ExpectedError != "" || err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 			a.Equal(nil, b)
@@ -959,7 +959,7 @@ func TestBump_WithVanillaFsRepoDoesntExist(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	meta := memfs.New()
 	data := memfs.New()
-	_, err := bump.New(fs, meta, data, ".")
+	_, err := bump.From(fs, meta, data, ".")
 	a.ErrorContains(err, "error opening repository: repository does not exist")
 }
 
@@ -988,7 +988,7 @@ func TestBump_BrokenBumpFile(t *testing.T) {
 	_ = git.Init(meta, data)
 	f, err := fs.Create(".bump")
 	_, err = f.WriteString("brokenbump-contents")
-	_, err = bump.New(fs, meta, data, ".")
+	_, err = bump.From(fs, meta, data, ".")
 	a.ErrorContains(err, "error parsing project config file")
 }
 
@@ -1094,7 +1094,7 @@ func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*
 
 	r := bump.Bump{
 		FS: afero.NewMemMapFs(),
-		Git: git.Config{
+		Git: &git.Instance{
 			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,

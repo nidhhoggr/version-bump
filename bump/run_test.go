@@ -61,7 +61,7 @@ func main() {
 
 	r := bump.Bump{
 		FS: afero.NewMemMapFs(),
-		Git: git.Config{
+		Git: &git.Instance{
 			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,

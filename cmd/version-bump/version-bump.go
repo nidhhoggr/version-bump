@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"github.com/cqroot/prompt"
 	"github.com/cqroot/prompt/input"
-	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/pkg/errors"
-	"github.com/spf13/afero"
-	"path"
 	"strings"
 
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
@@ -58,7 +55,7 @@ func main() {
 func runPromptMode(cmd *cobra.Command, args []string) {
 	hasPreRelease := flags.preReleaseTypeAlpha || flags.preReleaseTypeBeta || flags.preReleaseTypeRc
 	if len(args) == 1 || hasPreRelease {
-		b, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(currentDir, ".git")), osfs.New(currentDir), currentDir)
+		b, err := bump.New(currentDir)
 		if err != nil {
 			console.Fatal(errors.Wrap(err, "error preparing project configuration"))
 		}
@@ -129,7 +126,7 @@ func runInteractiveMode() {
 		}
 	}
 
-	b, err := bump.New(afero.NewOsFs(), osfs.New(path.Join(currentDir, ".git")), osfs.New(currentDir), currentDir)
+	b, err := bump.New(currentDir)
 	if err != nil {
 		console.Fatal(errors.Wrap(err, "error preparing project configuration"))
 	}

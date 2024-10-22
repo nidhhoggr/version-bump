@@ -12,7 +12,7 @@ const (
 
 type Bump struct {
 	FS            afero.Fs
-	Git           git.Config
+	Git           *git.Instance
 	Configuration Configuration
 }
 
