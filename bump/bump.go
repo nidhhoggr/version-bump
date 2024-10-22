@@ -179,7 +179,7 @@ func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, re
 }
 
 func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]string, error) {
-	console.Language(langName)
+
 	files := make([]string, 0)
 
 	for _, dir := range lang.Directories {
@@ -193,16 +193,23 @@ func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]str
 			return []string{}, errors.New(fmt.Sprintf("not supported language: %v", langName))
 		}
 
-		modifiedFiles, err := vbd.incrementVersion(
-			dir,
-			filterFiles(langSettings.Files, f),
-			*langSettings,
-		)
-		if err != nil {
-			return []string{}, err
-		}
+		filteredFiles := filterFiles(langSettings.Files, f)
 
-		files = append(files, modifiedFiles...)
+		if len(filteredFiles) > 0 {
+
+			console.Language(langName)
+
+			modifiedFiles, err := vbd.incrementVersion(
+				dir,
+				filterFiles(langSettings.Files, f),
+				*langSettings,
+			)
+			if err != nil {
+				return []string{}, err
+			}
+
+			files = append(files, modifiedFiles...)
+		}
 	}
 
 	return files, nil
