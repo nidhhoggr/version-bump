@@ -25,8 +25,8 @@ import (
 type versionBumpData struct {
 	bump       *Bump
 	versionMap *map[string]int
-	versionStr string
 	runArgs    *RunArgs
+	versionStr string
 }
 
 func New(dir string) (*Bump, error) {
@@ -43,18 +43,18 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		return nil, err
 	}
 
-	// NOTE: default config
-	dirs := []string{dir}
 	o := &Bump{
 		FS:  fs,
 		Git: gitInstance,
 	}
 
+	dirs := []string{dir}
+
 	// check for config file
 	content, err := readFile(fs, ".bump")
 	if err != nil {
-		// NOTE: return default settings if config file not found
 		if strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "file does not exist") {
+			//return default settings if config file not found
 			return o.withConfiguration(dirs, true), nil
 		} else {
 			return nil, errors.Wrap(err, "error reading project config file")
