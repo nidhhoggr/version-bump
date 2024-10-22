@@ -30,9 +30,11 @@ type versionBumpData struct {
 }
 
 var ConfigParser git.ConfigParserInterface
+var GpgEntityAccessor gpg.EntityAccessorInterface
 
 func init() {
 	ConfigParser = new(git.ConfigParser)
+	GpgEntityAccessor = new(gpg.EntityAccessor)
 }
 
 func New(dir string) (*Bump, error) {
@@ -161,7 +163,7 @@ func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, re
 		if err != nil {
 			return nil, err
 		}
-		gpgEntity, err := gpg.GetGpgEntity(keyPassphrase, gpgSigningKey)
+		gpgEntity, err := GpgEntityAccessor.GetEntity(keyPassphrase, gpgSigningKey)
 		if err != nil {
 			return vbd.passphrasePromptWithRetries(gpgSigningKey, retryLimit, retryCount+1)
 		} else {

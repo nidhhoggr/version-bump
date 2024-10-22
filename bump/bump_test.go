@@ -2,6 +2,7 @@ package bump_test
 
 import (
 	"fmt"
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"path"
 	"reflect"
 	"testing"
@@ -1027,7 +1028,7 @@ func (cp *ConfigParserMock) GetSectionOption(section string, option string) (boo
 	return false, ""
 }
 
-func TestBump_PassphraseDenied(t *testing.T) {
+func TestBump_PassphraseError(t *testing.T) {
 	a := assert.New(t)
 
 	testSuite := testSuites["Go - Single Constant #2"]
@@ -1038,11 +1039,78 @@ func TestBump_PassphraseDenied(t *testing.T) {
 		VersionType:    testSuite.VersionType,
 		PreReleaseType: testSuite.PreReleaseType,
 		PassphrasePrompt: func() (string, error) {
-			return "wrongpassphrase", fmt.Errorf("custom_passphrase_err")
+			return "", fmt.Errorf("custom_passphrase_err")
 		},
 	})
 	//currently we continue through the loop instead of returning an error
 	a.ErrorContains(err, "custom_passphrase_err")
+}
+
+func TestBump_PassphraseGetSigningKeyError(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	bump.ConfigParser = new(ConfigParserMock)
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+	})
+	a.ErrorContains(err, "could not validate gpg signing key")
+}
+
+type EntityAccessorMockScenarioOne struct{}
+
+func (ea *EntityAccessorMockScenarioOne) GetEntity(_ string, _ string) (*openpgp.Entity, error) {
+	return nil, errors.New("gpg_entity_error")
+}
+
+func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	bump.ConfigParser = new(ConfigParserMock)
+	bump.GpgEntityAccessor = new(EntityAccessorMockScenarioOne)
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+	})
+	//currently we continue through the loop instead of returning an error
+	a.ErrorContains(err, "could not validate gpg signing key")
+}
+
+type EntityAccessorMockScenarioTwo struct{}
+
+func (ea *EntityAccessorMockScenarioTwo) GetEntity(_ string, _ string) (*openpgp.Entity, error) {
+	return nil, nil
+}
+
+func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	bump.ConfigParser = new(ConfigParserMock)
+	bump.GpgEntityAccessor = new(EntityAccessorMockScenarioTwo)
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+	})
+	//currently we continue through the loop instead of returning an error
+	a.Empty(err)
 }
 
 func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {
