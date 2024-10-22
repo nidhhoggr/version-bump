@@ -2,19 +2,17 @@ package bump_test
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
 	"reflect"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
-	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/cache"
-	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
+	"github.com/joe-at-startupmedia/version-bump/v2/git"
 	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -201,10 +199,8 @@ exclude_files = [ 'client/test.js' ]`,
 		meta := memfs.New()
 		data := memfs.New()
 
-		_, err := git.Init(
-			filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
-			data,
-		)
+		err := git.Init(meta, data)
+
 		if err != nil {
 			t.Errorf("error preparing test case: error initializing repository: %v", err)
 			continue
@@ -989,10 +985,7 @@ func TestBump_BrokenBumpFile(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	meta := memfs.New()
 	data := memfs.New()
-	_, _ = git.Init(
-		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
-		data,
-	)
+	_ = git.Init(meta, data)
 	f, err := fs.Create(".bump")
 	_, err = f.WriteString("brokenbump-contents")
 	_, err = bump.New(fs, meta, data, ".")
@@ -1096,12 +1089,12 @@ func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*
 	m2 := new(mocks.Worktree)
 
 	gitConfig := &config.Config{}
-	gitConfig.User.Name = username
-	gitConfig.User.Email = email
+	gitConfig.User.Name = git.Username
+	gitConfig.User.Email = git.Email
 
 	r := bump.Bump{
 		FS: afero.NewMemMapFs(),
-		Git: bump.GitConfig{
+		Git: git.Config{
 			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,

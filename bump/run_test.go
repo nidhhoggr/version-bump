@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/joe-at-startupmedia/version-bump/v2/git"
 	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
@@ -55,12 +56,12 @@ func main() {
 	m2 := new(mocks.Worktree)
 
 	gitConfig := &config.Config{}
-	gitConfig.User.Name = username
-	gitConfig.User.Email = email
+	gitConfig.User.Name = git.Username
+	gitConfig.User.Email = git.Email
 
 	r := bump.Bump{
 		FS: afero.NewMemMapFs(),
-		Git: bump.GitConfig{
+		Git: git.Config{
 			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,

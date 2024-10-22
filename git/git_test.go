@@ -1,24 +1,20 @@
-package bump_test
+package git_test
 
 import (
 	"fmt"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/joe-at-startupmedia/version-bump/v2/git"
+
+	gogit "github.com/go-git/go-git/v5"
 	"testing"
 	"time"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/joe-at-startupmedia/version-bump/v2/bump"
 	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-)
-
-const (
-	username string = "username"
-	email    string = "username@domain.com"
 )
 
 func TestSave(t *testing.T) {
@@ -88,10 +84,10 @@ func TestSave(t *testing.T) {
 		m1.On("CreateTag", fmt.Sprintf("v%v", test.Version), test.MockCommitOutput, mock.AnythingOfType("*git.CreateTagOptions")).Return(nil, test.MockCreateTagError).Once()
 
 		gitConfig := &config.Config{}
-		gitConfig.User.Name = username
-		gitConfig.User.Email = email
+		gitConfig.User.Name = git.Username
+		gitConfig.User.Email = git.Email
 
-		receiver := &bump.GitConfig{
+		receiver := &git.Config{
 			Config:     gitConfig,
 			Repository: m1,
 			Worktree:   m2,
@@ -156,8 +152,8 @@ func TestCommit(t *testing.T) {
 		t.Logf("Test Case %v/%v - %s", counter, len(suite), name)
 
 		s := &object.Signature{
-			Name:  username,
-			Email: email,
+			Name:  git.Username,
+			Email: git.Email,
 			When:  time.Now(),
 		}
 
@@ -167,13 +163,13 @@ func TestCommit(t *testing.T) {
 			m.On("Add", f).Return(nil, test.MockAddError).Once()
 		}
 
-		m.On("Commit", test.Version, &git.CommitOptions{
+		m.On("Commit", test.Version, &gogit.CommitOptions{
 			All:       true,
 			Author:    s,
 			Committer: s,
 		}).Return(plumbing.NewHash(test.MockCommitHash), test.MockCommitError).Once()
 
-		h, err := bump.Commit(test.Files, test.Version, s, m, nil)
+		h, err := git.Commit(test.Files, test.Version, s, m, nil)
 		if test.ExpectedError != "" || err != nil {
 			a.EqualError(err, test.ExpectedError)
 			a.Equal(plumbing.NewHash(""), h)

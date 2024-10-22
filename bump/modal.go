@@ -1,9 +1,7 @@
 package bump
 
 import (
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/joe-at-startupmedia/version-bump/v2/git"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
 )
@@ -14,24 +12,8 @@ const (
 
 type Bump struct {
 	FS            afero.Fs
-	Git           GitConfig
+	Git           git.Config
 	Configuration Configuration
-}
-
-type GitConfig struct {
-	Repository Repository
-	Worktree   Worktree
-	Config     *config.Config
-}
-
-type Repository interface {
-	Worktree() (*git.Worktree, error)
-	CreateTag(string, plumbing.Hash, *git.CreateTagOptions) (*plumbing.Reference, error)
-}
-
-type Worktree interface {
-	Add(string) (plumbing.Hash, error)
-	Commit(string, *git.CommitOptions) (plumbing.Hash, error)
 }
 
 type Configuration struct {

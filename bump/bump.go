@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/ProtonMail/go-crypto/openpgp"
+	git2 "github.com/joe-at-startupmedia/version-bump/v2/git"
 	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
@@ -71,7 +72,7 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	o := &Bump{
 		FS:            fs,
 		Configuration: newConfiguration(dirs, true),
-		Git: GitConfig{
+		Git: git2.Config{
 			Repository: repo,
 			Worktree:   worktree,
 			Config:     localGitConfig,
@@ -141,7 +142,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		var gpgEntity *openpgp.Entity
 
 		if ra.PassphrasePrompt != nil {
-			gpgSigningKey, err := gpg.GetSigningKeyFromConfig(b.Git.Config)
+			gpgSigningKey, err := git2.GetSigningKeyFromConfig(b.Git.Config)
 			if err != nil {
 				return errors.Wrap(err, "error retrieving gpg configuration")
 			}
