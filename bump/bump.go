@@ -2,10 +2,12 @@ package bump
 
 import (
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -16,7 +18,6 @@ import (
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/tidwall/gjson"
@@ -28,6 +29,23 @@ type versionBumpData struct {
 	versionMap map[string]int
 	versionStr *string
 	runArgs    *RunArgs
+}
+
+func newConfiguration(dirs []string, enabledByDefault bool) Configuration {
+	return Configuration{
+		Docker: Language{
+			Enabled:     enabledByDefault,
+			Directories: dirs,
+		},
+		Go: Language{
+			Enabled:     enabledByDefault,
+			Directories: dirs,
+		},
+		JavaScript: Language{
+			Enabled:     enabledByDefault,
+			Directories: dirs,
+		},
+	}
 }
 
 func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
@@ -51,21 +69,8 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	// NOTE: default config
 	dirs := []string{dir}
 	o := &Bump{
-		FS: fs,
-		Configuration: Configuration{
-			Docker: Language{
-				Enabled:     true,
-				Directories: dirs,
-			},
-			Go: Language{
-				Enabled:     true,
-				Directories: dirs,
-			},
-			JavaScript: Language{
-				Enabled:     true,
-				Directories: dirs,
-			},
-		},
+		FS:            fs,
+		Configuration: newConfiguration(dirs, true),
 		Git: GitConfig{
 			Repository: repo,
 			Worktree:   worktree,
@@ -84,49 +89,10 @@ func New(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		}
 	}
 
-	// parse config file
-	userConfig := new(Configuration)
-	if err := toml.Unmarshal([]byte(strings.Join(content, "\n")), userConfig); err != nil {
+	o.Configuration = newConfiguration([]string{dir}, false)
+	_, err = toml.Decode(strings.Join(content, "\n"), &o.Configuration)
+	if err != nil {
 		return nil, errors.Wrap(err, "error parsing project config file")
-	}
-
-	o.Configuration = Configuration{
-		Docker: Language{
-			Enabled:     userConfig.Docker.Enabled,
-			Directories: dirs,
-		},
-		Go: Language{
-			Enabled:     userConfig.Go.Enabled,
-			Directories: dirs,
-		},
-		JavaScript: Language{
-			Enabled:     userConfig.JavaScript.Enabled,
-			Directories: dirs,
-		},
-	}
-
-	if len(userConfig.Docker.Directories) != 0 {
-		o.Configuration.Docker.Directories = userConfig.Docker.Directories
-	}
-
-	if len(userConfig.Go.Directories) != 0 {
-		o.Configuration.Go.Directories = userConfig.Go.Directories
-	}
-
-	if len(userConfig.JavaScript.Directories) != 0 {
-		o.Configuration.JavaScript.Directories = userConfig.JavaScript.Directories
-	}
-
-	if len(userConfig.Docker.ExcludeFiles) != 0 {
-		o.Configuration.Docker.ExcludeFiles = userConfig.Docker.ExcludeFiles
-	}
-
-	if len(userConfig.Go.ExcludeFiles) != 0 {
-		o.Configuration.Go.ExcludeFiles = userConfig.Go.ExcludeFiles
-	}
-
-	if len(userConfig.JavaScript.ExcludeFiles) != 0 {
-		o.Configuration.JavaScript.ExcludeFiles = userConfig.JavaScript.ExcludeFiles
 	}
 
 	return o, nil
@@ -146,28 +112,21 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		ra,
 	}
 
-	if b.Configuration.Docker.Enabled {
-		modifiedFiles, err := vbd.bumpComponent(langs.Docker, b.Configuration.Docker)
-		if err != nil {
-			return errors.Wrap(err, "error incrementing version in Docker project")
-		}
-		files = append(files, modifiedFiles...)
-	}
+	bcr := reflect.ValueOf(b.Configuration)
+	bcrType := bcr.Type()
 
-	if b.Configuration.Go.Enabled {
-		modifiedFiles, err := vbd.bumpComponent(langs.Go, b.Configuration.Go)
-		if err != nil {
-			return errors.Wrap(err, "error incrementing version in Go project")
+	for i := 0; i < bcr.NumField(); i++ {
+		langI := bcr.Field(i).Interface()
+		lang := langI.(Language)
+		langName := bcrType.Field(i).Name
+		if lang.Enabled {
+			//fmt.Printf("%s %-v", langName, lang)
+			modifiedFiles, err := vbd.bumpComponent(langName, lang)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error incrementing version in %s project", langName))
+			}
+			files = append(files, modifiedFiles...)
 		}
-		files = append(files, modifiedFiles...)
-	}
-
-	if b.Configuration.JavaScript.Enabled {
-		modifiedFiles, err := vbd.bumpComponent(langs.JavaScript, b.Configuration.JavaScript)
-		if err != nil {
-			return errors.Wrap(err, "error incrementing version in JavaScript project")
-		}
-		files = append(files, modifiedFiles...)
 	}
 
 	if len(versionMap) > 1 {
@@ -202,7 +161,6 @@ func (b *Bump) Bump(ra *RunArgs) error {
 	return nil
 }
 
-// +gocover:ignore:block
 func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, retryLimit int, retryCount int) (*openpgp.Entity, error) {
 	if retryCount < retryLimit {
 		keyPassphrase, err := vbd.runArgs.PassphrasePrompt()
@@ -230,7 +188,7 @@ func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]str
 			return []string{}, errors.Wrap(err, "error listing directory files")
 		}
 
-		langSettings := langs.New(langName)
+		var langSettings = langs.Supported[langName]
 		if langSettings == nil {
 			return []string{}, errors.New(fmt.Sprintf("not supported language: %v", langName))
 		}

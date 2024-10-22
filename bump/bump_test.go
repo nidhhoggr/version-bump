@@ -3,9 +3,9 @@ package bump_test
 import (
 	"fmt"
 	"github.com/go-git/go-git/v5/config"
-	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"path"
+	"reflect"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
@@ -241,10 +241,12 @@ type file struct {
 	Content             string
 }
 
+type fileMap map[string][]file
+
 type allFiles struct {
-	Docker     map[string][]file
-	Go         map[string][]file
-	JavaScript map[string][]file
+	Docker     fileMap
+	Go         fileMap
+	JavaScript fileMap
 }
 
 type testBumpTestSuite struct {
@@ -945,152 +947,11 @@ const Version string = "1.2.3"`,
 		counter++
 		t.Logf("Test Case %v/%v - %s", counter, len(suite), name)
 
-		m1 := new(mocks.Repository)
-		m2 := new(mocks.Worktree)
-
-		gitConfig := &config.Config{}
-		gitConfig.User.Name = username
-		gitConfig.User.Email = email
-
-		r := bump.Bump{
-			FS: afero.NewMemMapFs(),
-			Git: bump.GitConfig{
-				Config:     gitConfig,
-				Repository: m1,
-				Worktree:   m2,
-			},
-			Configuration: testSuite.Configuration,
-		}
-
-		shouldBeCommitted := false
-
-		if testSuite.Configuration.Docker.Enabled {
-			for _, dir := range testSuite.Configuration.Docker.Directories {
-				for tgtDir, tgtFiles := range testSuite.Files.Docker {
-					if dir == tgtDir {
-						for _, tgtFile := range tgtFiles {
-							shouldBeCommitted = true
-							f, err := r.FS.Create(path.Join(dir, tgtFile.Name))
-							if err != nil {
-								t.Errorf("error preparing test case: error creating Docker files: %v", err)
-								continue
-							}
-
-							_, err = f.WriteString(tgtFile.Content)
-							if err != nil {
-								t.Errorf("error preparing test case: error writing Docker files: %v", err)
-								continue
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if testSuite.Configuration.Go.Enabled {
-			for _, dir := range testSuite.Configuration.Go.Directories {
-				for tgtDir, tgtFiles := range testSuite.Files.Go {
-					if dir == tgtDir {
-						for _, tgtFile := range tgtFiles {
-							shouldBeCommitted = true
-							f, err := r.FS.Create(path.Join(dir, tgtFile.Name))
-							if err != nil {
-								t.Errorf("error preparing test case: error creating Go files: %v", err)
-								continue
-							}
-
-							_, err = f.WriteString(tgtFile.Content)
-							if err != nil {
-								t.Errorf("error preparing test case: error writing Go files: %v", err)
-								continue
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if testSuite.Configuration.JavaScript.Enabled {
-			for _, dir := range testSuite.Configuration.JavaScript.Directories {
-				for tgtDir, tgtFiles := range testSuite.Files.JavaScript {
-					if dir == tgtDir {
-						for _, tgtFile := range tgtFiles {
-							shouldBeCommitted = true
-							f, err := r.FS.Create(path.Join(dir, tgtFile.Name))
-							if err != nil {
-								t.Errorf("error preparing test case: error creating JavaScript files: %v", err)
-								continue
-							}
-
-							_, err = f.WriteString(tgtFile.Content)
-							if err != nil {
-								t.Errorf("error preparing test case: error writing JavaScript files: %v", err)
-								continue
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if shouldBeCommitted {
-			for dir, files := range testSuite.Files.Docker {
-				for _, file := range files {
-					if file.ExpectedToBeChanged {
-						var f string
-						if dir == "." {
-							f = file.Name
-						} else {
-							f = path.Join(dir, file.Name)
-						}
-						m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
-					}
-				}
-			}
-
-			for dir, files := range testSuite.Files.Go {
-				for _, file := range files {
-					if file.ExpectedToBeChanged {
-						var f string
-						if dir == "." {
-							f = file.Name
-						} else {
-							f = path.Join(dir, file.Name)
-						}
-						m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
-					}
-				}
-			}
-
-			for dir, files := range testSuite.Files.JavaScript {
-				for _, file := range files {
-					if file.ExpectedToBeChanged {
-						var f string
-						if dir == "." {
-							f = file.Name
-						} else {
-							f = path.Join(dir, file.Name)
-						}
-						m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
-					}
-				}
-			}
-
-			hash := plumbing.NewHash("abc")
-
-			m2.On(
-				"Commit", testSuite.Version, mock.AnythingOfType("*git.CommitOptions"),
-			).Return(hash, testSuite.MockCommitError).Once()
-
-			m1.On(
-				"CreateTag", fmt.Sprintf("v%v", testSuite.Version), hash, mock.AnythingOfType("*git.CreateTagOptions"),
-			).Return(nil, testSuite.MockCreateTagError).Once()
-		}
-
-		err := r.Bump(&bump.RunArgs{
+		_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 			VersionType:    testSuite.VersionType,
 			PreReleaseType: testSuite.PreReleaseType,
 		})
+
 		if testSuite.ExpectedError != "" || err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 		}
@@ -1173,7 +1034,7 @@ func main() {
 		ExpectedError:      "",
 	}
 
-	_, err := runBumpTest(testSuite, &bump.RunArgs{
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
 		PreReleaseType: testSuite.PreReleaseType,
 		ConfirmationPrompt: func(_ string, _ string, _ string) (bool, error) {
@@ -1218,7 +1079,7 @@ func main() {
 		ExpectedError:      "",
 	}
 
-	_, err := runBumpTest(testSuite, &bump.RunArgs{
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
 		PreReleaseType: testSuite.PreReleaseType,
 		ConfirmationPrompt: func(_ string, _ string, _ string) (bool, error) {
@@ -1229,7 +1090,7 @@ func main() {
 	a.ErrorContains(err, "0 files updated")
 }
 
-func runBumpTest(testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {
+func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {
 
 	m1 := new(mocks.Repository)
 	m2 := new(mocks.Worktree)
@@ -1250,22 +1111,44 @@ func runBumpTest(testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, err
 
 	shouldBeCommitted := false
 
-	if testSuite.Configuration.Go.Enabled {
-		for _, dir := range testSuite.Configuration.Go.Directories {
-			for tgtDir, tgtFiles := range testSuite.Files.Go {
-				if dir == tgtDir {
-					for _, tgtFile := range tgtFiles {
-						shouldBeCommitted = true
-						f, err := r.FS.Create(path.Join(dir, tgtFile.Name))
-						if err != nil {
-							console.Error(fmt.Sprintf("error preparing test case: error creating Go files: %v", err))
-							continue
-						}
+	bcr := reflect.ValueOf(testSuite.Configuration)
+	bcrType := bcr.Type()
+	tfr := reflect.ValueOf(testSuite.Files)
 
-						_, err = f.WriteString(tgtFile.Content)
-						if err != nil {
-							console.Error(fmt.Sprintf("error preparing test case: error writing Go files: %v", err))
-							continue
+	for i := 0; i < bcr.NumField(); i++ {
+		langI := bcr.Field(i).Interface()
+		lang := langI.(bump.Language)
+		langName := bcrType.Field(i).Name
+		sf := tfr.FieldByName(langName)
+		langFileMap := sf.Interface().(fileMap)
+
+		if lang.Enabled {
+			for _, dir := range lang.Directories {
+				for tgtDir, tgtFiles := range langFileMap {
+					if dir == tgtDir {
+						for _, tgtFile := range tgtFiles {
+							shouldBeCommitted = true
+							f, err := r.FS.Create(path.Join(dir, tgtFile.Name))
+							if err != nil {
+								t.Errorf("error preparing test case: error creating %s files: %v", langName, err)
+								continue
+							}
+
+							_, err = f.WriteString(tgtFile.Content)
+							if err != nil {
+								t.Errorf("error preparing test case: error writing %s files: %v", langName, err)
+								continue
+							}
+
+							if tgtFile.ExpectedToBeChanged {
+								var f string
+								if dir == "." {
+									f = tgtFile.Name
+								} else {
+									f = path.Join(dir, tgtFile.Name)
+								}
+								m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
+							}
 						}
 					}
 				}
@@ -1274,20 +1157,6 @@ func runBumpTest(testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, err
 	}
 
 	if shouldBeCommitted {
-
-		for dir, files := range testSuite.Files.Go {
-			for _, file := range files {
-				if file.ExpectedToBeChanged {
-					var f string
-					if dir == "." {
-						f = file.Name
-					} else {
-						f = path.Join(dir, file.Name)
-					}
-					m2.On("Add", f).Return(nil, testSuite.MockAddError).Once()
-				}
-			}
-		}
 
 		hash := plumbing.NewHash("abc")
 

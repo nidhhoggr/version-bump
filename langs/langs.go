@@ -1,9 +1,9 @@
 package langs
 
-const (
-	Docker     string = "Docker"
-	Go         string = "Go"
-	JavaScript string = "JavaScript"
+import (
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/docker"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/js"
 )
 
 type Language struct {
@@ -13,30 +13,29 @@ type Language struct {
 	Files      []string
 }
 
-func New(name string) *Language {
-	switch name {
-	case Docker:
-		return &Language{
-			Name:  Docker,
-			Files: []string{"Dockerfile"},
-			Regex: &dockerRegex,
-		}
-	case Go:
-		return &Language{
-			Name:  Go,
-			Files: []string{"*.go"},
-			Regex: &golangRegex,
-		}
-	case JavaScript:
-		return &Language{
-			Name: JavaScript,
-			Files: []string{
-				"package.json",
-				"package-lock.json",
-			},
-			JSONFields: &javaScriptJSONFields,
-		}
-	default:
-		return nil
+var Languages = []Language{
+	{
+		Name:  docker.Name,
+		Files: docker.Files,
+		Regex: &docker.Regex,
+	},
+	{
+		Name:  golang.Name,
+		Files: golang.Files,
+		Regex: &golang.Regex,
+	},
+	{
+		Name:       js.Name,
+		Files:      js.Files,
+		JSONFields: &js.JSONFields,
+	},
+}
+
+var Supported map[string]*Language
+
+func init() {
+	Supported = make(map[string]*Language, len(Languages))
+	for li := range Languages {
+		Supported[Languages[li].Name] = &Languages[li]
 	}
 }
