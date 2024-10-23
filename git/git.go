@@ -137,9 +137,9 @@ func getSigningKeyFromConfig(configParser ConfigParserInterface) (bool, string) 
 	var gpgVerificationKey string
 	shouldNotSign := false
 
-	_, shouldGpgsign := configParser.GetSectionOption("commit", "gpgsign")
+	shouldGpgsign := configParser.GetSectionOption("commit", "gpgsign")
 	if shouldGpgsign == "true" {
-		_, gpgVerificationKey = configParser.GetSectionOption("user", "signingkey")
+		gpgVerificationKey = configParser.GetSectionOption("user", "signingkey")
 	} else if shouldGpgsign == "false" {
 		shouldNotSign = true
 	}

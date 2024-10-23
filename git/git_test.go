@@ -206,11 +206,9 @@ func TestGit_ConfigParser(t *testing.T) {
 
 	cp := new(git.ConfigParser)
 	cp.SetConfig(cfg)
-	ok, username := cp.GetSectionOption("user", "name")
-	a.True(ok)
+	username := cp.GetSectionOption("user", "name")
 	a.Equal("John Doe", username)
 
-	ok, missing := cp.GetSectionOption("nonexistent", "gpgsign")
-	a.True(ok)
+	missing := cp.GetSectionOption("nonexistent", "gpgsign")
 	a.Equal("", missing)
 }

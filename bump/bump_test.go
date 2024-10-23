@@ -1053,18 +1053,18 @@ func (cp *ConfigParserMock) SetConfig(config *config.Config) {
 	cp.Config = config
 }
 
-func (cp *ConfigParserMock) GetSectionOption(section string, option string) (bool, string) {
+func (cp *ConfigParserMock) GetSectionOption(section string, option string) string {
 	switch section {
 	case "commit":
 		if option == "gpgsign" {
-			return true, "true"
+			return "true"
 		}
 	case "user":
 		if option == "signingkey" {
-			return true, "ACB2CCCDA93C90BF"
+			return "ACB2CCCDA93C90BF"
 		}
 	}
-	return false, ""
+	return ""
 }
 
 func TestBump_PassphraseError(t *testing.T) {
