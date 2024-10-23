@@ -4,6 +4,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/stretchr/testify/assert"
+	"regexp"
 	"testing"
 )
 
@@ -374,6 +375,14 @@ func TestVersion_PreReleaseWithNotAVersion(t *testing.T) {
 	a.Equal("1.0.1-alpha.0", v.String())
 }
 
+func TestVersion_NewWithBadRegex(t *testing.T) {
+	a := assert.New(t)
+	compile, err := regexp.Compile(version.Regex)
+	a.Empty(err)
+	_, err = version.NewFromRegex("", compile)
+	a.ErrorContains(err, "empty result when parsing versionStr from regex")
+}
+
 func TestVersion_SetPrereleaseWithEmptyVersion(t *testing.T) {
 	a := assert.New(t)
 	v := &version.Version{}
@@ -381,6 +390,44 @@ func TestVersion_SetPrereleaseWithEmptyVersion(t *testing.T) {
 	pr, err := v.GetPreRelease()
 	a.Empty(err)
 	a.Empty(pr)
+}
+
+func TestVersion_SetPrereleaseWithBadVersion(t *testing.T) {
+	a := assert.New(t)
+	v := &version.Version{}
+	v.SetSemverPtr(&semver.Version{})
+	err := v.SetPreReleaseString("!/+%")
+	a.ErrorContains(err, "Invalid Prerelease string")
+}
+
+func TestVersion_SetPrereleaseWithBadMetadata(t *testing.T) {
+	a := assert.New(t)
+	v := &version.Version{}
+	v.SetSemverPtr(&semver.Version{})
+	err := v.SetPreReleaseMetadata("!/+%")
+	a.ErrorContains(err, "Invalid Metadata string")
+}
+
+func TestVersion_PreReleaseEmptyType(t *testing.T) {
+	a := assert.New(t)
+	v := &version.Version{}
+	v.SetSemverPtr(&semver.Version{})
+	err := v.PreRelease(version.NotAPreRelease, "")
+	a.ErrorContains(err, "cannot prerelease and empty type")
+}
+
+func TestVersion_PreReleaseErrorGettingPreRelease(t *testing.T) {
+	a := assert.New(t)
+	v, err := version.New("v1.0.0-alpha.1")
+	err = v.PreRelease(version.AlphaPreRelease, "-%43")
+	a.ErrorContains(err, "Invalid Metadata string")
+}
+
+func TestVersion_PreReleaseErrorGettingPreReleaseFromMajor(t *testing.T) {
+	a := assert.New(t)
+	v, err := version.New("v1.0.0")
+	err = v.PreRelease(version.AlphaPreRelease, "-%43")
+	a.ErrorContains(err, "Invalid Metadata string")
 }
 
 func TestBump_StringToVersionType(t *testing.T) {

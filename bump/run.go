@@ -11,6 +11,20 @@ import (
 	"golang.org/x/mod/semver"
 )
 
+func init() {
+	cli := &http.Client{
+		Timeout: time.Second * 5,
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 3 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 5 * time.Second,
+		},
+	}
+
+	ReleaseGetter = cli
+}
+
 func (b *Bump) Run(ra *RunArgs) error {
 	// check for an update in parallel
 	updateVersion := make(chan string, 1)
@@ -34,20 +48,6 @@ func (b *Bump) Run(ra *RunArgs) error {
 	}
 
 	return err
-}
-
-func init() {
-	cli := &http.Client{
-		Timeout: time.Second * 5,
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 3 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-		},
-	}
-
-	ReleaseGetter = cli
 }
 
 func getLatestVersion(version chan string, resultErr chan error, repoName string) {
