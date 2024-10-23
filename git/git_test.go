@@ -209,4 +209,8 @@ func TestGit_ConfigParser(t *testing.T) {
 	ok, username := cp.GetSectionOption("user", "name")
 	a.True(ok)
 	a.Equal("John Doe", username)
+
+	ok, missing := cp.GetSectionOption("nonexistent", "gpgsign")
+	a.True(ok)
+	a.Equal("", missing)
 }
