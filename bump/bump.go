@@ -117,7 +117,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		langName := bcrType.Field(i).Name
 		if lang.Enabled {
 			//fmt.Printf("%s %-v", langName, lang)
-			modifiedFiles, err := vbd.bumpComponent(langName, lang)
+			modifiedFiles, err := vbd.bumpComponent(langName, lang, langs.Supported[langName])
 			if err != nil {
 				return errors.Wrap(err, fmt.Sprintf("error incrementing version in %s project", langName))
 			}
@@ -174,7 +174,7 @@ func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, re
 	}
 }
 
-func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]string, error) {
+func (vbd *versionBumpData) bumpComponent(langName string, lang Language, langSettings *langs.Language) ([]string, error) {
 
 	files := make([]string, 0)
 
@@ -182,11 +182,6 @@ func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]str
 		f, err := getFiles(vbd.bump.FS, dir, lang.ExcludeFiles)
 		if err != nil {
 			return []string{}, errors.Wrap(err, "error listing directory files")
-		}
-
-		var langSettings = langs.Supported[langName]
-		if langSettings == nil {
-			return []string{}, errors.New(fmt.Sprintf("not supported language: %v", langName))
 		}
 
 		filteredFiles := filterFiles(langSettings.Files, f)
@@ -198,7 +193,7 @@ func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]str
 			modifiedFiles, err := vbd.incrementVersion(
 				dir,
 				filterFiles(langSettings.Files, f),
-				*langSettings,
+				langSettings,
 			)
 			if err != nil {
 				return []string{}, err
@@ -211,7 +206,7 @@ func (vbd *versionBumpData) bumpComponent(langName string, lang Language) ([]str
 	return files, nil
 }
 
-func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang langs.Language) ([]string, error) {
+func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSettings *langs.Language) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
 
@@ -223,10 +218,10 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 		}
 		var oldVersion *version.Version
 		// get current version
-		if lang.Regex != nil {
+		if langSettings.Regex != nil {
 		outer:
 			for _, line := range fileContent {
-				for _, expression := range *lang.Regex {
+				for _, expression := range *langSettings.Regex {
 					regex := regexp.MustCompile(expression)
 					if regex.MatchString(line) {
 						oldVersion, err = version.NewFromRegex(line, regex)
@@ -239,8 +234,8 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 			}
 		}
 
-		if lang.JSONFields != nil {
-			for _, field := range *lang.JSONFields {
+		if langSettings.JSONFields != nil {
+			for _, field := range *langSettings.JSONFields {
 				oldVersion, err = version.New(gjson.Get(strings.Join(fileContent, ""), field).String())
 				if err != nil {
 					return []string{}, errors.Wrapf(err, "error parsing semantic version at file %v", filepath)
@@ -278,12 +273,12 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 			(*vbd.versionMap)[oldVersionStr]++
 
 			// set future version
-			if lang.Regex != nil {
+			if langSettings.Regex != nil {
 				newContent := make([]string, 0)
 
 				for _, line := range fileContent {
 					var added bool
-					for _, expression := range *lang.Regex {
+					for _, expression := range *langSettings.Regex {
 						regex := regexp.MustCompile(expression)
 						if regex.MatchString(line) {
 							l := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
@@ -305,8 +300,8 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, lang la
 				modifiedFiles = append(modifiedFiles, filepath)
 			}
 
-			if lang.JSONFields != nil {
-				for _, field := range *lang.JSONFields {
+			if langSettings.JSONFields != nil {
+				for _, field := range *langSettings.JSONFields {
 					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
 						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, vbd.versionStr)
 						if err != nil {
