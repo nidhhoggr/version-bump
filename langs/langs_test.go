@@ -14,32 +14,32 @@ func TestLangs_New(t *testing.T) {
 	a := assert.New(t)
 
 	type test struct {
-		ExpectedResult *langs.Language
+		ExpectedResult *langs.Settings
 	}
 
 	suite := map[string]test{
 		"Docker": {
-			ExpectedResult: &langs.Language{
+			ExpectedResult: &langs.Settings{
 				Name:  docker.Name,
 				Files: docker.Files,
 				Regex: &docker.Regex,
 			},
 		},
 		"Go": {
-			ExpectedResult: &langs.Language{
+			ExpectedResult: &langs.Settings{
 				Name:  golang.Name,
 				Files: golang.Files,
 				Regex: &golang.Regex,
 			},
 		},
 		"JavaScript": {
-			ExpectedResult: &langs.Language{
+			ExpectedResult: &langs.Settings{
 				Name:       js.Name,
 				Files:      js.Files,
 				JSONFields: &js.JSONFields,
 			},
 		},
-		"Not Supported Language": {
+		"Not Supported Settings": {
 			ExpectedResult: nil,
 		},
 	}
@@ -51,7 +51,7 @@ func TestLangs_New(t *testing.T) {
 
 		r := langs.Supported[name]
 
-		if name == "Not Supported Language" {
+		if name == "Not Supported Settings" {
 			a.Equal(test.ExpectedResult, r)
 		} else {
 			a.EqualValues(test.ExpectedResult, r)

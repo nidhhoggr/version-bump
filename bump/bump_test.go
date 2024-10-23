@@ -3,6 +3,10 @@ package bump_test
 import (
 	"fmt"
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/docker"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/js"
 	"path"
 	"reflect"
 	"testing"
@@ -40,15 +44,18 @@ func TestBump_New(t *testing.T) {
 		"Automatic": {
 			ConfigFile: configFile{},
 			ExpectedConfiguration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
-				JavaScript: bump.Language{
+				langs.Config{
+					Name:        js.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -63,17 +70,10 @@ enabled = true
 directories = ['dir1','dir2']`,
 			},
 			ExpectedConfiguration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"dir1", "dir2"},
-				},
-				Go: bump.Language{
-					Enabled:     false,
-					Directories: []string{"."},
-				},
-				JavaScript: bump.Language{
-					Enabled:     false,
-					Directories: []string{"."},
 				},
 			},
 			ExpectedError: "",
@@ -86,17 +86,10 @@ enabled = true
 directories = ['dir1','dir2']`,
 			},
 			ExpectedConfiguration: bump.Configuration{
-				Docker: bump.Language{
-					Enabled:     false,
-					Directories: []string{"."},
-				},
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"dir1", "dir2"},
-				},
-				JavaScript: bump.Language{
-					Enabled:     false,
-					Directories: []string{"."},
 				},
 			},
 			ExpectedError: "",
@@ -109,15 +102,8 @@ enabled = true
 directories = ['dir1','dir2']`,
 			},
 			ExpectedConfiguration: bump.Configuration{
-				Docker: bump.Language{
-					Enabled:     false,
-					Directories: []string{"."},
-				},
-				Go: bump.Language{
-					Enabled:     false,
-					Directories: []string{"."},
-				},
-				JavaScript: bump.Language{
+				langs.Config{
+					Name:        js.Name,
 					Enabled:     true,
 					Directories: []string{"dir1", "dir2"},
 				},
@@ -140,17 +126,49 @@ enabled = true
 directories = [ 'client' ]`,
 			},
 			ExpectedConfiguration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{".", "tools/qa"},
 				},
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"server", "tools/cli", "tools/qa"},
 				},
-				JavaScript: bump.Language{
+				langs.Config{
+					Name:        js.Name,
 					Enabled:     true,
 					Directories: []string{"client"},
+				},
+			},
+			ExpectedError: "",
+		},
+		"ComplexWithOneDisabled": {
+			ConfigFile: configFile{
+				Exists: true,
+				Content: `[docker]
+enabled = true
+directories = [ '.', 'tools/qa' ]
+				
+[go]
+enabled = true
+directories = [ 'server', 'tools/cli', 'tools/qa' ]
+				
+[javascript]
+enabled = false
+directories = [ 'client' ]`,
+			},
+			ExpectedConfiguration: bump.Configuration{
+				langs.Config{
+					Name:        docker.Name,
+					Enabled:     true,
+					Directories: []string{".", "tools/qa"},
+				},
+				langs.Config{
+					Name:        golang.Name,
+					Enabled:     true,
+					Directories: []string{"server", "tools/cli", "tools/qa"},
 				},
 			},
 			ExpectedError: "",
@@ -174,17 +192,20 @@ directories = [ 'client' ]
 exclude_files = [ 'client/test.js' ]`,
 			},
 			ExpectedConfiguration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:         docker.Name,
 					Enabled:      true,
 					Directories:  []string{".", "tools/qa"},
 					ExcludeFiles: []string{"tools/qa/Dockerfile"},
 				},
-				Go: bump.Language{
+				langs.Config{
+					Name:         golang.Name,
 					Enabled:      true,
 					Directories:  []string{"server", "tools/cli", "tools/qa"},
 					ExcludeFiles: []string{"tools/cli/main_test.go"},
 				},
-				JavaScript: bump.Language{
+				langs.Config{
+					Name:         js.Name,
 					Enabled:      true,
 					Directories:  []string{"client"},
 					ExcludeFiles: []string{"client/test.js"},
@@ -278,7 +299,8 @@ func TestBump_Bump(t *testing.T) {
 		"Docker - Single, without Quotes": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -319,7 +341,8 @@ ENTRYPOINT [ "/app" ]`,
 		"Docker - Single, with Quotes": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -360,7 +383,8 @@ ENTRYPOINT [ "/app" ]`,
 		"Docker - Multiple, with Quotes": {
 			Version: "4.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -400,7 +424,8 @@ ENTRYPOINT [ "/app" ]`,
 		"Docker - Multiple, without Quotes,": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -440,7 +465,8 @@ ENTRYPOINT [ "/app" ]`,
 		"Docker - Multi-line, with Quotes": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -481,7 +507,8 @@ ENTRYPOINT [ "/app" ]`,
 		"Docker - Multi-line, without Quotes": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -522,7 +549,8 @@ ENTRYPOINT [ "/app" ]`,
 		"Go - Single Constant": {
 			Version: "1.3.0",
 			Configuration: bump.Configuration{
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -556,7 +584,8 @@ func main() {
 		"Go - Single Constant #2": {
 			Version: "1.2.4",
 			Configuration: bump.Configuration{
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -590,7 +619,8 @@ func main() {
 		"Go - Multiple Constants": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -627,7 +657,8 @@ func main() {
 		"JavaScript - Multiple Constants": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				JavaScript: bump.Language{
+				langs.Config{
+					Name:        js.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -708,7 +739,8 @@ func main() {
 		"Docker - Get Files Error": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"dir"},
 				},
@@ -724,7 +756,8 @@ func main() {
 		"Go - Get Files Error": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"dir"},
 				},
@@ -740,7 +773,8 @@ func main() {
 		"JavaScript - Get Files Error": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				JavaScript: bump.Language{
+				langs.Config{
+					Name:        js.Name,
 					Enabled:     true,
 					Directories: []string{"dir"},
 				},
@@ -756,11 +790,13 @@ func main() {
 		"Inconsistent Versioning": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
-				Go: bump.Language{
+				langs.Config{
+					Name:        golang.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -818,7 +854,8 @@ func main() {
 		"Save Error": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
@@ -859,11 +896,13 @@ ENTRYPOINT [ "/app" ]`,
 		"Exclude Files": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
-				Docker: bump.Language{
+				langs.Config{
+					Name:        docker.Name,
 					Enabled:     true,
 					Directories: []string{"."},
 				},
-				Go: bump.Language{
+				langs.Config{
+					Name:         golang.Name,
 					Enabled:      true,
 					Directories:  []string{".", "lib"},
 					ExcludeFiles: []string{"lib/lib_test.go"},
@@ -1033,7 +1072,7 @@ func TestBump_PassphraseError(t *testing.T) {
 
 	testSuite := testSuites["Go - Single Constant #2"]
 
-	bump.ConfigParser = new(ConfigParserMock)
+	bump.GitConfigParser = new(ConfigParserMock)
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
@@ -1051,7 +1090,7 @@ func TestBump_PassphraseGetSigningKeyError(t *testing.T) {
 
 	testSuite := testSuites["Go - Single Constant #2"]
 
-	bump.ConfigParser = new(ConfigParserMock)
+	bump.GitConfigParser = new(ConfigParserMock)
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
@@ -1074,7 +1113,7 @@ func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
 
 	testSuite := testSuites["Go - Single Constant #2"]
 
-	bump.ConfigParser = new(ConfigParserMock)
+	bump.GitConfigParser = new(ConfigParserMock)
 	bump.GpgEntityAccessor = new(EntityAccessorMockScenarioOne)
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
@@ -1099,7 +1138,7 @@ func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
 
 	testSuite := testSuites["Go - Single Constant #2"]
 
-	bump.ConfigParser = new(ConfigParserMock)
+	bump.GitConfigParser = new(ConfigParserMock)
 	bump.GpgEntityAccessor = new(EntityAccessorMockScenarioTwo)
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
@@ -1134,32 +1173,29 @@ func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*
 
 	shouldBeCommitted := false
 
-	bcr := reflect.ValueOf(testSuite.Configuration)
-	bcrType := bcr.Type()
 	tfr := reflect.ValueOf(testSuite.Files)
 
-	for i := 0; i < bcr.NumField(); i++ {
-		langI := bcr.Field(i).Interface()
-		lang := langI.(bump.Language)
-		langName := bcrType.Field(i).Name
-		sf := tfr.FieldByName(langName)
+	for i := range testSuite.Configuration {
+		langConfig := testSuite.Configuration[i]
+
+		sf := tfr.FieldByName(langConfig.Name)
 		langFileMap := sf.Interface().(fileMap)
 
-		if lang.Enabled {
-			for _, dir := range lang.Directories {
+		if langConfig.Enabled {
+			for _, dir := range langConfig.Directories {
 				for tgtDir, tgtFiles := range langFileMap {
 					if dir == tgtDir {
 						for _, tgtFile := range tgtFiles {
 							shouldBeCommitted = true
 							f, err := r.FS.Create(path.Join(dir, tgtFile.Name))
 							if err != nil {
-								t.Errorf("error preparing test case: error creating %s files: %v", langName, err)
+								t.Errorf("error preparing test case: error creating %s files: %v", langConfig.Name, err)
 								continue
 							}
 
 							_, err = f.WriteString(tgtFile.Content)
 							if err != nil {
-								t.Errorf("error preparing test case: error writing %s files: %v", langName, err)
+								t.Errorf("error preparing test case: error writing %s files: %v", langConfig.Name, err)
 								continue
 							}
 

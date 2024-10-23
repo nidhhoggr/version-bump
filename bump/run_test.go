@@ -5,6 +5,8 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/joe-at-startupmedia/version-bump/v2/git"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
 	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
@@ -21,7 +23,8 @@ func getBumpInstance() *bump.Bump {
 	var testSuite = testBumpTestSuite{
 		Version: "1.3.0",
 		Configuration: bump.Configuration{
-			Go: bump.Language{
+			langs.Config{
+				Name:        golang.Name,
 				Enabled:     true,
 				Directories: []string{"."},
 			},
@@ -69,7 +72,7 @@ func main() {
 		Configuration: testSuite.Configuration,
 	}
 
-	for _, dir := range testSuite.Configuration.Go.Directories {
+	for _, dir := range testSuite.Configuration[0].Directories {
 		for tgtDir, tgtFiles := range testSuite.Files.Go {
 			if dir == tgtDir {
 				for _, tgtFile := range tgtFiles {

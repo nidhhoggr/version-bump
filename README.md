@@ -34,7 +34,7 @@ In a manual mode, **version-bump** will read a configuration file and modify fil
 Some languages, have a constant value in a specific file that contains a version, which are fairly easy to increment.
 But some languages are leaving that decision to a developer, thus **version-bump** assumes a constant position/value for them as well.
 
-| Language      | Expected Values                               | Filename                              |
+| Settings      | Expected Values                               | Filename                              |
 |:-------------:|:---------------------------------------------:|:-------------------------------------:|
 | Docker        | `org.opencontainers.image.version` label      | `Dockerfile`                          |
 | Go            | String constant named `Version`/`version`     | `*.go`                                |

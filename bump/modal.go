@@ -2,6 +2,7 @@ package bump
 
 import (
 	"github.com/joe-at-startupmedia/version-bump/v2/git"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
 )
@@ -16,17 +17,13 @@ type Bump struct {
 	Configuration Configuration
 }
 
-type Configuration struct {
-	Docker     Language
-	Go         Language
-	JavaScript Language
+type ConfigDecoder struct {
+	Docker     langs.Config
+	Go         langs.Config
+	JavaScript langs.Config
 }
 
-type Language struct {
-	Directories  []string
-	ExcludeFiles []string `toml:"exclude_files"`
-	Enabled      bool
-}
+type Configuration []langs.Config
 
 type RunArgs struct {
 	ConfirmationPrompt func(string, string, string) (bool, error)

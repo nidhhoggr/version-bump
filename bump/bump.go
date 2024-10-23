@@ -2,6 +2,9 @@ package bump
 
 import (
 	"fmt"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/docker"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/js"
 	"path"
 	"reflect"
 	"regexp"
@@ -29,11 +32,11 @@ type versionBumpData struct {
 	versionStr string
 }
 
-var ConfigParser git.ConfigParserInterface
+var GitConfigParser git.ConfigParserInterface
 var GpgEntityAccessor gpg.EntityAccessorInterface
 
 func init() {
-	ConfigParser = new(git.ConfigParser)
+	GitConfigParser = new(git.ConfigParser)
 	GpgEntityAccessor = new(gpg.EntityAccessor)
 }
 
@@ -69,9 +72,22 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		}
 	}
 
-	_, err = toml.Decode(strings.Join(content, "\n"), &o.withConfiguration(dirs, false).Configuration)
+	cf := new(ConfigDecoder)
+	_, err = toml.Decode(strings.Join(content, "\n"), cf)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing project config file")
+	}
+
+	bcr := reflect.ValueOf(cf).Elem()
+	bcrType := bcr.Type()
+	for i := 0; i < bcr.NumField(); i++ {
+		langI := bcr.Field(i).Interface()
+		lang := langI.(langs.Config)
+		if lang.Enabled {
+			langName := bcrType.Field(i).Name
+			lang.Name = langName
+			o.Configuration = append(o.Configuration, lang)
+		}
 	}
 
 	return o, nil
@@ -79,15 +95,18 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 
 func (b *Bump) withConfiguration(dirs []string, enabledByDefault bool) *Bump {
 	b.Configuration = Configuration{
-		Docker: Language{
+		langs.Config{
+			Name:        docker.Name,
 			Enabled:     enabledByDefault,
 			Directories: dirs,
 		},
-		Go: Language{
+		langs.Config{
+			Name:        golang.Name,
 			Enabled:     enabledByDefault,
 			Directories: dirs,
 		},
-		JavaScript: Language{
+		langs.Config{
+			Name:        js.Name,
 			Enabled:     enabledByDefault,
 			Directories: dirs,
 		},
@@ -106,20 +125,15 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		runArgs:    ra,
 	}
 
-	bcr := reflect.ValueOf(b.Configuration)
-	bcrType := bcr.Type()
-
 	files := make([]string, 0)
 
-	for i := 0; i < bcr.NumField(); i++ {
-		langI := bcr.Field(i).Interface()
-		lang := langI.(Language)
-		langName := bcrType.Field(i).Name
-		if lang.Enabled {
+	for i := range b.Configuration {
+		langConfig := b.Configuration[i]
+		if langConfig.Enabled {
 			//fmt.Printf("%s %-v", langName, lang)
-			modifiedFiles, err := vbd.bumpComponent(langName, lang, langs.Supported[langName])
+			modifiedFiles, err := vbd.bumpComponent(langConfig, langs.Supported[langConfig.Name])
 			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error incrementing version in %s project", langName))
+				return errors.Wrap(err, fmt.Sprintf("error incrementing version in %s project", langConfig.Name))
 			}
 			files = append(files, modifiedFiles...)
 		}
@@ -137,7 +151,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		var gpgEntity *openpgp.Entity
 
 		if ra.PassphrasePrompt != nil {
-			gpgSigningKey, err := b.Git.GetSigningKeyFromConfig(ConfigParser)
+			gpgSigningKey, err := b.Git.GetSigningKeyFromConfig(GitConfigParser)
 			if err != nil {
 				return errors.Wrap(err, "error retrieving gpg configuration")
 			}
@@ -174,12 +188,12 @@ func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, re
 	}
 }
 
-func (vbd *versionBumpData) bumpComponent(langName string, lang Language, langSettings *langs.Language) ([]string, error) {
+func (vbd *versionBumpData) bumpComponent(langConfig langs.Config, langSettings *langs.Settings) ([]string, error) {
 
 	files := make([]string, 0)
 
-	for _, dir := range lang.Directories {
-		f, err := getFiles(vbd.bump.FS, dir, lang.ExcludeFiles)
+	for _, dir := range langConfig.Directories {
+		f, err := getFiles(vbd.bump.FS, dir, langConfig.ExcludeFiles)
 		if err != nil {
 			return []string{}, errors.Wrap(err, "error listing directory files")
 		}
@@ -188,7 +202,7 @@ func (vbd *versionBumpData) bumpComponent(langName string, lang Language, langSe
 
 		if len(filteredFiles) > 0 {
 
-			console.Language(langName)
+			console.Language(langConfig.Name)
 
 			modifiedFiles, err := vbd.incrementVersion(
 				dir,
@@ -206,7 +220,7 @@ func (vbd *versionBumpData) bumpComponent(langName string, lang Language, langSe
 	return files, nil
 }
 
-func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSettings *langs.Language) ([]string, error) {
+func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSettings *langs.Settings) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
 
