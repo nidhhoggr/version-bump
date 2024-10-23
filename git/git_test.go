@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestSave(t *testing.T) {
+func TestGit_Save(t *testing.T) {
 	a := assert.New(t)
 
 	type test struct {
@@ -100,7 +100,7 @@ func TestSave(t *testing.T) {
 	}
 }
 
-func TestCommit(t *testing.T) {
+func TestGit_Commit(t *testing.T) {
 	a := assert.New(t)
 
 	type test struct {
@@ -186,4 +186,27 @@ func TestCommit(t *testing.T) {
 			a.Equal(plumbing.NewHash(test.MockCommitHash), h)
 		}
 	}
+}
+
+func TestGit_ConfigParser(t *testing.T) {
+	a := assert.New(t)
+
+	cfg := config.NewConfig()
+
+	input := []byte(`[core]
+		bare = true
+		worktree = foo
+		commentchar = bar
+[user]
+		name = John Doe
+		email = john@example.com`)
+
+	err := cfg.Unmarshal(input)
+	a.Empty(err)
+
+	cp := new(git.ConfigParser)
+	cp.SetConfig(cfg)
+	ok, username := cp.GetSectionOption("user", "name")
+	a.True(ok)
+	a.Equal("John Doe", username)
 }

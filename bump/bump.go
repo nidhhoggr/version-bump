@@ -78,14 +78,14 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		return nil, errors.Wrap(err, "error parsing project config file")
 	}
 
+	//map ConfigDecoder to the Configuration struct
 	bcr := reflect.ValueOf(cf).Elem()
 	bcrType := bcr.Type()
 	for i := 0; i < bcr.NumField(); i++ {
 		langI := bcr.Field(i).Interface()
 		lang := langI.(langs.Config)
 		if lang.Enabled {
-			langName := bcrType.Field(i).Name
-			lang.Name = langName
+			lang.Name = bcrType.Field(i).Name
 			o.Configuration = append(o.Configuration, lang)
 		}
 	}
