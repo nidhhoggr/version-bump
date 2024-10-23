@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
-	"github.com/pkg/errors"
 	"golang.org/x/mod/semver"
 )
 
@@ -20,7 +19,7 @@ func (b *Bump) Run(ra *RunArgs) error {
 	go getLatestVersion(updateVersion, updateVersionError, GhRepoName)
 
 	if err := b.Bump(ra); err != nil {
-		console.Fatal(errors.Wrap(err, "error bumping version"))
+		return err
 	}
 
 	err := <-updateVersionError
@@ -37,12 +36,7 @@ func (b *Bump) Run(ra *RunArgs) error {
 	return err
 }
 
-func getLatestVersion(version chan string, resultErr chan error, repoName string) {
-
-	type response struct {
-		TagName string `json:"tag_name"`
-	}
-
+func init() {
 	cli := &http.Client{
 		Timeout: time.Second * 5,
 		Transport: &http.Transport{
@@ -53,9 +47,18 @@ func getLatestVersion(version chan string, resultErr chan error, repoName string
 		},
 	}
 
+	ReleaseGetter = cli
+}
+
+func getLatestVersion(version chan string, resultErr chan error, repoName string) {
+
+	type response struct {
+		TagName string `json:"tag_name"`
+	}
+
 	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repoName)
 
-	res, err := cli.Get(apiUrl)
+	res, err := ReleaseGetter.Get(apiUrl)
 	if err != nil {
 		resultErr <- err
 		return

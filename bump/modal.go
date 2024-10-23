@@ -6,6 +6,7 @@ import (
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
+	"net/http"
 )
 
 const (
@@ -15,6 +16,11 @@ const (
 var GhRepoName = "joe-at-startupmedia/version-bump"
 var GitConfigParser git.ConfigParserInterface
 var GpgEntityAccessor gpg.EntityAccessorInterface
+var ReleaseGetter ReleaseGetterInterface
+
+type ReleaseGetterInterface interface {
+	Get(string) (*http.Response, error)
+}
 
 type Bump struct {
 	FS            afero.Fs
