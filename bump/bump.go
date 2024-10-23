@@ -25,16 +25,6 @@ import (
 	"github.com/tidwall/sjson"
 )
 
-type versionBumpData struct {
-	bump       *Bump
-	versionMap *map[string]int
-	runArgs    *RunArgs
-	versionStr string
-}
-
-var GitConfigParser git.ConfigParserInterface
-var GpgEntityAccessor gpg.EntityAccessorInterface
-
 func init() {
 	GitConfigParser = new(git.ConfigParser)
 	GpgEntityAccessor = new(gpg.EntityAccessor)

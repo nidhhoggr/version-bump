@@ -2,6 +2,7 @@ package bump
 
 import (
 	"github.com/joe-at-startupmedia/version-bump/v2/git"
+	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
@@ -10,6 +11,10 @@ import (
 const (
 	Version string = "2.1.0"
 )
+
+var GhRepoName = "joe-at-startupmedia/version-bump"
+var GitConfigParser git.ConfigParserInterface
+var GpgEntityAccessor gpg.EntityAccessorInterface
 
 type Bump struct {
 	FS            afero.Fs
@@ -31,4 +36,11 @@ type RunArgs struct {
 	PreReleaseMetadata string
 	VersionType        version.Type
 	PreReleaseType     version.PreReleaseType
+}
+
+type versionBumpData struct {
+	bump       *Bump
+	versionMap *map[string]int
+	runArgs    *RunArgs
+	versionStr string
 }

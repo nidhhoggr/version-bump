@@ -12,8 +12,6 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-var GhRepoName = "joe-at-startupmedia/version-bump"
-
 func (b *Bump) Run(ra *RunArgs) error {
 	// check for an update in parallel
 	updateVersion := make(chan string, 1)
