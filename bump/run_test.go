@@ -1,7 +1,6 @@
 package bump_test
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"github.com/go-git/go-git/v5/config"
@@ -13,8 +12,6 @@ import (
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/mock"
-	"io"
-	"net/http"
 	"path"
 	"testing"
 
@@ -184,79 +181,64 @@ func TestBumpRun_FailingUrl(t *testing.T) {
 	a.ErrorContains(err, "status code was not success: 404")
 }
 
-type ReleaseGetterMock struct{}
+const nonExistentReleaseUrl = "https://api.github.com/repos/nonexistent-user/nonexistent-package/releases/latest"
 
-var rgMockScenarios = 0
-
-func (r *ReleaseGetterMock) Get(_ string) (*http.Response, error) {
-	rgMockScenarios++
-	switch rgMockScenarios {
-	case 1:
-		return nil, errors.New("mock scenario 1 with error")
-	case 2:
-		return &http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader([]byte(`{"invalid_json":`))),
-		}, nil
-	case 3:
-		return &http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader([]byte(`{"tag_name_wrong":""}`))),
-		}, nil
-	case 4:
-		return &http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader([]byte(`{"tag_name":"v4.0.0"}`))),
-		}, nil
-	}
-
-	return nil, nil
-}
-
-func TestBumpRun_AGetterHasError(t *testing.T) {
+func TestBumpRun_GetterHasError(t *testing.T) {
 	a := assert.New(t)
 
-	bump.ReleaseGetter = new(ReleaseGetterMock)
+	rg := new(mocks.ReleaseGetterMock)
+	rg.On("Get", nonExistentReleaseUrl).Return(0, "", errors.New("mock scenario 1 with error"))
+	bump.ReleaseGetter = rg
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
 		PreReleaseType: version.NotAPreRelease,
 	})
 	a.ErrorContains(err, "mock scenario 1 with error")
+	rg.AssertExpectations(t)
 }
 
-func TestBumpRun_BGetterHasJunkJson(t *testing.T) {
+func TestBumpRun_GetterHasJunkJson(t *testing.T) {
 	a := assert.New(t)
 
-	bump.ReleaseGetter = new(ReleaseGetterMock)
+	rg := new(mocks.ReleaseGetterMock)
+	rg.On("Get", nonExistentReleaseUrl).Return(200, "{\"invalid_json\":", nil)
+	bump.ReleaseGetter = rg
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
 		PreReleaseType: version.NotAPreRelease,
 	})
 	a.ErrorContains(err, "unexpected EOF")
+	rg.AssertExpectations(t)
 }
 
-func TestBumpRun_CGetterHasNoTagName(t *testing.T) {
+func TestBumpRun_GetterHasNoTagName(t *testing.T) {
 	a := assert.New(t)
 
-	bump.ReleaseGetter = new(ReleaseGetterMock)
+	rg := new(mocks.ReleaseGetterMock)
+	rg.On("Get", nonExistentReleaseUrl).Return(200, "{\"tag_name_wrong\":\"\"}", nil)
+	bump.ReleaseGetter = rg
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
 		PreReleaseType: version.NotAPreRelease,
 	})
 	a.ErrorContains(err, "tag name from request was empty")
+	rg.AssertExpectations(t)
 }
 
-func TestBumpRun_DGetterShouldPresentNewVersion(t *testing.T) {
+func TestBumpRun_GetterShouldPresentNewVersion(t *testing.T) {
 	a := assert.New(t)
 
-	bump.ReleaseGetter = new(ReleaseGetterMock)
+	rg := new(mocks.ReleaseGetterMock)
+	rg.On("Get", nonExistentReleaseUrl).Return(200, "{\"tag_name\":\"v4.0.0\"}", nil)
+	bump.ReleaseGetter = rg
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
 		PreReleaseType: version.NotAPreRelease,
 	})
 	a.Empty(err)
+	rg.AssertExpectations(t)
 }

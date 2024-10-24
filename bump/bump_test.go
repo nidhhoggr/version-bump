@@ -2,7 +2,6 @@ package bump_test
 
 import (
 	"fmt"
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/docker"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
@@ -1045,34 +1044,20 @@ func TestBump_ConfirmationDenied(t *testing.T) {
 	a.ErrorContains(err, "0 files updated")
 }
 
-type ConfigParserMock struct {
-	Config *config.Config
-}
-
-func (cp *ConfigParserMock) SetConfig(config *config.Config) {
-	cp.Config = config
-}
-
-func (cp *ConfigParserMock) GetSectionOption(section string, option string) string {
-	switch section {
-	case "commit":
-		if option == "gpgsign" {
-			return "true"
-		}
-	case "user":
-		if option == "signingkey" {
-			return "ACB2CCCDA93C90BF"
-		}
-	}
-	return ""
+func GitConfigParserMockScenarioOne() *mocks.GitConfigParserMock {
+	cpm := new(mocks.GitConfigParserMock)
+	cpm.On("GetSectionOption", "commit", "gpgsign").Return("true")
+	cpm.On("GetSectionOption", "user", "signingkey").Return("ACB2CCCDA93C90BF")
+	return cpm
 }
 
 func TestBump_PassphraseError(t *testing.T) {
 	a := assert.New(t)
 
 	testSuite := testSuites["Go - Single Constant #2"]
-
-	bump.GitConfigParser = new(ConfigParserMock)
+	gcp := GitConfigParserMockScenarioOne()
+	defer gcp.AssertExpectations(t)
+	bump.GitConfigParser = gcp
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
@@ -1089,8 +1074,9 @@ func TestBump_PassphraseGetSigningKeyError(t *testing.T) {
 	a := assert.New(t)
 
 	testSuite := testSuites["Go - Single Constant #2"]
-
-	bump.GitConfigParser = new(ConfigParserMock)
+	gcp := GitConfigParserMockScenarioOne()
+	defer gcp.AssertExpectations(t)
+	bump.GitConfigParser = gcp
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
@@ -1102,19 +1088,18 @@ func TestBump_PassphraseGetSigningKeyError(t *testing.T) {
 	a.ErrorContains(err, "could not validate gpg signing key")
 }
 
-type EntityAccessorMockScenarioOne struct{}
-
-func (ea *EntityAccessorMockScenarioOne) GetEntity(_ string, _ string) (*openpgp.Entity, error) {
-	return nil, errors.New("gpg_entity_error")
-}
-
 func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
 	a := assert.New(t)
 
 	testSuite := testSuites["Go - Single Constant #2"]
 
-	bump.GitConfigParser = new(ConfigParserMock)
-	bump.GpgEntityAccessor = new(EntityAccessorMockScenarioOne)
+	gcp := GitConfigParserMockScenarioOne()
+	defer gcp.AssertExpectations(t)
+	bump.GitConfigParser = gcp
+	gea := new(mocks.GpgEntityAccessorMock)
+	defer gea.AssertExpectations(t)
+	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(errors.New("gpg_entity_error"))
+	bump.GpgEntityAccessor = gea
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
@@ -1127,19 +1112,18 @@ func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
 	a.ErrorContains(err, "could not validate gpg signing key")
 }
 
-type EntityAccessorMockScenarioTwo struct{}
-
-func (ea *EntityAccessorMockScenarioTwo) GetEntity(_ string, _ string) (*openpgp.Entity, error) {
-	return nil, nil
-}
-
 func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
 	a := assert.New(t)
 
 	testSuite := testSuites["Go - Single Constant #2"]
 
-	bump.GitConfigParser = new(ConfigParserMock)
-	bump.GpgEntityAccessor = new(EntityAccessorMockScenarioTwo)
+	gcp := GitConfigParserMockScenarioOne()
+	defer gcp.AssertExpectations(t)
+	bump.GitConfigParser = gcp
+	gea := new(mocks.GpgEntityAccessorMock)
+	defer gea.AssertExpectations(t)
+	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(nil)
+	bump.GpgEntityAccessor = gea
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
