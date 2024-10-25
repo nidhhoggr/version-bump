@@ -12,9 +12,9 @@ type GpgEntityAccessor struct {
 	mock.Mock
 }
 
-// GetEntity provides a mock function with given fields: keyPassphrase, signingKey
-func (_m *GpgEntityAccessor) GetEntity(keyPassphrase string, signingKey string) (*openpgp.Entity, error) {
-	ret := _m.Called(keyPassphrase, signingKey)
+// GetEntity provides a mock function with given fields: _a0, _a1
+func (_m *GpgEntityAccessor) GetEntity(_a0 string, _a1 string) (*openpgp.Entity, error) {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetEntity")
@@ -23,10 +23,10 @@ func (_m *GpgEntityAccessor) GetEntity(keyPassphrase string, signingKey string) 
 	var r0 *openpgp.Entity
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string, string) (*openpgp.Entity, error)); ok {
-		return rf(keyPassphrase, signingKey)
+		return rf(_a0, _a1)
 	}
 	if rf, ok := ret.Get(0).(func(string, string) *openpgp.Entity); ok {
-		r0 = rf(keyPassphrase, signingKey)
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*openpgp.Entity)
@@ -34,7 +34,7 @@ func (_m *GpgEntityAccessor) GetEntity(keyPassphrase string, signingKey string) 
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(keyPassphrase, signingKey)
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}

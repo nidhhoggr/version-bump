@@ -92,6 +92,7 @@ mockery: ## generates the mocks
 	mockery --output mocks --name WorktreeInterface --dir git --filename git_worktree.go --structname Worktree
 	mockery --output mocks --name RepositoryInterface --dir git --filename git_repositrory.go --structname Repository
 	mockery --output mocks --name EntityAccessorInterface --dir gpg --filename gpg_entity_accessor.go --structname GpgEntityAccessor
+	mockery --output mocks --name EntityReaderInterface --dir gpg --filename gpg_entity_reader.go --structname GpgEntityReader
 	mockery --output mocks --name ReleaseGetterInterface --dir bump --filename release_getter.go --structname ReleaseGetter
 
 define print-target

@@ -1212,7 +1212,7 @@ func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*
 	m1 := new(mocks.Repository)
 	m2 := new(mocks.Worktree)
 
-	gitConfig := &config.Config{}
+	gitConfig := new(config.Config)
 	gitConfig.User.Name = git.Username
 	gitConfig.User.Email = git.Email
 

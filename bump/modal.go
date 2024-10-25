@@ -16,6 +16,7 @@ const (
 var GhRepoName = "joe-at-startupmedia/version-bump"
 var GitConfigParser git.ConfigParserInterface
 var GpgEntityAccessor gpg.EntityAccessorInterface
+var GpgEntityReader gpg.EntityReaderInterface
 var ReleaseGetter ReleaseGetterInterface
 
 type ReleaseGetterInterface interface {

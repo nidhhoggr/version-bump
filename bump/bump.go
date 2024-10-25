@@ -27,7 +27,9 @@ import (
 
 func init() {
 	GitConfigParser = new(git.ConfigParser)
-	GpgEntityAccessor = new(gpg.EntityAccessor)
+	GpgEntityAccessor = &gpg.EntityAccessor{
+		Reader: new(gpg.EntityReader),
+	}
 }
 
 func New(dir string) (*Bump, error) {

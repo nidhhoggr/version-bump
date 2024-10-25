@@ -7,19 +7,33 @@ import (
 )
 
 type EntityAccessorInterface interface {
-	GetEntity(keyPassphrase string, signingKey string) (*openpgp.Entity, error)
+	GetEntity(string, string) (*openpgp.Entity, error)
 }
 
-type EntityAccessor struct{}
+type EntityReaderInterface interface {
+	ReadArmoredKeyRing(string) (openpgp.EntityList, error)
+	GetPrivateKey(string, string) (string, error)
+}
+
+type EntityAccessor struct {
+	Reader EntityReaderInterface
+}
+
+type EntityReader struct{}
 
 func (ea *EntityAccessor) GetEntity(keyPassphrase string, signingKey string) (*openpgp.Entity, error) {
-	privateKeyString, err := getPrivateKey(keyPassphrase, signingKey)
+	privateKeyString, err := ea.Reader.GetPrivateKey(keyPassphrase, signingKey)
 	if err != nil {
 		return nil, err
 	}
-	es, err := openpgp.ReadArmoredKeyRing(strings.NewReader(privateKeyString))
-	if err != nil {
-		return nil, err
-	}
-	return es[0], nil
+	es, err := ea.Reader.ReadArmoredKeyRing(privateKeyString)
+	return es[0], err
+}
+
+func (ea *EntityReader) ReadArmoredKeyRing(privateKey string) (openpgp.EntityList, error) {
+	return openpgp.ReadArmoredKeyRing(strings.NewReader(privateKey))
+}
+
+func (ea *EntityReader) GetPrivateKey(keyPassphrase string, signingKey string) (string, error) {
+	return getPrivateKey(keyPassphrase, signingKey)
 }
