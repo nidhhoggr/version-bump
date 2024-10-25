@@ -226,3 +226,9 @@ func TestGit_ErrorGettingInstanceFromRepoFromWorktree(t *testing.T) {
 	_, err := git.GetInstanceFromRepo(m1)
 	assert.ErrorContains(t, err, "error retrieving git worktree: test_mock_worktree_error")
 }
+
+func TestGit_LoadConfig(t *testing.T) {
+	cp := new(git.ConfigParser)
+	_, err := cp.LoadConfig(config.GlobalScope)
+	assert.Empty(t, err)
+}
