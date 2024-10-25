@@ -2,9 +2,12 @@ package version_test
 
 import (
 	"github.com/Masterminds/semver/v3"
+	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -452,4 +455,18 @@ func TestBump_FromPreReleaseString(t *testing.T) {
 	a.Equal(version.FromPreReleaseTypeString("beta"), version.BetaPreRelease)
 	a.Equal(version.FromPreReleaseTypeString("rc"), version.ReleaseCandidate)
 	a.Equal(version.FromPreReleaseTypeString(""), version.NotAPreRelease)
+}
+
+func TestVersion_PreReleaseErrorGettingPreReleaseTag(t *testing.T) {
+	a := assert.New(t)
+	versionStr := "v1.0.0-alpha.1"
+	v, _ := version.New(versionStr)
+	sm := new(mocks.Semver)
+	versionString := strings.TrimLeft(versionStr, "vV")
+	semverPtr, err := semver.StrictNewVersion(versionString)
+	sm.On("SetPrerelease", mock.Anything).Return(*semverPtr, err)
+	sm.On("Prerelease").Return("-%43")
+	v.SetSemverPtr(sm)
+	err = v.PreRelease(version.AlphaPreRelease, "")
+	a.ErrorContains(err, "Could not parse pre-release tag: prerelease contains invalid value: -%43")
 }

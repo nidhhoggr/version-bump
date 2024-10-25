@@ -43,15 +43,6 @@ func FromPreReleaseTypeString(s string) PreReleaseType {
 	return NotAPreRelease
 }
 
-func (v *Version) GetPreRelease() (*PreRelease, error) {
-	preReleaseStr := v.GetPreReleaseString()
-	preRelease, err := parsePreRelease(preReleaseStr)
-	if err != nil {
-		return nil, errors.WithMessage(err, "Could not parse pre-release tag")
-	}
-	return preRelease, nil
-}
-
 func (p *PreRelease) Length() int {
 	return p.segmentLen
 }
@@ -88,6 +79,17 @@ func segmentType(segment interface{}) string {
 	return fmt.Sprintf("%s", reflect.ValueOf(segment).Kind())
 }
 
+const (
+	num     string = "0123456789"
+	allowed string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-" + num
+)
+
+func containsOnly(s string, comp string) bool {
+	return strings.IndexFunc(s, func(r rune) bool {
+		return !strings.ContainsRune(comp, r)
+	}) == -1
+}
+
 func parsePreRelease(str string) (*PreRelease, error) {
 
 	if len(str) == 0 {
@@ -99,6 +101,10 @@ func parsePreRelease(str string) (*PreRelease, error) {
 	preReleaseTags := make([]interface{}, 0, len(parts)+1)
 
 	for _, part := range parts {
+
+		if !containsOnly(part, allowed) {
+			return nil, fmt.Errorf("prerelease contains invalid value: %s", part)
+		}
 
 		parsedPart, err := strconv.ParseInt(part, 10, 64)
 

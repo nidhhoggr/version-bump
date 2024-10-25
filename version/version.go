@@ -188,6 +188,15 @@ func (v *Version) String() string {
 	return v.semverPtr.String()
 }
 
+func (v *Version) GetPreRelease() (*PreRelease, error) {
+	preReleaseStr := v.GetPreReleaseString()
+	preRelease, err := parsePreRelease(preReleaseStr)
+	if err != nil {
+		return nil, errors.WithMessage(err, "Could not parse pre-release tag")
+	}
+	return preRelease, nil
+}
+
 func (v *Version) GetPreReleaseString() string {
 	return v.semverPtr.Prerelease()
 }
