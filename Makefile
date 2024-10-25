@@ -94,6 +94,7 @@ mockery: ## generates the mocks
 	mockery --output mocks --name EntityAccessorInterface --dir gpg --filename gpg_entity_accessor.go --structname GpgEntityAccessor
 	mockery --output mocks --name EntityReaderInterface --dir gpg --filename gpg_entity_reader.go --structname GpgEntityReader
 	mockery --output mocks --name ReleaseGetterInterface --dir bump --filename release_getter.go --structname ReleaseGetter
+	mockery --output mocks --name SemverInterface --dir version --filename semver.go --structname Semver
 
 define print-target
     @printf "Executing target: \033[36m$@\033[0m\n"
