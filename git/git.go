@@ -22,30 +22,38 @@ const (
 )
 
 type Instance struct {
-	Repository Repository
-	Worktree   Worktree
+	Repository RepositoryInterface
+	Worktree   WorktreeInterface
 	Config     *config.Config
 }
 
-type Repository interface {
+type RepositoryInterface interface {
 	Worktree() (*git.Worktree, error)
 	CreateTag(string, plumbing.Hash, *git.CreateTagOptions) (*plumbing.Reference, error)
+	ConfigScoped(config.Scope) (*config.Config, error)
 }
 
-type Worktree interface {
+type WorktreeInterface interface {
 	Add(string) (plumbing.Hash, error)
 	Commit(string, *git.CommitOptions) (plumbing.Hash, error)
 }
 
 func New(meta billy.Filesystem, data billy.Filesystem) (*Instance, error) {
-	repo, err := git.Open(
-		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
-		data,
-	)
+	repo, err := GetRepoFromFileSystem(meta, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "error opening repository")
 	}
+	return GetInstanceFromRepo(repo)
+}
 
+func GetRepoFromFileSystem(meta billy.Filesystem, data billy.Filesystem) (*git.Repository, error) {
+	return git.Open(
+		filesystem.NewStorage(meta, cache.NewObjectLRU(cache.DefaultMaxSize)),
+		data,
+	)
+}
+
+func GetInstanceFromRepo(repo *git.Repository) (*Instance, error) {
 	gitConfig, err := repo.ConfigScoped(config.GlobalScope)
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving global git configuration")

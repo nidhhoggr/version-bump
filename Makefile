@@ -89,6 +89,15 @@ install: ## install the binary in the systems executable path
 	$(call print-target)
 	cp -R bin/* /usr/local/bin/
 
+.PHONY: mockery
+mockery: ## generates the mocks	
+	$(call print-target)
+	mockery --output mocks --name ConfigParserInterface --dir git --filename git_config_parser.go --structname GitConfigParser
+	mockery --output mocks --name WorktreeInterface --dir git --filename git_worktree.go --structname Worktree
+	mockery --output mocks --name RepositoryInterface --dir git --filename git_repositrory.go --structname Repository
+	mockery --output mocks --name EntityAccessorInterface --dir gpg --filename gpg_entity_accessor.go --structname GpgEntityAccessor
+	mockery --output mocks --name ReleaseGetterInterface --dir bump --filename release_getter.go --structname ReleaseGetter
+
 define print-target
     @printf "Executing target: \033[36m$@\033[0m\n"
 endef

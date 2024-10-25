@@ -10,5 +10,6 @@ import (
 	_ "github.com/client9/misspell/cmd/misspell"
 	_ "github.com/dkorunic/betteralign/cmd/betteralign"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	_ "github.com/vektra/mockery/v2"
 	_ "golang.org/x/vuln/cmd/govulncheck"
 )

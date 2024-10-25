@@ -1044,8 +1044,9 @@ func TestBump_ConfirmationDenied(t *testing.T) {
 	a.ErrorContains(err, "0 files updated")
 }
 
-func GitConfigParserMockScenarioOne() *mocks.GitConfigParserMock {
-	cpm := new(mocks.GitConfigParserMock)
+func GitConfigParserMockScenarioOne() *mocks.GitConfigParser {
+	cpm := new(mocks.GitConfigParser)
+	cpm.On("SetConfig", mock.AnythingOfType("*config.Config")).Return(nil)
 	cpm.On("GetSectionOption", "commit", "gpgsign").Return("true")
 	cpm.On("GetSectionOption", "user", "signingkey").Return("ACB2CCCDA93C90BF")
 	return cpm
@@ -1096,9 +1097,9 @@ func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
 	gcp := GitConfigParserMockScenarioOne()
 	defer gcp.AssertExpectations(t)
 	bump.GitConfigParser = gcp
-	gea := new(mocks.GpgEntityAccessorMock)
+	gea := new(mocks.GpgEntityAccessor)
 	defer gea.AssertExpectations(t)
-	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(errors.New("gpg_entity_error"))
+	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(nil, errors.New("gpg_entity_error"))
 	bump.GpgEntityAccessor = gea
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
@@ -1120,9 +1121,9 @@ func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
 	gcp := GitConfigParserMockScenarioOne()
 	defer gcp.AssertExpectations(t)
 	bump.GitConfigParser = gcp
-	gea := new(mocks.GpgEntityAccessorMock)
+	gea := new(mocks.GpgEntityAccessor)
 	defer gea.AssertExpectations(t)
-	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(nil)
+	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(nil, nil)
 	bump.GpgEntityAccessor = gea
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
