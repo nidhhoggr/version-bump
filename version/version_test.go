@@ -470,3 +470,40 @@ func TestVersion_PreReleaseErrorGettingPreReleaseTag(t *testing.T) {
 	err = v.PreRelease(version.AlphaPreRelease, "")
 	a.ErrorContains(err, "Could not parse pre-release tag: prerelease contains invalid value: -%43")
 }
+
+func TestVersion_PreReleaseErrorGettingPreReleaseTagTwo(t *testing.T) {
+	a := assert.New(t)
+	versionStr := "v1.0.0-alpha.1"
+	v, _ := version.New(versionStr)
+	sm := new(mocks.Semver)
+	versionString := strings.TrimLeft(versionStr, "vV")
+	semverPtr, err := semver.StrictNewVersion(versionString)
+	sm.On("SetPrerelease", mock.Anything).Return(*semverPtr, err)
+	sm.On("Prerelease").Return("-%43")
+	v.SetSemverPtr(sm)
+	err = v.IncrementPreRelease()
+	a.ErrorContains(err, "error incrementing: could not get pre-release: Could not parse pre-release tag: prerelease contains invalid value: -%43")
+}
+
+func TestVersion_EmptyPtrReturnsEmptyString(t *testing.T) {
+	a := assert.New(t)
+	versionStr := "v1.0.0-alpha.1"
+	v, _ := version.New(versionStr)
+	v.SetSemverPtr(nil)
+	a.Equal(v.String(), "")
+}
+
+//func TestVersion_PreReleaseErrorGettingPreReleaseTagThree(t *testing.T) {
+//	a := assert.New(t)
+//	versionStr := "v1.0.0"
+//	v, _ := version.New(versionStr)
+//	sm := new(mocks.Semver)
+//	versionString := strings.TrimLeft(versionStr, "vV")
+//	semverPtr, err := semver.StrictNewVersion(versionString + "-alpha.1")
+//	sm.On("SetPrerelease", mock.Anything).Return(*semverPtr, err)
+//	sm.On("Prerelease").Return("").Once()
+//	sm.On("Prerelease").Return("-%43").Once()
+//	v.SetSemverPtr(sm)
+//	err = v.PreRelease(version.AlphaPreRelease, "")
+//	a.Nil(err)
+//}

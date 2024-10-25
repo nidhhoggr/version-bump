@@ -229,7 +229,7 @@ func (v *Version) IncrementPreRelease() error {
 	if v.IsPreRelease() {
 		preRelease, err := v.GetPreRelease()
 		if err != nil {
-			return errors.Wrap(err, "could not get pre-release")
+			return errors.Wrap(err, "error incrementing: could not get pre-release")
 		}
 		preRelease.Increment()
 		if preRelease.Length() > 0 {
