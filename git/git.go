@@ -53,7 +53,7 @@ func GetRepoFromFileSystem(meta billy.Filesystem, data billy.Filesystem) (*git.R
 	)
 }
 
-func GetInstanceFromRepo(repo *git.Repository) (*Instance, error) {
+func GetInstanceFromRepo(repo RepositoryInterface) (*Instance, error) {
 	gitConfig, err := repo.ConfigScoped(config.GlobalScope)
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving global git configuration")
@@ -121,7 +121,7 @@ func (i *Instance) GetSigningKeyFromConfig(configParser ConfigParserInterface) (
 	shouldNotSign, gpgVerificationKey := getSigningKeyFromConfig(configParser)
 
 	if !shouldNotSign && gpgVerificationKey == "" {
-		gitConfig, err := config.LoadConfig(config.GlobalScope)
+		gitConfig, err := configParser.LoadConfig(config.GlobalScope)
 		if err != nil {
 			return "", errors.Wrap(err, "error loading git configuration from global scope")
 		}

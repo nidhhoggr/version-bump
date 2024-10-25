@@ -1099,7 +1099,7 @@ func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
 	bump.GitConfigParser = gcp
 	gea := new(mocks.GpgEntityAccessor)
 	defer gea.AssertExpectations(t)
-	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(nil, errors.New("gpg_entity_error"))
+	gea.On("GetEntity", "", mock.Anything).Return(nil, errors.New("gpg_entity_error"))
 	bump.GpgEntityAccessor = gea
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
@@ -1123,7 +1123,7 @@ func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
 	bump.GitConfigParser = gcp
 	gea := new(mocks.GpgEntityAccessor)
 	defer gea.AssertExpectations(t)
-	gea.On("GetEntity", "", "ACB2CCCDA93C90BF").Return(nil, nil)
+	gea.On("GetEntity", "", mock.Anything).Return(nil, nil)
 	bump.GpgEntityAccessor = gea
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
@@ -1135,6 +1135,76 @@ func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
 	})
 	//currently we continue through the loop instead of returning an error
 	a.Empty(err)
+}
+
+func TestBump_PassphraseGetShouldNotSign(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	gcp := new(mocks.GitConfigParser)
+	defer gcp.AssertExpectations(t)
+	gcp.On("SetConfig", mock.AnythingOfType("*config.Config")).Return(nil)
+	gcp.On("GetSectionOption", "commit", "gpgsign").Return("false")
+	bump.GitConfigParser = gcp
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+	})
+	//currently we continue through the loop instead of returning an error
+	a.Empty(err)
+}
+
+func TestBump_PassphraseGetShouldNotSignLoadConfigFails(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	gcp := new(mocks.GitConfigParser)
+	defer gcp.AssertExpectations(t)
+	gcp.On("SetConfig", mock.AnythingOfType("*config.Config")).Return(nil)
+	gcp.On("GetSectionOption", "commit", "gpgsign").Return("true")
+	gcp.On("GetSectionOption", "user", "signingkey").Return("")
+	gcp.On("LoadConfig", config.GlobalScope).Return(nil, errors.New("mock_test_load_config_error"))
+	bump.GitConfigParser = gcp
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+	})
+	//currently we continue through the loop instead of returning an error
+	a.ErrorContains(err, "error loading git configuration from global scope: mock_test_load_config_error")
+}
+
+func TestBump_PassphraseGetShouldNotSignLoadConfigPasses(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	gcp := new(mocks.GitConfigParser)
+	defer gcp.AssertExpectations(t)
+	gcp.On("SetConfig", mock.AnythingOfType("*config.Config")).Return(nil)
+	gcp.On("GetSectionOption", "commit", "gpgsign").Return("true")
+	gcp.On("GetSectionOption", "user", "signingkey").Return("")
+	gcp.On("LoadConfig", config.GlobalScope).Return(config.NewConfig(), nil)
+	bump.GitConfigParser = gcp
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+	})
+	//currently we continue through the loop instead of returning an error
+	a.Nil(err)
 }
 
 func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {

@@ -2,10 +2,9 @@ package git_test
 
 import (
 	"fmt"
+	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/joe-at-startupmedia/version-bump/v2/git"
-
-	gogit "github.com/go-git/go-git/v5"
 	"testing"
 	"time"
 
@@ -211,4 +210,19 @@ func TestGit_ConfigParser(t *testing.T) {
 
 	missing := cp.GetSectionOption("nonexistent", "gpgsign")
 	a.Equal("", missing)
+}
+
+func TestGit_ErrorGettingInstanceFromRepoFromConfigScoped(t *testing.T) {
+	m1 := new(mocks.Repository)
+	m1.On("ConfigScoped", config.GlobalScope).Return(nil, errors.New("test_mock_config_getter_error"))
+	_, err := git.GetInstanceFromRepo(m1)
+	assert.ErrorContains(t, err, "error retrieving global git configuration: test_mock_config_getter_error")
+}
+
+func TestGit_ErrorGettingInstanceFromRepoFromWorktree(t *testing.T) {
+	m1 := new(mocks.Repository)
+	m1.On("ConfigScoped", config.GlobalScope).Return(config.NewConfig(), nil)
+	m1.On("Worktree").Return(nil, errors.New("test_mock_worktree_error"))
+	_, err := git.GetInstanceFromRepo(m1)
+	assert.ErrorContains(t, err, "error retrieving git worktree: test_mock_worktree_error")
 }

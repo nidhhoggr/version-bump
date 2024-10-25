@@ -31,6 +31,36 @@ func (_m *GitConfigParser) GetSectionOption(_a0 string, _a1 string) string {
 	return r0
 }
 
+// LoadConfig provides a mock function with given fields: _a0
+func (_m *GitConfigParser) LoadConfig(_a0 config.Scope) (*config.Config, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LoadConfig")
+	}
+
+	var r0 *config.Config
+	var r1 error
+	if rf, ok := ret.Get(0).(func(config.Scope) (*config.Config, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(config.Scope) *config.Config); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*config.Config)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(config.Scope) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SetConfig provides a mock function with given fields: _a0
 func (_m *GitConfigParser) SetConfig(_a0 *config.Config) {
 	_m.Called(_a0)
