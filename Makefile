@@ -2,11 +2,9 @@ GO ?= go
 GOFMT ?= gofmt "-s"
 GOFILES := $(shell find . -name "*.go")
 PACKAGES ?= $(shell $(GO) list ./...)
-PROJECT_PATH=$(shell cd "$(dirname "$0")"; pwd)
 TEST_REGEX := $(or $(TEST_REGEX),"Test")
-DEFAULT_TEST_PACKAGES := "./..."
+DEFAULT_TEST_PACKAGES := "v2/bump,v2/git,v2/gpg,v2/langs,v2/version"
 TEST_PACKAGES := $(or $(TEST_PACKAGES),$(DEFAULT_TEST_PACKAGES))
-COVERAGE_OMISSION := '!/(v2\/cmd|v2\/console|v2\/gpg|v2\/mocks)/'
 
 all: build
 
@@ -61,14 +59,12 @@ build: mod fmt tools vuln misspell betteralign
 .PHONY: test
 test: build ## run the tests
 	$(call print-target)
-	PROJECT_PATH=$(PROJECT_PATH) $(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 ./...
+	$(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 ./...
 
 .PHONY: test_cover
 test_cover: build ## run the tests and generate a coverage report
 	$(call print-target)
-	PROJECT_PATH=$(PROJECT_PATH) $(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 -coverprofile=coverage.txt -coverpkg=$(TEST_PACKAGES) ./...
-	awk $(COVERAGE_OMISSION) coverage.txt > coverage.out
-	rm -f coverage.txt
+	$(GO) test $(BUILD_FLAGS) -v -run $(TEST_REGEX) -p 1 -coverprofile=coverage.out -coverpkg=$(TEST_PACKAGES) ./...
 
 .PHONY: codecov
 codecov: ## process the coverage report and upload it
