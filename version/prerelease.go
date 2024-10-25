@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+type PreRelease struct {
+	Segments   []interface{}
+	segmentLen int
+}
+
 type PreReleaseType int
 
 const (
@@ -36,11 +41,6 @@ func FromPreReleaseTypeString(s string) PreReleaseType {
 		return ReleaseCandidate
 	}
 	return NotAPreRelease
-}
-
-type PreRelease struct {
-	Segments   []interface{}
-	segmentLen int
 }
 
 func (v *Version) GetPreRelease() (*PreRelease, error) {

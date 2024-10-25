@@ -15,6 +15,21 @@ type Type int
 
 var TypeStrings = []string{"major", "minor", "patch"}
 
+type SemverInterface interface {
+	IncMajor() semver.Version
+	IncMinor() semver.Version
+	IncPatch() semver.Version
+	Prerelease() string
+	Metadata() string
+	SetPrerelease(string) (semver.Version, error)
+	SetMetadata(string) (semver.Version, error)
+	String() string
+}
+
+type Version struct {
+	semverPtr SemverInterface
+}
+
 const (
 	NotAVersion Type = iota
 	Major
@@ -34,11 +49,7 @@ func FromString(s string) Type {
 	return NotAVersion
 }
 
-type Version struct {
-	semverPtr *semver.Version
-}
-
-func (v *Version) SetSemverPtr(semverPtr *semver.Version) {
+func (v *Version) SetSemverPtr(semverPtr SemverInterface) {
 	v.semverPtr = semverPtr
 }
 
@@ -46,10 +57,14 @@ func New(versionString string) (*Version, error) {
 	versionString = strings.TrimLeft(versionString, "vV")
 	//fmt.Printf("Get version from string %s \n", versionString)
 	semverPtr, err := semver.StrictNewVersion(versionString)
+	if err != nil {
+		return nil, err
+	}
 	//fmt.Printf("Got version from string %s \n", semverPtr)
+
 	return &Version{
-		semverPtr,
-	}, err
+		semverPtr: semverPtr,
+	}, nil
 }
 
 func NewFromRegex(versionString string, regex *regexp.Regexp) (*Version, error) {

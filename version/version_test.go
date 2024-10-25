@@ -21,7 +21,7 @@ func TestVersion_Construction(t *testing.T) {
 
 	v, err = version.New("v1.0")
 	a.ErrorContains(err, "Invalid Semantic Version")
-	a.Empty(v.String())
+	a.Nil(v)
 
 	v, err = version.New("v1.0.1-alpha")
 	a.Empty(err)
