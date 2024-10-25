@@ -46,8 +46,8 @@ type RunArgs struct {
 }
 
 type versionBumpData struct {
-	bump       *Bump
-	versionMap *map[string]int
-	runArgs    *RunArgs
-	versionStr string
+	bump             *Bump
+	versionsDetected *map[string]int
+	runArgs          *RunArgs
+	versionStr       string
 }

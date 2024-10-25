@@ -109,12 +109,12 @@ func (b *Bump) withConfiguration(dirs []string, enabledByDefault bool) *Bump {
 func (b *Bump) Bump(ra *RunArgs) error {
 	console.IncrementProjectVersion()
 
-	versionMap := make(map[string]int)
+	versionsDetected := make(map[string]int)
 
 	vbd := &versionBumpData{
-		bump:       b,
-		versionMap: &versionMap,
-		runArgs:    ra,
+		bump:             b,
+		versionsDetected: &versionsDetected,
+		runArgs:          ra,
 	}
 
 	files := make([]string, 0)
@@ -131,9 +131,9 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		}
 	}
 
-	if len(*vbd.versionMap) > 1 {
+	if len(*vbd.versionsDetected) > 1 {
 		return errors.New("inconsistent versioning")
-	} else if len(*vbd.versionMap) == 0 {
+	} else if len(*vbd.versionsDetected) == 0 {
 		return errors.New("0 files updated")
 	}
 
@@ -276,9 +276,8 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 				}
 			}
 
-			(*vbd.versionMap)[oldVersionStr]++
+			(*vbd.versionsDetected)[oldVersionStr]++
 
-			// set future version
 			if langSettings.Regex != nil {
 				newContent := make([]string, 0)
 
