@@ -3,7 +3,7 @@ GOFMT ?= gofmt "-s"
 GOFILES := $(shell find . -name "*.go")
 PACKAGES ?= $(shell $(GO) list ./...)
 TEST_REGEX := $(or $(TEST_REGEX),"Test")
-DEFAULT_TEST_PACKAGES := "v2/bump,v2/git,v2/gpg,v2/langs,v2/version"
+DEFAULT_TEST_PACKAGES := $(shell  $(GO) list ./... | awk '!/(cmd|mocks|console)/' | tr "\n" ",")
 TEST_PACKAGES := $(or $(TEST_PACKAGES),$(DEFAULT_TEST_PACKAGES))
 
 all: build
