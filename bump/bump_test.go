@@ -318,8 +318,8 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "repository"="https://github.com/anton-yurchenko/git-release"
-LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
+LABEL "repository"="https://github.com/none/none"
+LABEL "maintainer"="None None <none.none@gmail.com>"
 LABEL org.opencontainers.image.version=1.2.3
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
@@ -360,8 +360,8 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "repository"="https://github.com/anton-yurchenko/git-release"
-LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
+LABEL "repository"="https://github.com/none/none"
+LABEL "maintainer"="None None <none.none@gmail.com>"
 LABEL "org.opencontainers.image.version"="v1.2.3"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
@@ -402,8 +402,8 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
-LABEL "repository"="https://github.com/anton-yurchenko/git-release" "org.opencontainers.image.version"="V3.4.7"
+LABEL "repository"="https://github.com/none/none" "org.opencontainers.image.version"="V3.4.7"
+LABEL "maintainer"="None None <none.none@gmail.com>"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY LICENSE.md /LICENSE.md
@@ -443,8 +443,8 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
-LABEL "repository"="https://github.com/anton-yurchenko/git-release" org.opencontainers.image.version="1.2.3"
+LABEL "repository"="https://github.com/none/none"
+LABEL "maintainer"="None None <none.none@gmail.com>" org.opencontainers.image.version="1.2.3"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY LICENSE.md /LICENSE.md
@@ -484,9 +484,9 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "repository"="https://github.com/anton-yurchenko/git-release" \
+LABEL "repository"="https://github.com/none/none" \
 	"org.opencontainers.image.version"="v1.2.3" \
-	"maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
+	"maintainer"="None None <none.none@gmail.com>"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY LICENSE.md /LICENSE.md
@@ -526,9 +526,9 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "repository"="https://github.com/anton-yurchenko/git-release" \
+LABEL "repository"="https://github.com/none/none" \
 org.opencontainers.image.version="v1.2.3" \
-	"maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
+	"maintainer"="None None <none.none@gmail.com>"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY LICENSE.md /LICENSE.md
@@ -669,24 +669,24 @@ func main() {
 							Name:                "package.json",
 							ExpectedToBeChanged: true,
 							Content: `{
-	"name": "git-release",
+	"name": "some-package",
 	"version": "1.2.3",
-	"description": "A GitHub VersionType for creating a GitHub Release with Assets and Changelog whenever a new Tag is pushed to the repository.",
+	"description": "An npm project",
 	"main": "wrapper.js",
 	"directories": {
 	  "doc": "docs"
 	},
 	"repository": {
 	  "type": "git",
-	  "url": "git+https://github.com/anton-yurchenko/git-release.git"
+	  "url": "git+https://github.com/none/none.git"
 	},
 	"keywords": [],
-	"author": "Anton Yurchenko",
+	"author": "None None",
 	"license": "MIT",
 	"bugs": {
-	  "url": "https://github.com/anton-yurchenko/git-release/issues"
+	  "url": "https://github.com/none/none/issues"
 	},
-	"homepage": "https://github.com/anton-yurchenko/git-release#readme",
+	"homepage": "https://github.com/none/none#readme",
 	"dependencies": {
 	  "@actions/core": "^1.4.0"
 	},
@@ -697,7 +697,7 @@ func main() {
 							Name:                "package-lock.json",
 							ExpectedToBeChanged: true,
 							Content: `{
-	"name": "git-release",
+	"name": "some-package",
 	"version": "1.2.3",
 	"lockfileVersion": 2,
 	"requires": true,
@@ -814,8 +814,8 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "repository"="https://github.com/anton-yurchenko/git-release"
-LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
+LABEL "repository"="https://github.com/none/none"
+LABEL "maintainer"="None None <none.none@gmail.com>"
 LABEL "org.opencontainers.image.version"="1.2.3"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
@@ -873,8 +873,8 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "repository"="https://github.com/anton-yurchenko/git-release"
-LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
+LABEL "repository"="https://github.com/none/none"
+LABEL "maintainer"="None None <none.none@gmail.com>"
 LABEL org.opencontainers.image.version 1.2.3
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
@@ -921,8 +921,8 @@ RUN groupadd -g 1000 appuser &&\
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
 FROM scratch
-LABEL "repository"="https://github.com/anton-yurchenko/git-release"
-LABEL "maintainer"="Anton Yurchenko <anton.doar@gmail.com>"
+LABEL "repository"="https://github.com/none/none"
+LABEL "maintainer"="None None <none.none@gmail.com>"
 LABEL "version"="1.2.3"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd

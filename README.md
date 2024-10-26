@@ -6,24 +6,6 @@
 [![Release](https://img.shields.io/github/v/release/joe-at-startupmedia/version-bump)](https://github.com/joe-at-startupmedia/version-bump/releases/latest)
 [![License](https://img.shields.io/github/license/joe-at-startupmedia/version-bump)](LICENSE.md)
 
-Have you ever made a mistake incrementing a project version?  
-Do you have multiple files to update the version at?  
-I was always forgetting to update a `Dockerfile` label or a version constant in `main.go` file. Inspired by `npm bump`, I wrote **version-bump**.  
-
-This application allows easily incrementing a single/multi language project [Semantic Version](https://semver.org/), committing the changes and tagging a commit.
-
-![PIC](docs/images/demo.png)
-
-## Features
-
-- Supported languages: **Go**, **Docker**, **JavaScript**
-- [Semantic Versioning](https://semver.org/) Compliant
-- Update files in multiple directories of the project at once
-- Commit and tag changes
-
-## Installation
-
-Download [latest release](https://github.com/joe-at-startupmedia/version-bump/releases/latest) and move the file to one of the directories under your `PATH` environmental variable.
 
 ## Configuration
 
@@ -39,10 +21,6 @@ But some languages are leaving that decision to a developer, thus **version-bump
 | Docker        | `org.opencontainers.image.version` label      | `Dockerfile`                          |
 | Go            | String constant named `Version`/`version`     | `*.go`                                |
 | JavaScript    | JSON `version` field                          | `package.json`, `package-lock.json`   |
-
-### Automatic
-
-Run **version-bump** in a root of the project: `version-bump [major|minor|patch]>`
 
 ### Manual
 
@@ -83,4 +61,4 @@ directories = [ 'client' ]
 ## Remarks
 
 - Versions are expected to be consistent across all files
-- In automatic mode, **version-bump** has all languages enabled
+- With the absence of a `.bump` configuration file,, **version-bump** has all languages enabled

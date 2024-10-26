@@ -22,7 +22,10 @@ var flags = &struct {
 	preReleaseTypeBeta       bool
 	preReleaseTypeRc         bool
 	interactiveMode          bool
+	autoConfirm              bool
+	disablePrompts           bool
 	preReleaseMetadataString string
+	passphrase               string
 }{}
 
 var rootCmd = &cobra.Command{
@@ -48,7 +51,10 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&flags.preReleaseTypeBeta, "beta", false, "beta prerelease")
 	rootCmd.PersistentFlags().BoolVar(&flags.preReleaseTypeRc, "rc", false, "release candidate prerelease")
 	rootCmd.PersistentFlags().BoolVar(&flags.interactiveMode, "interactive", false, "enable interactive mode")
+	rootCmd.PersistentFlags().BoolVar(&flags.autoConfirm, "auto-confirm", false, "disable confirmation prompts and automatically confirm")
+	rootCmd.PersistentFlags().BoolVar(&flags.disablePrompts, "disable-prompts", false, "disable passphrase and confirmation prompts. Caution: this will result in unsigned commits, tags and releases!")
 	rootCmd.PersistentFlags().StringVar(&flags.preReleaseMetadataString, "metadata", "", "provide metadata for the prerelease")
+	rootCmd.PersistentFlags().StringVar(&flags.passphrase, "passphrase", "", "provide gpg passphrase as a flag instead of a secure prompt. Caution!")
 	cobra.CheckErr(rootCmd.Execute())
 }
 
@@ -143,11 +149,17 @@ func runInteractiveMode() {
 }
 
 func passphrasePrompt() (string, error) {
+	if len(flags.passphrase) > 0 || flags.disablePrompts {
+		return flags.passphrase, nil
+	}
 	return prompt.New().Ask("Input your GPG passphrase:").
 		Input("", input.WithEchoMode(input.EchoNone))
 }
 
 func confirmationPrompt(currentVersion string, proposedVersion string, file string) (bool, error) {
+	if flags.autoConfirm || flags.disablePrompts {
+		return true, nil
+	}
 	s, err := prompt.New().Ask(fmt.Sprintf("continue with the following change: \n%s", console.VersionUpdate(currentVersion, proposedVersion, file))).Choose([]string{"Yes", "No"})
 	if err != nil {
 		return false, err
