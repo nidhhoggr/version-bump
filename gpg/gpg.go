@@ -32,10 +32,7 @@ func (ea *EntityAccessor) GetEntity(keyPassphrase string, signingKey string) (*o
 	}
 	key := es[0]
 	err = key.PrivateKey.Decrypt([]byte(keyPassphrase))
-	if err != nil {
-		return nil, err
-	}
-	return key, nil
+	return key, err
 }
 
 func (ea *EntityReader) ReadArmoredKeyRing(privateKey string) (openpgp.EntityList, error) {
