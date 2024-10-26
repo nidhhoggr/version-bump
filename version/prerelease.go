@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+var (
+	ErrStrFormattedPreReleaseContainsInvalidValue = "prerelease contains invalid value: %s"
+	ErrStrFormattedParsingPreReleasePart          = "Could not parse part '%-v' as int64"
+)
+
 type PreRelease struct {
 	Segments   []interface{}
 	segmentLen int
@@ -103,7 +108,7 @@ func parsePreRelease(str string) (*PreRelease, error) {
 	for _, part := range parts {
 
 		if !containsOnly(part, allowed) {
-			return nil, fmt.Errorf("prerelease contains invalid value: %s", part)
+			return nil, fmt.Errorf(ErrStrFormattedPreReleaseContainsInvalidValue, part)
 		}
 
 		parsedPart, err := strconv.ParseInt(part, 10, 64)
@@ -112,7 +117,7 @@ func parsePreRelease(str string) (*PreRelease, error) {
 			numErr, ok := err.(*strconv.NumError)
 
 			if !ok || !errors.Is(numErr.Err, strconv.ErrSyntax) {
-				return nil, errors.WithMessage(err, "Could not parse part '"+part+"' as int64")
+				return nil, errors.WithMessage(err, fmt.Sprintf(ErrStrFormattedParsingPreReleasePart, part))
 			}
 
 			preReleaseTags = append(preReleaseTags, part)

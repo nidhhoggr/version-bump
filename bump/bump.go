@@ -25,6 +25,26 @@ import (
 	"github.com/tidwall/sjson"
 )
 
+var (
+	ErrStrNoSuchFileOrDirectory      = "no such file or directory"
+	ErrStrFileDoesNotExist           = "file does not exist"
+	ErrStrReadingConfigFile          = "error reading project config file"
+	ErrStrParsingConfigFile          = "error parsing project config file"
+	ErrStrZeroFilesUpdated           = "0 files updated"
+	ErrStrInconsistentVersioning     = "inconsistent versioning"
+	ErrStrRetrievingGpgConfiguration = "error retrieving gpg configuration"
+	ErrStrValidatingGpgSigningKey    = "could not validate gpg signing key"
+	ErrStrListingDirectoryFiles      = "error listing directory files"
+	ErrStrDuringConfirmationPrompt   = "error during confirmation prompt"
+
+	ErrStrFormattedIncrementingInLangProject        = "error incrementing version in %s project"
+	ErrStrFormattedReadingAFile                     = "error reading a file %v"
+	ErrStrFormattedWritingToFile                    = "error writing to file %v"
+	ErrStrFormattedParsingVersionFromFileAndVersion = "error parsing semantic version at file %v from version: %s"
+	ErrStrFormattedBumpingVersion                   = "error bumping version %v"
+	ErrStrFormattedSettingVersionInFile             = "error setting new version on content of a file %v"
+)
+
 func init() {
 	GitConfigParser = new(git.ConfigParser)
 	GpgEntityAccessor = &gpg.EntityAccessor{
@@ -56,18 +76,18 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	// check for config file
 	content, err := readFile(fs, ".bump")
 	if err != nil {
-		if strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "file does not exist") {
+		if strings.Contains(err.Error(), ErrStrNoSuchFileOrDirectory) || strings.Contains(err.Error(), ErrStrFileDoesNotExist) {
 			//return default settings if config file not found
 			return o.withConfiguration(dirs, true), nil
 		} else {
-			return nil, errors.Wrap(err, "error reading project config file")
+			return nil, errors.Wrap(err, ErrStrReadingConfigFile)
 		}
 	}
 
 	cf := new(ConfigDecoder)
 	_, err = toml.Decode(strings.Join(content, "\n"), cf)
 	if err != nil {
-		return nil, errors.Wrap(err, "error parsing project config file")
+		return nil, errors.Wrap(err, ErrStrParsingConfigFile)
 	}
 
 	//map ConfigDecoder to the Configuration struct
@@ -125,16 +145,16 @@ func (b *Bump) Bump(ra *RunArgs) error {
 			//fmt.Printf("%s %-v", langName, lang)
 			modifiedFiles, err := vbd.bumpComponent(langConfig, langs.Supported[langConfig.Name])
 			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error incrementing version in %s project", langConfig.Name))
+				return errors.Wrapf(err, ErrStrFormattedIncrementingInLangProject, langConfig.Name)
 			}
 			files = append(files, modifiedFiles...)
 		}
 	}
 
 	if len(*vbd.versionsDetected) > 1 {
-		return errors.New("inconsistent versioning")
+		return errors.New(ErrStrInconsistentVersioning)
 	} else if len(*vbd.versionsDetected) == 0 {
-		return errors.New("0 files updated")
+		return errors.New(ErrStrZeroFilesUpdated)
 	}
 
 	if len(files) != 0 {
@@ -145,7 +165,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		if ra.PassphrasePrompt != nil {
 			gpgSigningKey, err := b.Git.GetSigningKeyFromConfig(GitConfigParser)
 			if err != nil {
-				return errors.Wrap(err, "error retrieving gpg configuration")
+				return errors.Wrap(err, ErrStrRetrievingGpgConfiguration)
 			}
 			if gpgSigningKey != "" {
 				gpgEntity, err = vbd.passphrasePromptWithRetries(gpgSigningKey, 3, 0)
@@ -156,7 +176,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		}
 
 		if err := b.Git.Save(files, vbd.versionStr, gpgEntity); err != nil {
-			return errors.Wrap(err, "error committing changes")
+			return err
 		}
 	}
 
@@ -176,7 +196,7 @@ func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, re
 			return gpgEntity, nil
 		}
 	} else {
-		return nil, errors.New("could not validate gpg signing key")
+		return nil, errors.New(ErrStrValidatingGpgSigningKey)
 	}
 }
 
@@ -187,7 +207,7 @@ func (vbd *versionBumpData) bumpComponent(langConfig langs.Config, langSettings 
 	for _, dir := range langConfig.Directories {
 		f, err := getFiles(vbd.bump.FS, dir, langConfig.ExcludeFiles)
 		if err != nil {
-			return []string{}, errors.Wrap(err, "error listing directory files")
+			return []string{}, errors.Wrap(err, ErrStrListingDirectoryFiles)
 		}
 
 		filteredFiles := filterFiles(langSettings.Files, f)
@@ -220,7 +240,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 		filepath := path.Join(dir, file)
 		fileContent, err := readFile(vbd.bump.FS, filepath)
 		if err != nil {
-			return []string{}, errors.Wrapf(err, "error reading a file %v", file)
+			return []string{}, errors.Wrapf(err, ErrStrFormattedReadingAFile, file)
 		}
 		var oldVersion *version.Version
 		// get current version
@@ -232,7 +252,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 					if regex.MatchString(line) {
 						oldVersion, err = version.NewFromRegex(line, regex)
 						if err != nil {
-							return []string{}, errors.Wrapf(err, "error parsing semantic version at file %v from version: %s", filepath, oldVersion)
+							return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
 						}
 						break outer
 					}
@@ -244,7 +264,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 			for _, field := range *langSettings.JSONFields {
 				oldVersion, err = version.New(gjson.Get(strings.Join(fileContent, ""), field).String())
 				if err != nil {
-					return []string{}, errors.Wrapf(err, "error parsing semantic version at file %v", filepath)
+					return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
 				}
 				break
 			}
@@ -255,7 +275,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 			oldVersionStr := oldVersion.String()
 			err = oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PreReleaseType, vbd.runArgs.PreReleaseMetadata)
 			if err != nil {
-				return []string{}, errors.Wrapf(err, "error bumping version %v", filepath)
+				return []string{}, errors.Wrapf(err, ErrStrFormattedBumpingVersion, filepath)
 			}
 			vbd.versionStr = oldVersion.String()
 
@@ -268,7 +288,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 			if vbd.runArgs.ConfirmationPrompt != nil {
 				confirmed, err := vbd.runArgs.ConfirmationPrompt(oldVersionStr, vbd.versionStr, file)
 				if err != nil {
-					return []string{}, errors.Wrap(err, "error during confirmation prompt")
+					return []string{}, errors.Wrap(err, ErrStrDuringConfirmationPrompt)
 				} else if !confirmed {
 					//return []string{}, errors.New("proposed version was denied")
 					//continue allows scenarios where denying changes in specific file(s) is necessary
@@ -299,7 +319,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 
 				newContent = append(newContent, "")
 				if err = writeFile(vbd.bump.FS, filepath, strings.Join(newContent, "\n")); err != nil {
-					return []string{}, errors.Wrapf(err, "error writing to file %v", filepath)
+					return []string{}, errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
 				}
 
 				modifiedFiles = append(modifiedFiles, filepath)
@@ -310,11 +330,11 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
 						newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, vbd.versionStr)
 						if err != nil {
-							return []string{}, errors.Wrapf(err, "error setting new version on content of a file %v", file)
+							return []string{}, errors.Wrapf(err, ErrStrFormattedSettingVersionInFile, file)
 						}
 
 						if err := writeFile(vbd.bump.FS, filepath, newContent); err != nil {
-							return []string{}, errors.Wrapf(err, "error writing to file %v", filepath)
+							return []string{}, errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
 						}
 
 						modifiedFiles = append(modifiedFiles, filepath)

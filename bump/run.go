@@ -11,6 +11,12 @@ import (
 	"golang.org/x/mod/semver"
 )
 
+var (
+	ErrStrResponseHasEmptyTag = "tag name from response was empty"
+
+	ErrStrFormattedUnsuccessfulStatusCode = "status code was not success: %d"
+)
+
 func init() {
 	cli := &http.Client{
 		Timeout: time.Second * 5,
@@ -66,7 +72,7 @@ func getLatestVersion(version chan string, resultErr chan error, repoName string
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		resultErr <- fmt.Errorf("status code was not success: %d", res.StatusCode)
+		resultErr <- fmt.Errorf(ErrStrFormattedUnsuccessfulStatusCode, res.StatusCode)
 
 	} else {
 		d := new(response)
@@ -75,7 +81,7 @@ func getLatestVersion(version chan string, resultErr chan error, repoName string
 			return
 		}
 		if d.TagName == "" {
-			resultErr <- fmt.Errorf("tag name from request was empty")
+			resultErr <- fmt.Errorf(ErrStrResponseHasEmptyTag)
 		} else if semver.Compare(d.TagName, fmt.Sprintf("v%v", Version)) == 1 {
 			resultErr <- nil
 			version <- d.TagName

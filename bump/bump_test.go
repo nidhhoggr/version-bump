@@ -75,7 +75,6 @@ directories = ['dir1','dir2']`,
 					Directories: []string{"dir1", "dir2"},
 				},
 			},
-			ExpectedError: "",
 		},
 		"Go": {
 			ConfigFile: configFile{
@@ -91,7 +90,6 @@ directories = ['dir1','dir2']`,
 					Directories: []string{"dir1", "dir2"},
 				},
 			},
-			ExpectedError: "",
 		},
 		"JavaScript": {
 			ConfigFile: configFile{
@@ -107,7 +105,6 @@ directories = ['dir1','dir2']`,
 					Directories: []string{"dir1", "dir2"},
 				},
 			},
-			ExpectedError: "",
 		},
 		"Complex": {
 			ConfigFile: configFile{
@@ -141,7 +138,6 @@ directories = [ 'client' ]`,
 					Directories: []string{"client"},
 				},
 			},
-			ExpectedError: "",
 		},
 		"ComplexWithOneDisabled": {
 			ConfigFile: configFile{
@@ -170,7 +166,6 @@ directories = [ 'client' ]`,
 					Directories: []string{"server", "tools/cli", "tools/qa"},
 				},
 			},
-			ExpectedError: "",
 		},
 		"Exclude Files": {
 			ConfigFile: configFile{
@@ -210,7 +205,6 @@ exclude_files = [ 'client/test.js' ]`,
 					ExcludeFiles: []string{"client/test.js"},
 				},
 			},
-			ExpectedError: "",
 		},
 	}
 
@@ -269,15 +263,16 @@ type allFiles struct {
 }
 
 type testBumpTestSuite struct {
-	Version            string
-	Configuration      bump.Configuration
-	Files              allFiles
-	VersionType        version.Type
-	PreReleaseType     version.PreReleaseType
-	MockAddError       error
-	MockCommitError    error
-	MockCreateTagError error
-	ExpectedError      string
+	Version               string
+	Configuration         bump.Configuration
+	Files                 allFiles
+	VersionType           version.Type
+	PreReleaseType        version.PreReleaseType
+	MockAddError          error
+	MockCommitError       error
+	MockCreateTagError    error
+	ExpectedError         string
+	ExpectedErrorContains []string
 }
 
 func TestBump_Bump(t *testing.T) {
@@ -285,15 +280,12 @@ func TestBump_Bump(t *testing.T) {
 
 	testSuites = map[string]testBumpTestSuite{
 		"Empty Configuration": {
-			Version:            "",
-			Configuration:      bump.Configuration{},
-			Files:              allFiles{},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "0 files updated",
+			Version:        "",
+			Configuration:  bump.Configuration{},
+			Files:          allFiles{},
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
+			ExpectedError:  bump.ErrStrZeroFilesUpdated,
 		},
 		"Docker - Single, without Quotes": {
 			Version: "2.0.0",
@@ -330,12 +322,8 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Docker - Single, with Quotes": {
 			Version: "2.0.0",
@@ -372,12 +360,8 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Docker - Multiple, with Quotes": {
 			Version: "4.0.0",
@@ -454,12 +438,8 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Docker - Multi-line, with Quotes": {
 			Version: "2.0.0",
@@ -496,12 +476,8 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Docker - Multi-line, without Quotes": {
 			Version: "2.0.0",
@@ -538,12 +514,8 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Go - Single Constant": {
 			Version: "1.3.0",
@@ -573,12 +545,8 @@ func main() {
 					},
 				},
 			},
-			VersionType:        version.Minor,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Minor,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Go - Single Constant #2": {
 			Version: "1.2.4",
@@ -608,12 +576,8 @@ func main() {
 					},
 				},
 			},
-			VersionType:        version.Patch,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Patch,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Go - Multiple Constants": {
 			Version: "2.0.0",
@@ -646,12 +610,8 @@ func main() {
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"JavaScript - Multiple Constants": {
 			Version: "2.0.0",
@@ -728,12 +688,8 @@ func main() {
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 		"Docker - Get Files Error": {
 			Version: "2.0.0",
@@ -744,13 +700,10 @@ func main() {
 					Directories: []string{"dir"},
 				},
 			},
-			Files:              allFiles{},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "error incrementing version in Docker project: error listing directory files: open dir: file does not exist",
+			Files:          allFiles{},
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
+			ExpectedError:  "error incrementing version in Docker project: error listing directory files: open dir: file does not exist",
 		},
 		"Go - Get Files Error": {
 			Version: "2.0.0",
@@ -761,13 +714,14 @@ func main() {
 					Directories: []string{"dir"},
 				},
 			},
-			Files:              allFiles{},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "error incrementing version in Go project: error listing directory files: open dir: file does not exist",
+			Files:          allFiles{},
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
+			ExpectedErrorContains: []string{
+				fmt.Sprintf(bump.ErrStrFormattedIncrementingInLangProject, golang.Name),
+				bump.ErrStrListingDirectoryFiles,
+				"open dir: file does not exist",
+			},
 		},
 		"JavaScript - Get Files Error": {
 			Version: "2.0.0",
@@ -778,13 +732,14 @@ func main() {
 					Directories: []string{"dir"},
 				},
 			},
-			Files:              allFiles{},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "error incrementing version in JavaScript project: error listing directory files: open dir: file does not exist",
+			Files:          allFiles{},
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
+			ExpectedErrorContains: []string{
+				fmt.Sprintf(bump.ErrStrFormattedIncrementingInLangProject, js.Name),
+				bump.ErrStrListingDirectoryFiles,
+				"open dir: file does not exist",
+			},
 		},
 		"Inconsistent Versioning": {
 			Version: "2.0.0",
@@ -843,12 +798,9 @@ func main() {
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "inconsistent versioning",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
+			ExpectedError:  bump.ErrStrInconsistentVersioning,
 		},
 		"Save Error": {
 			Version: "2.0.0",
@@ -885,12 +837,10 @@ ENTRYPOINT [ "/app" ]`,
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    errors.New("reason"),
-			MockCreateTagError: nil,
-			ExpectedError:      "error committing changes: error committing changes: reason",
+			VersionType:     version.Major,
+			PreReleaseType:  version.NotAPreRelease,
+			MockCommitError: errors.New("reason"),
+			ExpectedError:   fmt.Sprintf("%s: %s", git.ErrStrCommittingChanges, "reason"),
 		},
 		"Exclude Files": {
 			Version: "2.0.0",
@@ -970,12 +920,8 @@ const Version string = "1.2.3"`,
 					},
 				},
 			},
-			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
-			MockAddError:       nil,
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
 		},
 	}
 
@@ -989,7 +935,13 @@ const Version string = "1.2.3"`,
 			PreReleaseType: testSuite.PreReleaseType,
 		})
 
-		if testSuite.ExpectedError != "" || err != nil {
+		if testSuite.ExpectedError != "" {
+			a.EqualError(err, testSuite.ExpectedError)
+		} else if len(testSuite.ExpectedErrorContains) > 0 {
+			for i := range testSuite.ExpectedErrorContains {
+				a.ErrorContains(err, testSuite.ExpectedErrorContains[i])
+			}
+		} else if err != nil {
 			a.EqualError(err, testSuite.ExpectedError)
 		}
 	}
@@ -998,7 +950,7 @@ const Version string = "1.2.3"`,
 func TestBump_WithVanillaFsRepoDoesntExist(t *testing.T) {
 	a := assert.New(t)
 	_, err := bump.New(".")
-	a.ErrorContains(err, "error opening repository: repository does not exist")
+	a.ErrorContains(err, fmt.Sprintf("%s: repository does not exist", git.ErrStrOpeningRepo))
 }
 
 func TestBump_BrokenBumpFile(t *testing.T) {
@@ -1010,7 +962,7 @@ func TestBump_BrokenBumpFile(t *testing.T) {
 	f, err := fs.Create(".bump")
 	_, err = f.WriteString("brokenbump-contents")
 	_, err = bump.From(fs, meta, data, ".")
-	a.ErrorContains(err, "error parsing project config file")
+	a.ErrorContains(err, bump.ErrStrParsingConfigFile)
 }
 
 func TestBump_ConfirmationError(t *testing.T) {
@@ -1025,7 +977,7 @@ func TestBump_ConfirmationError(t *testing.T) {
 			return true, fmt.Errorf("confirmation_error")
 		},
 	})
-	a.ErrorContains(err, "error during confirmation prompt: confirmation_error")
+	a.ErrorContains(err, fmt.Sprintf("%s: confirmation_error", bump.ErrStrDuringConfirmationPrompt))
 }
 
 func TestBump_ConfirmationDenied(t *testing.T) {
@@ -1041,7 +993,7 @@ func TestBump_ConfirmationDenied(t *testing.T) {
 		},
 	})
 	//currently we continue through the loop instead of returning an error
-	a.ErrorContains(err, "0 files updated")
+	a.ErrorContains(err, bump.ErrStrZeroFilesUpdated)
 }
 
 func GitConfigParserMockScenarioOne() *mocks.GitConfigParser {
@@ -1086,7 +1038,7 @@ func TestBump_PassphraseGetSigningKeyError(t *testing.T) {
 			return "", nil
 		},
 	})
-	a.ErrorContains(err, "could not validate gpg signing key")
+	a.ErrorContains(err, bump.ErrStrValidatingGpgSigningKey)
 }
 
 func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
@@ -1110,7 +1062,7 @@ func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
 		},
 	})
 	//currently we continue through the loop instead of returning an error
-	a.ErrorContains(err, "could not validate gpg signing key")
+	a.ErrorContains(err, bump.ErrStrValidatingGpgSigningKey)
 }
 
 func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
@@ -1180,7 +1132,7 @@ func TestBump_PassphraseGetShouldNotSignLoadConfigFails(t *testing.T) {
 		},
 	})
 	//currently we continue through the loop instead of returning an error
-	a.ErrorContains(err, "error loading git configuration from global scope: mock_test_load_config_error")
+	a.ErrorContains(err, fmt.Sprintf("%s: mock_test_load_config_error", git.ErrStrLoadingConfiguration))
 }
 
 func TestBump_PassphraseGetShouldNotSignLoadConfigPasses(t *testing.T) {

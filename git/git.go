@@ -16,6 +16,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	ErrStrOpeningRepo                   = "error opening repository"
+	ErrStrRetrievingGlobalConfiguration = "error retrieving global git configuration"
+	ErrStrRetrievingWorkTree            = "error retrieving git worktree"
+	ErrStrCommittingChanges             = "error committing changes"
+	ErrStrTaggingChanges                = "error tagging changes"
+	ErrStrLoadingConfiguration          = "error loading git configuration from global scope"
+
+	ErrStrFormattedStagingAFile = "error staging a file %s"
+)
+
 const (
 	Username string = "username"
 	Email    string = "username@domain.com"
@@ -41,7 +52,7 @@ type WorktreeInterface interface {
 func New(meta billy.Filesystem, data billy.Filesystem) (*Instance, error) {
 	repo, err := GetRepoFromFileSystem(meta, data)
 	if err != nil {
-		return nil, errors.Wrap(err, "error opening repository")
+		return nil, errors.Wrap(err, ErrStrOpeningRepo)
 	}
 	return GetInstanceFromRepo(repo)
 }
@@ -56,12 +67,12 @@ func GetRepoFromFileSystem(meta billy.Filesystem, data billy.Filesystem) (*git.R
 func GetInstanceFromRepo(repo RepositoryInterface) (*Instance, error) {
 	gitConfig, err := repo.ConfigScoped(config.GlobalScope)
 	if err != nil {
-		return nil, errors.Wrap(err, "error retrieving global git configuration")
+		return nil, errors.Wrap(err, ErrStrRetrievingGlobalConfiguration)
 	}
 
 	worktree, err := repo.Worktree()
 	if err != nil {
-		return nil, errors.Wrap(err, "error retrieving git worktree")
+		return nil, errors.Wrap(err, ErrStrRetrievingWorkTree)
 	}
 
 	return &Instance{
@@ -90,7 +101,7 @@ func (i *Instance) Save(files []string, version string, gpgEntity *openpgp.Entit
 		SignKey: gpgEntity,
 	})
 	if err != nil {
-		return errors.Wrap(err, "error tagging changes")
+		return errors.Wrap(err, ErrStrTaggingChanges)
 	}
 
 	return nil
@@ -100,7 +111,7 @@ func (i *Instance) Commit(files []string, version string, sign *object.Signature
 	for _, f := range files {
 		_, err := i.Worktree.Add(f)
 		if err != nil {
-			return plumbing.Hash{}, errors.Wrapf(err, "error staging a file %v", f)
+			return plumbing.Hash{}, errors.Wrapf(err, ErrStrFormattedStagingAFile, f)
 		}
 	}
 	hash, err := i.Worktree.Commit(version, &git.CommitOptions{
@@ -110,7 +121,7 @@ func (i *Instance) Commit(files []string, version string, sign *object.Signature
 		SignKey:   entity,
 	})
 	if err != nil {
-		return plumbing.Hash{}, errors.Wrap(err, "error committing changes")
+		return plumbing.Hash{}, errors.Wrap(err, ErrStrCommittingChanges)
 	}
 
 	return hash, nil
@@ -123,7 +134,7 @@ func (i *Instance) GetSigningKeyFromConfig(configParser ConfigParserInterface) (
 	if !shouldNotSign && gpgVerificationKey == "" {
 		gitConfig, err := configParser.LoadConfig(config.GlobalScope)
 		if err != nil {
-			return "", errors.Wrap(err, "error loading git configuration from global scope")
+			return "", errors.Wrap(err, ErrStrLoadingConfiguration)
 		}
 		configParser.SetConfig(gitConfig)
 		_, gpgVerificationKey = getSigningKeyFromConfig(configParser)

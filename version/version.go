@@ -9,6 +9,20 @@ import (
 	"strings"
 )
 
+var (
+	ErrStrPreReleasingNonPreRelease    = "cannot prerelease a non-prerelease without incrementing a version type"
+	ErrStrPreReleaseEmptyType          = "cannot prerelease an empty type"
+	ErrStrPreReleaseAlphaFromBeta      = "cannot prerelease an alpha from an existing beta pre-release"
+	ErrStrPreReleaseNonRcFromRc        = "cannot prerelease a non-rc from a release candidate"
+	ErrStrParsePreReleaseTag           = "Could not parse pre-release tag"
+	ErrStrIncrementerGettingPreRelease = "error incrementing: could not get pre-release"
+	ErrStrIncrementingPreRelease       = "error incrementing pre-release"
+
+	ErrStrFormattedUnsupportedReleaseType  = "unsupported release type: %d"
+	ErrStrFormattedRegexParsingResultEmpty = "empty result when parsing versionStr from regex: %s %s"
+	ErrStrFormattedNotAPrerelease          = "%v is not a prerelease"
+)
+
 const Regex = `[vV]?([0-9]*)\.([0-9]*)\.([0-9]*)(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))??`
 
 type Type int
@@ -71,7 +85,7 @@ func NewFromRegex(versionString string, regex *regexp.Regexp) (*Version, error) 
 	//fmt.Printf("Get versionStr from regex: %s %s\n", versionString, regex)
 	replaced := regex.ReplaceAllString(versionString, "${1}")
 	if replaced == "" {
-		return nil, fmt.Errorf("empty result when parsing versionStr from regex: %s %s", versionString, regex)
+		return nil, fmt.Errorf(ErrStrFormattedRegexParsingResultEmpty, versionString, regex)
 	}
 	//fmt.Printf("Got versionStr: %s\n", replaced)
 	return New(replaced)
@@ -92,7 +106,7 @@ func (v *Version) Increment(versionType Type, preReleaseType PreReleaseType, pre
 	} else if !v.IsPreRelease() &&
 		isPreReleasing &&
 		!isVersionBumping {
-		return fmt.Errorf("cannot prerelease a non-prerelease without incrementing a version type")
+		return errors.New(ErrStrPreReleasingNonPreRelease)
 	}
 
 	if isVersionBumping {
@@ -124,7 +138,7 @@ func (v *Version) IsPreRelease() bool {
 
 func (v *Version) PreRelease(preReleaseType PreReleaseType, preReleaseMetadata string) error {
 	if preReleaseType == NotAPreRelease {
-		return fmt.Errorf("cannot prerelease and empty type")
+		return errors.New(ErrStrPreReleaseEmptyType)
 	}
 	if v.IsPreRelease() {
 		preRelease, err := v.GetPreRelease()
@@ -141,7 +155,7 @@ func (v *Version) PreRelease(preReleaseType PreReleaseType, preReleaseMetadata s
 			}
 		} else if strings.Contains(fmt.Sprintf("%s", firstSegment), PreReleaseString(BetaPreRelease)) {
 			if preReleaseType == AlphaPreRelease {
-				return fmt.Errorf("cannot prerelease an alpha from an existing beta pre-release")
+				return errors.New(ErrStrPreReleaseAlphaFromBeta)
 			} else if preReleaseType != BetaPreRelease { //only other option is rc
 				err = v.SetPreReleaseString(PreReleaseString(preReleaseType))
 				if err != nil {
@@ -150,7 +164,7 @@ func (v *Version) PreRelease(preReleaseType PreReleaseType, preReleaseMetadata s
 			}
 		} else if strings.Contains(fmt.Sprintf("%s", firstSegment), PreReleaseString(ReleaseCandidate)) {
 			if preReleaseType == AlphaPreRelease || preReleaseType == BetaPreRelease {
-				return fmt.Errorf("cannot prerelease an alpha||beta from an existing beta release candidate")
+				return errors.New(ErrStrPreReleaseNonRcFromRc)
 			}
 		}
 	} else {
@@ -165,7 +179,7 @@ func (v *Version) PreRelease(preReleaseType PreReleaseType, preReleaseMetadata s
 				return err
 			}
 		default:
-			return fmt.Errorf("unsupported release type: -%v", preReleaseType)
+			return fmt.Errorf(ErrStrFormattedUnsupportedReleaseType, preReleaseType)
 		}
 	}
 	err := v.IncrementPreRelease()
@@ -192,7 +206,7 @@ func (v *Version) GetPreRelease() (*PreRelease, error) {
 	preReleaseStr := v.GetPreReleaseString()
 	preRelease, err := parsePreRelease(preReleaseStr)
 	if err != nil {
-		return nil, errors.WithMessage(err, "Could not parse pre-release tag")
+		return nil, errors.WithMessage(err, ErrStrParsePreReleaseTag)
 	}
 	return preRelease, nil
 }
@@ -229,17 +243,17 @@ func (v *Version) IncrementPreRelease() error {
 	if v.IsPreRelease() {
 		preRelease, err := v.GetPreRelease()
 		if err != nil {
-			return errors.Wrap(err, "error incrementing: could not get pre-release")
+			return errors.Wrap(err, ErrStrIncrementerGettingPreRelease)
 		}
 		preRelease.Increment()
 		if preRelease.Length() > 0 {
 			err = v.SetPreReleaseString(preRelease.String())
 		} else {
-			err = errors.Wrap(err, "error incrementing pre-release")
+			err = errors.Wrap(err, ErrStrIncrementingPreRelease)
 		}
 		return err
 
 	} else {
-		return fmt.Errorf("%v is not a prerelease", v)
+		return fmt.Errorf(ErrStrFormattedNotAPrerelease, v)
 	}
 }

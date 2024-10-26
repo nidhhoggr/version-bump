@@ -1,6 +1,7 @@
 package version_test
 
 import (
+	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
@@ -23,7 +24,7 @@ func TestVersion_Construction(t *testing.T) {
 	a.Equal("1.0.1", v.String())
 
 	v, err = version.New("v1.0")
-	a.ErrorContains(err, "Invalid Semantic Version")
+	a.Equal(err, semver.ErrInvalidSemVer)
 	a.Nil(v)
 
 	v, err = version.New("v1.0.1-alpha")
@@ -119,7 +120,7 @@ func TestVersion_IncrementPreReleaseIfNotAPrerelease(t *testing.T) {
 	a.Empty(err)
 
 	err = v.IncrementPreRelease()
-	a.ErrorContains(err, "1.0.1 is not a prerelease")
+	a.ErrorContains(err, fmt.Sprintf(version.ErrStrFormattedNotAPrerelease, "1.0.1"))
 }
 
 func TestVersion_PreReleaseANonPreRelease(t *testing.T) {
@@ -162,7 +163,7 @@ func TestVersion_PreReleaseWithUnsupportedType(t *testing.T) {
 	a.Equal(false, v.IsPreRelease())
 	a.Equal("1.0.0", v.String())
 	err = v.Increment(version.Major, 43, "")
-	a.ErrorContains(err, "unsupported release type:")
+	a.ErrorContains(err, fmt.Sprintf(version.ErrStrFormattedUnsupportedReleaseType, 43))
 }
 
 func TestVersion_PreReleaseAPreReleaseWithMajorResetsPrCounter(t *testing.T) {
@@ -244,7 +245,7 @@ func TestVersion_PreReleaseAPreReleaseWithReleasePromotionsFromAlpha(t *testing.
 	a.Empty(err)
 	a.Equal(false, v.IsPreRelease())
 	err = v.Increment(version.NotAVersion, version.ReleaseCandidate, "discard")
-	a.ErrorContains(err, "cannot prerelease a non-prerelease without incrementing a version type")
+	a.ErrorContains(err, version.ErrStrPreReleasingNonPreRelease)
 	a.Equal("1.0.0+junk", v.String())
 }
 
@@ -268,7 +269,7 @@ func TestVersion_PreReleaseAPreReleaseWithReleasePromotionsFromBeta(t *testing.T
 	a.Empty(err)
 	a.Equal(true, v.IsPreRelease())
 	err = v.Increment(version.NotAVersion, version.AlphaPreRelease, "")
-	a.ErrorContains(err, "cannot prerelease an alpha from an existing beta pre-release")
+	a.ErrorContains(err, version.ErrStrPreReleaseAlphaFromBeta)
 	a.Equal("1.0.0-beta.1", v.String())
 
 	v, err = version.New("v1.0.0-beta.1")
@@ -313,14 +314,14 @@ func TestVersion_PreReleaseAPreReleaseWithReleasePromotionsFromReleaseCandidate(
 	a.Empty(err)
 	a.Equal(true, v.IsPreRelease())
 	err = v.Increment(version.NotAVersion, version.AlphaPreRelease, "")
-	a.ErrorContains(err, "cannot prerelease an alpha||beta from an existing beta release candidate")
+	a.ErrorContains(err, version.ErrStrPreReleaseNonRcFromRc)
 	a.Equal("1.0.0-rc.1", v.String())
 
 	v, err = version.New("v1.0.0-rc.1")
 	a.Empty(err)
 	a.Equal(true, v.IsPreRelease())
 	err = v.Increment(version.NotAVersion, version.BetaPreRelease, "")
-	a.ErrorContains(err, "cannot prerelease an alpha||beta from an existing beta release candidate")
+	a.ErrorContains(err, version.ErrStrPreReleaseNonRcFromRc)
 	a.Equal("1.0.0-rc.1", v.String())
 
 	v, err = version.New("v1.0.0-rc.1")
@@ -383,7 +384,7 @@ func TestVersion_NewWithBadRegex(t *testing.T) {
 	compile, err := regexp.Compile(version.Regex)
 	a.Empty(err)
 	_, err = version.NewFromRegex("", compile)
-	a.ErrorContains(err, "empty result when parsing versionStr from regex")
+	a.ErrorContains(err, fmt.Sprintf(version.ErrStrFormattedRegexParsingResultEmpty, "", ""))
 }
 
 func TestVersion_SetPrereleaseWithEmptyVersion(t *testing.T) {
@@ -400,7 +401,7 @@ func TestVersion_SetPrereleaseWithBadVersion(t *testing.T) {
 	v := &version.Version{}
 	v.SetSemverPtr(&semver.Version{})
 	err := v.SetPreReleaseString("!/+%")
-	a.ErrorContains(err, "Invalid Prerelease string")
+	a.Equal(err, semver.ErrInvalidPrerelease)
 }
 
 func TestVersion_SetPrereleaseWithBadMetadata(t *testing.T) {
@@ -408,7 +409,7 @@ func TestVersion_SetPrereleaseWithBadMetadata(t *testing.T) {
 	v := &version.Version{}
 	v.SetSemverPtr(&semver.Version{})
 	err := v.SetPreReleaseMetadata("!/+%")
-	a.ErrorContains(err, "Invalid Metadata string")
+	a.Equal(err, semver.ErrInvalidMetadata)
 }
 
 func TestVersion_PreReleaseEmptyType(t *testing.T) {
@@ -416,21 +417,21 @@ func TestVersion_PreReleaseEmptyType(t *testing.T) {
 	v := &version.Version{}
 	v.SetSemverPtr(&semver.Version{})
 	err := v.PreRelease(version.NotAPreRelease, "")
-	a.ErrorContains(err, "cannot prerelease and empty type")
+	a.ErrorContains(err, version.ErrStrPreReleaseEmptyType)
 }
 
 func TestVersion_PreReleaseErrorGettingPreRelease(t *testing.T) {
 	a := assert.New(t)
 	v, err := version.New("v1.0.0-alpha.1")
 	err = v.PreRelease(version.AlphaPreRelease, "-%43")
-	a.ErrorContains(err, "Invalid Metadata string")
+	a.Equal(err, semver.ErrInvalidMetadata)
 }
 
 func TestVersion_PreReleaseErrorGettingPreReleaseFromMajor(t *testing.T) {
 	a := assert.New(t)
 	v, err := version.New("v1.0.0")
 	err = v.PreRelease(version.AlphaPreRelease, "-%43")
-	a.ErrorContains(err, "Invalid Metadata string")
+	a.Equal(err, semver.ErrInvalidMetadata)
 }
 
 func TestBump_StringToVersionType(t *testing.T) {
@@ -468,7 +469,7 @@ func TestVersion_PreReleaseErrorGettingPreReleaseTag(t *testing.T) {
 	sm.On("Prerelease").Return("-%43")
 	v.SetSemverPtr(sm)
 	err = v.PreRelease(version.AlphaPreRelease, "")
-	a.ErrorContains(err, "Could not parse pre-release tag: prerelease contains invalid value: -%43")
+	a.ErrorContains(err, fmt.Sprintf("%s: %s", version.ErrStrParsePreReleaseTag, fmt.Sprintf(version.ErrStrFormattedPreReleaseContainsInvalidValue, "-%43")))
 }
 
 func TestVersion_PreReleaseErrorGettingPreReleaseTagTwo(t *testing.T) {
@@ -482,7 +483,7 @@ func TestVersion_PreReleaseErrorGettingPreReleaseTagTwo(t *testing.T) {
 	sm.On("Prerelease").Return("-%43")
 	v.SetSemverPtr(sm)
 	err = v.IncrementPreRelease()
-	a.ErrorContains(err, "error incrementing: could not get pre-release: Could not parse pre-release tag: prerelease contains invalid value: -%43")
+	a.ErrorContains(err, fmt.Sprintf("%s: %s", version.ErrStrIncrementerGettingPreRelease, fmt.Sprintf("%s: %s", version.ErrStrParsePreReleaseTag, fmt.Sprintf(version.ErrStrFormattedPreReleaseContainsInvalidValue, "-%43"))))
 }
 
 func TestVersion_EmptyPtrReturnsEmptyString(t *testing.T) {

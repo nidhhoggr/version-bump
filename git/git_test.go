@@ -36,33 +36,25 @@ func TestGit_Save(t *testing.T) {
 				"file-1.txt",
 				"file-2.txt",
 			},
-			MockWorktreeError:  nil,
-			MockCommitOutput:   plumbing.NewHash("abc"),
-			MockCommitError:    nil,
-			MockCreateTagError: nil,
-			ExpectedError:      "",
+			MockCommitOutput: plumbing.NewHash("abc"),
 		},
 		"Error Tagging Commit": {
 			Version: "1.0.0",
 			Files: []string{
 				"file.txt",
 			},
-			MockWorktreeError:  nil,
 			MockCommitOutput:   plumbing.NewHash("abc"),
-			MockCommitError:    nil,
 			MockCreateTagError: errors.New("reason"),
-			ExpectedError:      "error tagging changes: reason",
+			ExpectedError:      fmt.Sprintf("%s: reason", git.ErrStrTaggingChanges),
 		},
 		"Error Committing Changes": {
 			Version: "1.0.0",
 			Files: []string{
 				"file.txt",
 			},
-			MockWorktreeError:  nil,
-			MockCommitOutput:   plumbing.NewHash("abc"),
-			MockCommitError:    errors.New("reason"),
-			MockCreateTagError: nil,
-			ExpectedError:      "error committing changes: reason",
+			MockCommitOutput: plumbing.NewHash("abc"),
+			MockCommitError:  errors.New("reason"),
+			ExpectedError:    fmt.Sprintf("%s: reason", git.ErrStrCommittingChanges),
 		},
 	}
 
@@ -118,30 +110,24 @@ func TestGit_Commit(t *testing.T) {
 				"file-1.txt",
 				"file-2.txt",
 			},
-			MockAddError:    nil,
-			MockCommitHash:  "abc",
-			MockCommitError: nil,
-			ExpectedError:   "",
+			MockCommitHash: "abc",
 		},
 		"Stage Error": {
 			Version: "1.0.0",
 			Files: []string{
 				"file.txt",
 			},
-			MockAddError:    errors.New("reason"),
-			MockCommitHash:  "",
-			MockCommitError: nil,
-			ExpectedError:   "error staging a file file.txt: reason",
+			MockAddError:  errors.New("reason"),
+			ExpectedError: fmt.Sprintf("%s: reason", fmt.Sprintf(git.ErrStrFormattedStagingAFile, "file.txt")),
 		},
 		"Commit Error": {
 			Version: "1.0.0",
 			Files: []string{
 				"file.txt",
 			},
-			MockAddError:    nil,
 			MockCommitHash:  "abc",
 			MockCommitError: errors.New("reason"),
-			ExpectedError:   "error committing changes: reason",
+			ExpectedError:   fmt.Sprintf("%s: reason", git.ErrStrCommittingChanges),
 		},
 	}
 
@@ -216,7 +202,7 @@ func TestGit_ErrorGettingInstanceFromRepoFromConfigScoped(t *testing.T) {
 	m1 := new(mocks.Repository)
 	m1.On("ConfigScoped", config.GlobalScope).Return(nil, errors.New("test_mock_config_getter_error"))
 	_, err := git.GetInstanceFromRepo(m1)
-	assert.ErrorContains(t, err, "error retrieving global git configuration: test_mock_config_getter_error")
+	assert.ErrorContains(t, err, fmt.Sprintf("%s: test_mock_config_getter_error", git.ErrStrRetrievingGlobalConfiguration))
 }
 
 func TestGit_ErrorGettingInstanceFromRepoFromWorktree(t *testing.T) {
@@ -224,7 +210,7 @@ func TestGit_ErrorGettingInstanceFromRepoFromWorktree(t *testing.T) {
 	m1.On("ConfigScoped", config.GlobalScope).Return(config.NewConfig(), nil)
 	m1.On("Worktree").Return(nil, errors.New("test_mock_worktree_error"))
 	_, err := git.GetInstanceFromRepo(m1)
-	assert.ErrorContains(t, err, "error retrieving git worktree: test_mock_worktree_error")
+	assert.ErrorContains(t, err, fmt.Sprintf("%s: test_mock_worktree_error", git.ErrStrRetrievingWorkTree))
 }
 
 func TestGit_LoadConfig(t *testing.T) {

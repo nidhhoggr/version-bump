@@ -171,7 +171,7 @@ func TestBumpRun_Fails(t *testing.T) {
 		VersionType:    version.NotAVersion,
 		PreReleaseType: version.AlphaPreRelease,
 	})
-	a.ErrorContains(err, "cannot prerelease a non-prerelease without incrementing a version type")
+	a.ErrorContains(err, version.ErrStrPreReleasingNonPreRelease)
 }
 
 func TestBumpRun_FailingUrl(t *testing.T) {
@@ -183,7 +183,7 @@ func TestBumpRun_FailingUrl(t *testing.T) {
 		VersionType:    version.Minor,
 		PreReleaseType: version.NotAPreRelease,
 	})
-	a.ErrorContains(err, "status code was not success: 404")
+	a.ErrorContains(err, fmt.Sprintf(bump.ErrStrFormattedUnsuccessfulStatusCode, 404))
 }
 
 func TestBumpRun_GetterHasError(t *testing.T) {
@@ -227,7 +227,7 @@ func TestBumpRun_GetterHasNoTagName(t *testing.T) {
 		VersionType:    version.Minor,
 		PreReleaseType: version.NotAPreRelease,
 	})
-	a.ErrorContains(err, "tag name from request was empty")
+	a.ErrorContains(err, bump.ErrStrResponseHasEmptyTag)
 	rg.AssertExpectations(t)
 }
 
