@@ -78,7 +78,7 @@ func ErrorCheckingForUpdate(msg interface{}) {
 }
 
 func Error(msg interface{}) {
-	fmt.Printf("%v%v%v\n",
+	fmt.Printf("%verror: %v%v\n",
 		colorRed, msg, colorReset,
 	)
 }
