@@ -7,6 +7,7 @@ import (
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
 	"github.com/spf13/afero"
 	"net/http"
+	"sync"
 )
 
 const (
@@ -29,7 +30,10 @@ type ReleaseGetterInterface interface {
 type Bump struct {
 	FS            afero.Fs
 	Git           *git.Instance
+	errChan       chan error
+	waitGroup     *sync.WaitGroup
 	Configuration Configuration
+	mutex         sync.Mutex
 }
 
 type ConfigDecoder struct {

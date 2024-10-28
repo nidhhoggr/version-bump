@@ -31,7 +31,7 @@ func Language(name string, isDryRun bool) {
 	if isDryRun {
 		action = "Will update"
 	}
-	fmt.Printf("  %s %v%v%v files:\n",
+	fmt.Printf("\n  %s %v%v%v files:\n",
 		action,
 		colorCyan,
 		name,
@@ -44,6 +44,24 @@ func VersionUpdate(oldVersion, newVersion, filepath string) string {
 		colorYellow, oldVersion, colorReset,
 		colorGreen, newVersion, colorReset,
 		filepath,
+	)
+}
+
+func VersionUpdateLine(oldVersion, newVersion, filepath string, line string) {
+	fmt.Printf("    %v%v%v -> %v%v%v %v\n    Line: %s\n",
+		colorYellow, oldVersion, colorReset,
+		colorGreen, newVersion, colorReset,
+		filepath,
+		line,
+	)
+}
+
+func VersionUpdateField(oldVersion, newVersion, filepath string, field string) {
+	fmt.Printf("    %v%v%v -> %v%v%v %v\n    Field: %s\n",
+		colorYellow, oldVersion, colorReset,
+		colorGreen, newVersion, colorReset,
+		filepath,
+		field,
 	)
 }
 

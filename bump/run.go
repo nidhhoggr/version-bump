@@ -46,11 +46,12 @@ func (b *Bump) Run(ra *RunArgs) error {
 
 	if err != nil {
 		console.ErrorCheckingForUpdate(err)
-	} else {
-		v := <-updateVersion
-		if v != "" {
-			console.UpdateAvailable(v, GhRepoName)
-		}
+		return err
+	}
+
+	v := <-updateVersion
+	if v != "" {
+		console.UpdateAvailable(v, GhRepoName)
 	}
 
 	return err

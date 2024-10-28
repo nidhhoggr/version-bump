@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -68,8 +69,9 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	}
 
 	o := &Bump{
-		FS:  fs,
-		Git: gitInstance,
+		FS:        fs,
+		Git:       gitInstance,
+		waitGroup: new(sync.WaitGroup),
 	}
 
 	dirs := []string{dir}
@@ -138,6 +140,8 @@ func (b *Bump) Bump(ra *RunArgs) error {
 
 	files := make([]string, 0)
 
+	b.errChan = make(chan error, 1)
+
 	for i := range b.Configuration {
 		langConfig := b.Configuration[i]
 		if langConfig.Enabled {
@@ -152,10 +156,21 @@ func (b *Bump) Bump(ra *RunArgs) error {
 
 	versionsDetected := vbd.versionsDetected
 
+	var err error
 	if len(versionsDetected) > 1 {
-		return fmt.Errorf(ErrStrFormattedInconsistentVersioning, versionsDetected.String())
+		err = fmt.Errorf(ErrStrFormattedInconsistentVersioning, versionsDetected.String())
 	} else if len(versionsDetected) == 0 {
-		return errors.New(ErrStrZeroFilesUpdated)
+		err = errors.New(ErrStrZeroFilesUpdated)
+	}
+
+	if ra.IsDryRun {
+		b.errChan <- err
+		close(b.errChan)
+		b.waitGroup.Wait()
+	}
+
+	if err != nil {
+		return err
 	}
 
 	if !ra.IsDryRun {
@@ -217,8 +232,6 @@ func (vbd *versionBumpData) bumpComponent(langConfig langs.Config, langSettings 
 		filteredFiles := filterFiles(langSettings.Files, f)
 
 		if len(filteredFiles) > 0 {
-
-			console.Language(langConfig.Name, vbd.runArgs.IsDryRun)
 
 			var versionIncrementor func(dir string, files []string, langSettings *langs.Settings) ([]string, error)
 
@@ -366,6 +379,21 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 	return modifiedFiles, nil
 }
 
+func (vbd *versionBumpData) incrementAndCompareVersions(oldVersion *version.Version) (bool, error) {
+	oldVersionStr := oldVersion.String()
+	(vbd.versionsDetected)[oldVersionStr]++
+	err := oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PreReleaseType, vbd.runArgs.PreReleaseMetadata)
+	if err != nil {
+		return false, err
+	}
+	vbd.versionStr = oldVersion.String()
+	if strings.Compare(oldVersionStr, vbd.versionStr) == 0 {
+		//no changes in version
+		return true, nil
+	}
+	return false, nil
+}
+
 func (vbd *versionBumpData) incrementVersionDryRun(dir string, files []string, langSettings *langs.Settings) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
@@ -379,7 +407,7 @@ func (vbd *versionBumpData) incrementVersionDryRun(dir string, files []string, l
 		var oldVersion *version.Version
 		// get current version
 		if langSettings.Regex != nil {
-		outer:
+		outerR:
 			for _, line := range fileContent {
 				for _, expression := range *langSettings.Regex {
 					regex := regexp.MustCompile(expression)
@@ -387,90 +415,57 @@ func (vbd *versionBumpData) incrementVersionDryRun(dir string, files []string, l
 						oldVersion, err = version.NewFromRegex(line, regex)
 						if err != nil {
 							return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
+						} else if oldVersion != nil {
+
+							oldVersionStr := oldVersion.String()
+							versionsAreSame, err := vbd.incrementAndCompareVersions(oldVersion)
+
+							if err != nil {
+								return []string{}, errors.Wrapf(err, ErrStrFormattedBumpingVersion, filepath)
+							} else if versionsAreSame {
+								continue outerR
+							}
+
+							identified = true
+
+							if vbd.runArgs.IsDryRun {
+								go vbd.dryRunRegex(langSettings, expression, line, filepath, oldVersionStr)
+							}
+
+							modifiedFiles = append(modifiedFiles, filepath)
 						}
-						break outer
+						break outerR
 					}
 				}
 			}
 		}
 
-		//@TODO Are we gonna do one the other or both?
 		if langSettings.JSONFields != nil {
+		outerJ:
 			for _, field := range *langSettings.JSONFields {
 				oldVersion, err = version.New(gjson.Get(strings.Join(fileContent, ""), field).String())
 				if err != nil {
 					return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
-				}
-				break
-			}
-		}
+				} else if oldVersion != nil {
 
-		if oldVersion != nil {
+					oldVersionStr := oldVersion.String()
+					versionsAreSame, err := vbd.incrementAndCompareVersions(oldVersion)
 
-			oldVersionStr := oldVersion.String()
-			(vbd.versionsDetected)[oldVersionStr]++
-			err = oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PreReleaseType, vbd.runArgs.PreReleaseMetadata)
-			if err != nil {
-				return []string{}, errors.Wrapf(err, ErrStrFormattedBumpingVersion, filepath)
-			}
-			vbd.versionStr = oldVersion.String()
-
-			if strings.Compare(oldVersionStr, vbd.versionStr) == 0 {
-				//no changes in version
-				continue
-			}
-
-			identified = true
-
-			if langSettings.Regex != nil {
-				//newContent := make([]string, 0)
-
-				for _, line := range fileContent {
-					//var added bool
-					for _, expression := range *langSettings.Regex {
-						regex := regexp.MustCompile(expression)
-						if regex.MatchString(line) {
-							fmt.Printf("lang.Regex:\n\tfile: %s/%s\n\tline: %s\n\tcurrent version: %s\n\tnew version %s", dir, file, line, oldVersionStr, vbd.versionStr)
-							//l := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
-							//newContent = append(newContent, l)
-							//added = true
-						}
+					if err != nil {
+						return []string{}, errors.Wrapf(err, ErrStrFormattedBumpingVersion, filepath)
+					} else if versionsAreSame {
+						continue outerJ
 					}
 
-					//if !added {
-					//	newContent = append(newContent, line)
-					//}
-				}
+					identified = true
 
-				//newContent = append(newContent, "")
-				//if err = writeFile(vbd.bump.FS, filepath, strings.Join(newContent, "\n")); err != nil {
-				//	return []string{}, errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
-				//}
-
-				modifiedFiles = append(modifiedFiles, filepath)
-			}
-
-			if langSettings.JSONFields != nil {
-				for _, field := range *langSettings.JSONFields {
-					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
-						fmt.Printf("lang.JSONFields:\n\tfile: %s/%s\n\tfield: %s\n\tcurrent version: %s\n\tnew version %s", dir, file, field, oldVersionStr, vbd.versionStr)
-						//newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, vbd.versionStr)
-						//
-						//if err != nil {
-						//	return []string{}, errors.Wrapf(err, ErrStrFormattedSettingVersionInFile, file)
-						//}
-						//
-						//if err := writeFile(vbd.bump.FS, filepath, newContent); err != nil {
-						//	return []string{}, errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
-						//}
-						//
-						modifiedFiles = append(modifiedFiles, filepath)
+					if vbd.runArgs.IsDryRun {
+						go vbd.dryRunJsonFields(langSettings, fileContent, field, filepath, oldVersionStr)
 					}
-				}
-			}
 
-			if len(modifiedFiles) > 0 {
-				fmt.Printf("Will Modify: %s\n", console.VersionUpdate(oldVersionStr, vbd.versionStr, filepath))
+					modifiedFiles = append(modifiedFiles, filepath)
+				}
+				break outerJ
 			}
 		}
 	}
@@ -480,6 +475,42 @@ func (vbd *versionBumpData) incrementVersionDryRun(dir string, files []string, l
 	}
 
 	return modifiedFiles, nil
+}
+
+func (vbd *versionBumpData) dryRunRegex(langSettings *langs.Settings, expression string, line string, filepath string, oldVersionStr string) {
+
+	err := <-vbd.bump.errChan
+	if err != nil {
+		return
+	}
+
+	vbd.bump.waitGroup.Add(1)
+
+	vbd.bump.mutex.Lock()
+	console.Language(langSettings.Name, vbd.runArgs.IsDryRun)
+	console.VersionUpdateLine(oldVersionStr, vbd.versionStr, filepath, line)
+	vbd.bump.mutex.Unlock()
+
+	vbd.bump.waitGroup.Done()
+}
+
+func (vbd *versionBumpData) dryRunJsonFields(langSettings *langs.Settings, fileContent []string, field string, filepath string, oldVersionStr string) {
+
+	err := <-vbd.bump.errChan
+	if err != nil {
+		return
+	}
+
+	vbd.bump.waitGroup.Add(1)
+
+	vbd.bump.mutex.Lock()
+	if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
+		console.Language(langSettings.Name, vbd.runArgs.IsDryRun)
+		console.VersionUpdateField(oldVersionStr, vbd.versionStr, filepath, field)
+	}
+	vbd.bump.mutex.Unlock()
+
+	vbd.bump.waitGroup.Done()
 }
 
 func NewVersionDetector() VersionsDetected {
