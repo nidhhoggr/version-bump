@@ -13,16 +13,26 @@ const (
 	colorCyan   string = "\033[36m"
 )
 
-func IncrementProjectVersion() {
-	fmt.Println("Incrementing project version...")
+func IncrementProjectVersion(isDryRun bool) {
+	if isDryRun {
+		fmt.Println("Dry Run: Incrementing project version...")
+	} else {
+		fmt.Println("Incrementing project version...")
+	}
+
 }
 
 func CommittingChanges() {
 	fmt.Println("Committing changes...")
 }
 
-func Language(name string) {
-	fmt.Printf("  Updating %v%v%v files:\n",
+func Language(name string, isDryRun bool) {
+	action := "Updating"
+	if isDryRun {
+		action = "Will update"
+	}
+	fmt.Printf("  %s %v%v%v files:\n",
+		action,
 		colorCyan,
 		name,
 		colorReset,

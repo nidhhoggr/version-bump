@@ -14,10 +14,13 @@ const (
 )
 
 var GhRepoName = "joe-at-startupmedia/version-bump"
-var GitConfigParser git.ConfigParserInterface
-var GpgEntityAccessor gpg.EntityAccessorInterface
-var GpgEntityReader gpg.EntityReaderInterface
-var ReleaseGetter ReleaseGetterInterface
+
+// #do better
+var (
+	GitConfigParser   git.ConfigParserInterface
+	GpgEntityAccessor gpg.EntityAccessorInterface
+	ReleaseGetter     ReleaseGetterInterface
+)
 
 type ReleaseGetterInterface interface {
 	Get(string) (*http.Response, error)
@@ -43,11 +46,16 @@ type RunArgs struct {
 	PreReleaseMetadata string
 	VersionType        version.Type
 	PreReleaseType     version.PreReleaseType
+	IsDryRun           bool
 }
 
 type versionBumpData struct {
 	bump             *Bump
-	versionsDetected *map[string]int
+	versionsDetected VersionsDetected
 	runArgs          *RunArgs
 	versionStr       string
 }
+
+type stringedMap map[string]int
+
+type VersionsDetected stringedMap

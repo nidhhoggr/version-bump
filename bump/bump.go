@@ -8,6 +8,7 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -28,21 +29,21 @@ import (
 var (
 	ErrStrNoSuchFileOrDirectory      = "no such file or directory"
 	ErrStrFileDoesNotExist           = "file does not exist"
-	ErrStrReadingConfigFile          = "error reading project config file"
-	ErrStrParsingConfigFile          = "error parsing project config file"
+	ErrStrReadingConfigFile          = "reading project config file"
+	ErrStrParsingConfigFile          = "parsing project config file"
 	ErrStrZeroFilesUpdated           = "0 files updated"
-	ErrStrInconsistentVersioning     = "inconsistent versioning"
-	ErrStrRetrievingGpgConfiguration = "error retrieving gpg configuration"
-	ErrStrValidatingGpgSigningKey    = "could not validate gpg signing key"
-	ErrStrListingDirectoryFiles      = "error listing directory files"
-	ErrStrDuringConfirmationPrompt   = "error during confirmation prompt"
+	ErrStrRetrievingGpgConfiguration = "retrieving gpg configuration"
+	ErrStrValidatingGpgSigningKey    = "validating gpg signing key"
+	ErrStrListingDirectoryFiles      = "listing directory files"
+	ErrStrDuringConfirmationPrompt   = "during confirmation prompt"
 
-	ErrStrFormattedIncrementingInLangProject        = "error incrementing version in %s project"
-	ErrStrFormattedReadingAFile                     = "error reading a file %v"
-	ErrStrFormattedWritingToFile                    = "error writing to file %v"
-	ErrStrFormattedParsingVersionFromFileAndVersion = "error parsing semantic version at file %v from version: %s"
-	ErrStrFormattedBumpingVersion                   = "error bumping version %v"
-	ErrStrFormattedSettingVersionInFile             = "error setting new version on content of a file %v"
+	ErrStrFormattedIncrementingInLangProject        = "incrementing version in %s project"
+	ErrStrFormattedReadingAFile                     = "reading a file %v"
+	ErrStrFormattedWritingToFile                    = "writing to file %v"
+	ErrStrFormattedParsingVersionFromFileAndVersion = "parsing semantic version at file %v from version: %s"
+	ErrStrFormattedBumpingVersion                   = "bumping version %v"
+	ErrStrFormattedSettingVersionInFile             = "setting new version on content of a file %v"
+	ErrStrFormattedInconsistentVersioning           = "inconsistent versioning %s"
 )
 
 func init() {
@@ -127,13 +128,11 @@ func (b *Bump) withConfiguration(dirs []string, enabledByDefault bool) *Bump {
 }
 
 func (b *Bump) Bump(ra *RunArgs) error {
-	console.IncrementProjectVersion()
-
-	versionsDetected := make(map[string]int)
+	console.IncrementProjectVersion(ra.IsDryRun)
 
 	vbd := &versionBumpData{
 		bump:             b,
-		versionsDetected: &versionsDetected,
+		versionsDetected: NewVersionDetector(),
 		runArgs:          ra,
 	}
 
@@ -151,32 +150,37 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		}
 	}
 
-	if len(*vbd.versionsDetected) > 1 {
-		return errors.New(ErrStrInconsistentVersioning)
-	} else if len(*vbd.versionsDetected) == 0 {
+	versionsDetected := vbd.versionsDetected
+
+	if len(versionsDetected) > 1 {
+		return fmt.Errorf(ErrStrFormattedInconsistentVersioning, versionsDetected.String())
+	} else if len(versionsDetected) == 0 {
 		return errors.New(ErrStrZeroFilesUpdated)
 	}
 
-	if len(files) != 0 {
-		console.CommittingChanges()
+	if !ra.IsDryRun {
 
-		var gpgEntity *openpgp.Entity
+		if len(files) != 0 {
+			console.CommittingChanges()
 
-		if ra.PassphrasePrompt != nil {
-			gpgSigningKey, err := b.Git.GetSigningKeyFromConfig(GitConfigParser)
-			if err != nil {
-				return errors.Wrap(err, ErrStrRetrievingGpgConfiguration)
-			}
-			if gpgSigningKey != "" {
-				gpgEntity, err = vbd.passphrasePromptWithRetries(gpgSigningKey, 3, 0)
+			var gpgEntity *openpgp.Entity
+
+			if ra.PassphrasePrompt != nil {
+				gpgSigningKey, err := b.Git.GetSigningKeyFromConfig(GitConfigParser)
 				if err != nil {
-					return err
+					return errors.Wrap(err, ErrStrRetrievingGpgConfiguration)
+				}
+				if gpgSigningKey != "" {
+					gpgEntity, err = vbd.passphrasePromptWithRetries(gpgSigningKey, 3, 0)
+					if err != nil {
+						return err
+					}
 				}
 			}
-		}
 
-		if err := b.Git.Save(files, vbd.versionStr, gpgEntity); err != nil {
-			return err
+			if err := b.Git.Save(files, vbd.versionStr, gpgEntity); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -214,9 +218,16 @@ func (vbd *versionBumpData) bumpComponent(langConfig langs.Config, langSettings 
 
 		if len(filteredFiles) > 0 {
 
-			console.Language(langConfig.Name)
+			console.Language(langConfig.Name, vbd.runArgs.IsDryRun)
 
-			modifiedFiles, err := vbd.incrementVersion(
+			var versionIncrementor func(dir string, files []string, langSettings *langs.Settings) ([]string, error)
+
+			if vbd.runArgs.IsDryRun {
+				versionIncrementor = vbd.incrementVersionDryRun
+			} else {
+				versionIncrementor = vbd.incrementVersion
+			}
+			modifiedFiles, err := versionIncrementor(
 				dir,
 				filterFiles(langSettings.Files, f),
 				langSettings,
@@ -296,7 +307,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 				}
 			}
 
-			(*vbd.versionsDetected)[oldVersionStr]++
+			(vbd.versionsDetected)[oldVersionStr]++
 
 			if langSettings.Regex != nil {
 				newContent := make([]string, 0)
@@ -353,4 +364,133 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 	}
 
 	return modifiedFiles, nil
+}
+
+func (vbd *versionBumpData) incrementVersionDryRun(dir string, files []string, langSettings *langs.Settings) ([]string, error) {
+	var identified bool
+	modifiedFiles := make([]string, 0)
+
+	for _, file := range files {
+		filepath := path.Join(dir, file)
+		fileContent, err := readFile(vbd.bump.FS, filepath)
+		if err != nil {
+			return []string{}, errors.Wrapf(err, ErrStrFormattedReadingAFile, file)
+		}
+		var oldVersion *version.Version
+		// get current version
+		if langSettings.Regex != nil {
+		outer:
+			for _, line := range fileContent {
+				for _, expression := range *langSettings.Regex {
+					regex := regexp.MustCompile(expression)
+					if regex.MatchString(line) {
+						oldVersion, err = version.NewFromRegex(line, regex)
+						if err != nil {
+							return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
+						}
+						break outer
+					}
+				}
+			}
+		}
+
+		//@TODO Are we gonna do one the other or both?
+		if langSettings.JSONFields != nil {
+			for _, field := range *langSettings.JSONFields {
+				oldVersion, err = version.New(gjson.Get(strings.Join(fileContent, ""), field).String())
+				if err != nil {
+					return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
+				}
+				break
+			}
+		}
+
+		if oldVersion != nil {
+
+			oldVersionStr := oldVersion.String()
+			(vbd.versionsDetected)[oldVersionStr]++
+			err = oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PreReleaseType, vbd.runArgs.PreReleaseMetadata)
+			if err != nil {
+				return []string{}, errors.Wrapf(err, ErrStrFormattedBumpingVersion, filepath)
+			}
+			vbd.versionStr = oldVersion.String()
+
+			if strings.Compare(oldVersionStr, vbd.versionStr) == 0 {
+				//no changes in version
+				continue
+			}
+
+			identified = true
+
+			if langSettings.Regex != nil {
+				//newContent := make([]string, 0)
+
+				for _, line := range fileContent {
+					//var added bool
+					for _, expression := range *langSettings.Regex {
+						regex := regexp.MustCompile(expression)
+						if regex.MatchString(line) {
+							fmt.Printf("lang.Regex:\n\tfile: %s/%s\n\tline: %s\n\tcurrent version: %s\n\tnew version %s", dir, file, line, oldVersionStr, vbd.versionStr)
+							//l := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
+							//newContent = append(newContent, l)
+							//added = true
+						}
+					}
+
+					//if !added {
+					//	newContent = append(newContent, line)
+					//}
+				}
+
+				//newContent = append(newContent, "")
+				//if err = writeFile(vbd.bump.FS, filepath, strings.Join(newContent, "\n")); err != nil {
+				//	return []string{}, errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
+				//}
+
+				modifiedFiles = append(modifiedFiles, filepath)
+			}
+
+			if langSettings.JSONFields != nil {
+				for _, field := range *langSettings.JSONFields {
+					if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
+						fmt.Printf("lang.JSONFields:\n\tfile: %s/%s\n\tfield: %s\n\tcurrent version: %s\n\tnew version %s", dir, file, field, oldVersionStr, vbd.versionStr)
+						//newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, vbd.versionStr)
+						//
+						//if err != nil {
+						//	return []string{}, errors.Wrapf(err, ErrStrFormattedSettingVersionInFile, file)
+						//}
+						//
+						//if err := writeFile(vbd.bump.FS, filepath, newContent); err != nil {
+						//	return []string{}, errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
+						//}
+						//
+						modifiedFiles = append(modifiedFiles, filepath)
+					}
+				}
+			}
+
+			if len(modifiedFiles) > 0 {
+				fmt.Printf("Will Modify: %s\n", console.VersionUpdate(oldVersionStr, vbd.versionStr, filepath))
+			}
+		}
+	}
+
+	if len(files) > 0 && !identified {
+		console.Error("    Version was not identified")
+	}
+
+	return modifiedFiles, nil
+}
+
+func NewVersionDetector() VersionsDetected {
+	return (VersionsDetected)(make(stringedMap))
+}
+
+func (vd *VersionsDetected) String() string {
+	var vdStr []string
+	for key := range *vd {
+		vdStr = append(vdStr, key)
+	}
+	sort.Strings(vdStr)
+	return strings.Join(vdStr, ",")
 }

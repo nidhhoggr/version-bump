@@ -17,14 +17,14 @@ import (
 )
 
 var (
-	ErrStrOpeningRepo                   = "error opening repository"
-	ErrStrRetrievingGlobalConfiguration = "error retrieving global git configuration"
-	ErrStrRetrievingWorkTree            = "error retrieving git worktree"
-	ErrStrCommittingChanges             = "error committing changes"
-	ErrStrTaggingChanges                = "error tagging changes"
-	ErrStrLoadingConfiguration          = "error loading git configuration from global scope"
+	ErrStrOpeningRepo                   = "opening repository"
+	ErrStrRetrievingGlobalConfiguration = "retrieving global git configuration"
+	ErrStrRetrievingWorkTree            = "retrieving git worktree"
+	ErrStrCommittingChanges             = "committing changes"
+	ErrStrTaggingChanges                = "tagging changes"
+	ErrStrLoadingConfiguration          = "loading git configuration from global scope"
 
-	ErrStrFormattedStagingAFile = "error staging a file %s"
+	ErrStrFormattedStagingAFile = "staging a file %s"
 )
 
 const (

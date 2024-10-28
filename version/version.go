@@ -14,9 +14,9 @@ var (
 	ErrStrPreReleaseEmptyType          = "cannot prerelease an empty type"
 	ErrStrPreReleaseAlphaFromBeta      = "cannot prerelease an alpha from an existing beta pre-release"
 	ErrStrPreReleaseNonRcFromRc        = "cannot prerelease a non-rc from a release candidate"
-	ErrStrParsePreReleaseTag           = "Could not parse pre-release tag"
-	ErrStrIncrementerGettingPreRelease = "error incrementing: could not get pre-release"
-	ErrStrIncrementingPreRelease       = "error incrementing pre-release"
+	ErrStrParsePreReleaseTag           = "could not parse pre-release tag"
+	ErrStrIncrementerGettingPreRelease = "incrementing: could not get pre-release"
+	ErrStrIncrementingPreRelease       = "incrementing pre-release"
 
 	ErrStrFormattedUnsupportedReleaseType  = "unsupported release type: %d"
 	ErrStrFormattedRegexParsingResultEmpty = "empty result when parsing versionStr from regex: %s %s"

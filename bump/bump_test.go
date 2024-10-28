@@ -703,7 +703,11 @@ func main() {
 			Files:          allFiles{},
 			VersionType:    version.Major,
 			PreReleaseType: version.NotAPreRelease,
-			ExpectedError:  "error incrementing version in Docker project: error listing directory files: open dir: file does not exist",
+			ExpectedErrorContains: []string{
+				fmt.Sprintf(bump.ErrStrFormattedIncrementingInLangProject, docker.Name),
+				bump.ErrStrListingDirectoryFiles,
+				"open dir: file does not exist",
+			},
 		},
 		"Go - Get Files Error": {
 			Version: "2.0.0",
@@ -800,7 +804,7 @@ func main() {
 			},
 			VersionType:    version.Major,
 			PreReleaseType: version.NotAPreRelease,
-			ExpectedError:  bump.ErrStrInconsistentVersioning,
+			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3,1.3.0"),
 		},
 		"Save Error": {
 			Version: "2.0.0",

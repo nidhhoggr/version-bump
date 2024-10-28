@@ -24,6 +24,7 @@ var flags = &struct {
 	interactiveMode          bool
 	autoConfirm              bool
 	disablePrompts           bool
+	isDryRun                 bool
 	preReleaseMetadataString string
 	passphrase               string
 }{}
@@ -53,6 +54,7 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&flags.interactiveMode, "interactive", false, "enable interactive mode")
 	rootCmd.PersistentFlags().BoolVar(&flags.autoConfirm, "auto-confirm", false, "disable confirmation prompts and automatically confirm")
 	rootCmd.PersistentFlags().BoolVar(&flags.disablePrompts, "disable-prompts", false, "disable passphrase and confirmation prompts. Caution: this will result in unsigned commits, tags and releases!")
+	rootCmd.PersistentFlags().BoolVar(&flags.isDryRun, "dry-run", false, "perform a dry run without modifying any files or interacting with git")
 	rootCmd.PersistentFlags().StringVar(&flags.preReleaseMetadataString, "metadata", "", "provide metadata for the prerelease")
 	rootCmd.PersistentFlags().StringVar(&flags.passphrase, "passphrase", "", "provide gpg passphrase as a flag instead of a secure prompt. Caution!")
 	cobra.CheckErr(rootCmd.Execute())
@@ -89,6 +91,7 @@ func runPromptMode(cmd *cobra.Command, args []string) {
 			VersionType:        versionType,
 			PreReleaseType:     preReleaseType,
 			PreReleaseMetadata: flags.preReleaseMetadataString,
+			IsDryRun:           flags.isDryRun,
 		})
 		if err != nil {
 			console.Fatal(err)
@@ -125,7 +128,7 @@ func runInteractiveMode() {
 			console.Fatal(err)
 		} else {
 			preReleaseType = version.FromPreReleaseTypeString(s)
-			preReleaseMetadata, err = prompt.New().Ask("enter prerelease metadata. (leave empty for none)").Input("")
+			preReleaseMetadata, err = prompt.New().Ask("enter prerelease metadata. (leave empty for none)").Input(flags.preReleaseMetadataString)
 			if err != nil {
 				console.Fatal(err)
 			}
@@ -142,6 +145,7 @@ func runInteractiveMode() {
 		VersionType:        versionType,
 		PreReleaseType:     preReleaseType,
 		PreReleaseMetadata: preReleaseMetadata,
+		IsDryRun:           flags.isDryRun,
 	})
 	if err != nil {
 		console.Fatal(err)
