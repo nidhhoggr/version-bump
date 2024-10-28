@@ -304,11 +304,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 
 							identified = true
 
-							if vbd.runArgs.IsDryRun {
-								go vbd.dryRunRegex(langSettings, line, filepath, oldVersionStr)
-							} else {
-								go vbd.modRunRegex(langSettings, line, filepath, oldVersionStr)
-							}
+							go vbd.runRegexReplacement(langSettings, line, filepath, oldVersionStr)
 
 							modifiedFiles = append(modifiedFiles, filepath)
 						}
@@ -348,11 +344,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 
 					identified = true
 
-					if vbd.runArgs.IsDryRun {
-						go vbd.dryRunJsonFields(langSettings, fileContent, field, filepath, oldVersionStr)
-					} else {
-						go vbd.modJsonFields(langSettings, fileContent, field, filepath, oldVersionStr)
-					}
+					go vbd.runJsonFieldReplacement(langSettings, fileContent, field, filepath, oldVersionStr)
 
 					modifiedFiles = append(modifiedFiles, filepath)
 				}
@@ -383,24 +375,7 @@ func (vbd *versionBumpData) incrementAndCompareVersions(oldVersion *version.Vers
 	return false, nil
 }
 
-func (vbd *versionBumpData) dryRunRegex(langSettings *langs.Settings, line string, filepath string, oldVersionStr string) {
-
-	err := <-vbd.bump.errChanVersionGathering
-	if err != nil {
-		return
-	}
-
-	vbd.bump.WaitGroup.Add(1)
-
-	vbd.bump.mutex.Lock()
-	console.Language(langSettings.Name, vbd.runArgs.IsDryRun)
-	console.VersionUpdateLine(oldVersionStr, vbd.versionStr, filepath, line)
-	vbd.bump.mutex.Unlock()
-
-	vbd.bump.WaitGroup.Done()
-}
-
-func (vbd *versionBumpData) modRunRegex(langSettings *langs.Settings, line string, filepath string, oldVersionStr string) {
+func (vbd *versionBumpData) runRegexReplacement(langSettings *langs.Settings, line string, filepath string, oldVersionStr string) {
 	err := <-vbd.bump.errChanVersionGathering
 	if err != nil {
 		return
@@ -411,14 +386,18 @@ func (vbd *versionBumpData) modRunRegex(langSettings *langs.Settings, line strin
 	vbd.bump.mutex.Lock()
 
 	console.Language(langSettings.Name, vbd.runArgs.IsDryRun)
-	newContent := make([]string, 0)
-	l := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
-	newContent = append(newContent, l)
 
-	newContent = append(newContent, "")
-	if err := writeFile(vbd.bump.FS, filepath, strings.Join(newContent, "\n")); err != nil {
-		vbd.bump.errChanPostProcessing <- errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
+	if !vbd.runArgs.IsDryRun {
+		newContent := make([]string, 0)
+		l := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
+		newContent = append(newContent, l)
+
+		newContent = append(newContent, "")
+		if err := writeFile(vbd.bump.FS, filepath, strings.Join(newContent, "\n")); err != nil {
+			vbd.bump.errChanPostProcessing <- errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
+		}
 	}
+
 	console.VersionUpdateLine(oldVersionStr, vbd.versionStr, filepath, line)
 
 	vbd.bump.mutex.Unlock()
@@ -428,26 +407,7 @@ func (vbd *versionBumpData) modRunRegex(langSettings *langs.Settings, line strin
 	return
 }
 
-func (vbd *versionBumpData) dryRunJsonFields(langSettings *langs.Settings, fileContent []string, field string, filepath string, oldVersionStr string) {
-
-	err := <-vbd.bump.errChanVersionGathering
-	if err != nil {
-		return
-	}
-
-	vbd.bump.WaitGroup.Add(1)
-
-	vbd.bump.mutex.Lock()
-	if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
-		console.Language(langSettings.Name, vbd.runArgs.IsDryRun)
-		console.VersionUpdateField(oldVersionStr, vbd.versionStr, filepath, field)
-	}
-	vbd.bump.mutex.Unlock()
-
-	vbd.bump.WaitGroup.Done()
-}
-
-func (vbd *versionBumpData) modJsonFields(langSettings *langs.Settings, fileContent []string, field string, filepath string, oldVersionStr string) {
+func (vbd *versionBumpData) runJsonFieldReplacement(langSettings *langs.Settings, fileContent []string, field string, filepath string, oldVersionStr string) {
 
 	err := <-vbd.bump.errChanVersionGathering
 	if err != nil {
@@ -459,17 +419,22 @@ func (vbd *versionBumpData) modJsonFields(langSettings *langs.Settings, fileCont
 	vbd.bump.mutex.Lock()
 
 	console.Language(langSettings.Name, vbd.runArgs.IsDryRun)
-	if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
-		newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, vbd.versionStr)
-		if err != nil {
-			vbd.bump.errChanPostProcessing <- errors.Wrapf(err, ErrStrFormattedSettingVersionInFile, filepath)
-			return
-		}
 
-		if err := writeFile(vbd.bump.FS, filepath, newContent); err != nil {
-			vbd.bump.errChanPostProcessing <- errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
+	if !vbd.runArgs.IsDryRun {
+		if gjson.Get(strings.Join(fileContent, ""), field).Exists() {
+			newContent, err := sjson.Set(strings.Join(fileContent, "\n"), field, vbd.versionStr)
+			if err != nil {
+				vbd.bump.errChanPostProcessing <- errors.Wrapf(err, ErrStrFormattedSettingVersionInFile, filepath)
+				return
+			}
+
+			if err := writeFile(vbd.bump.FS, filepath, newContent); err != nil {
+				vbd.bump.errChanPostProcessing <- errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
+				return
+			}
 		}
 	}
+
 	console.VersionUpdateField(oldVersionStr, vbd.versionStr, filepath, field)
 
 	vbd.bump.mutex.Unlock()
