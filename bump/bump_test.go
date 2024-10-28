@@ -1164,6 +1164,23 @@ func TestBump_PassphraseGetShouldNotSignLoadConfigPasses(t *testing.T) {
 	a.Nil(err)
 }
 
+func TestBump_DryRun(t *testing.T) {
+	a := assert.New(t)
+
+	testSuite := testSuites["Go - Single Constant #2"]
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+		IsDryRun: true,
+	})
+	//currently we continue through the loop instead of returning an error
+	a.Nil(err)
+}
+
 func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {
 
 	m1 := new(mocks.Repository)
