@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"sync"
 	"testing"
 
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
@@ -112,6 +113,7 @@ func getBumpInstance(testSuite testBumpTestSuite) *bump.Bump {
 			Worktree:   m2,
 		},
 		Configuration: testSuite.Configuration,
+		WaitGroup:     new(sync.WaitGroup),
 	}
 
 	for _, dir := range testSuite.Configuration[0].Directories {
@@ -152,7 +154,7 @@ func getBumpInstance(testSuite testBumpTestSuite) *bump.Bump {
 	return &r
 }
 
-func TestBumpRun(t *testing.T) {
+func TestRun_Bump(t *testing.T) {
 	a := assert.New(t)
 
 	b := getBumpInstance(runTestSuites[0])
@@ -163,7 +165,7 @@ func TestBumpRun(t *testing.T) {
 	a.Nil(err)
 }
 
-func TestBumpRun_Fails(t *testing.T) {
+func TestRun_BumpFails(t *testing.T) {
 	a := assert.New(t)
 
 	b := getBumpInstance(runTestSuites[1])
@@ -174,7 +176,7 @@ func TestBumpRun_Fails(t *testing.T) {
 	a.ErrorContains(err, version.ErrStrPreReleasingNonPreRelease)
 }
 
-func TestBumpRun_FailingUrl(t *testing.T) {
+func TestRun_BumpFailingUrl(t *testing.T) {
 	a := assert.New(t)
 
 	bump.GhRepoName = "nonexistent-user/nonexistent-package"
@@ -186,7 +188,7 @@ func TestBumpRun_FailingUrl(t *testing.T) {
 	a.ErrorContains(err, fmt.Sprintf(bump.ErrStrFormattedUnsuccessfulStatusCode, 404))
 }
 
-func TestBumpRun_GetterHasError(t *testing.T) {
+func TestRun_BumGetterHasError(t *testing.T) {
 	a := assert.New(t)
 
 	rg := new(mocks.ReleaseGetter)
@@ -201,7 +203,7 @@ func TestBumpRun_GetterHasError(t *testing.T) {
 	rg.AssertExpectations(t)
 }
 
-func TestBumpRun_GetterHasJunkJson(t *testing.T) {
+func TestRun_BumGetterHasJunkJson(t *testing.T) {
 	a := assert.New(t)
 
 	rg := new(mocks.ReleaseGetter)
@@ -216,7 +218,7 @@ func TestBumpRun_GetterHasJunkJson(t *testing.T) {
 	rg.AssertExpectations(t)
 }
 
-func TestBumpRun_GetterHasNoTagName(t *testing.T) {
+func TestRun_BumGetterHasNoTagName(t *testing.T) {
 	a := assert.New(t)
 
 	rg := new(mocks.ReleaseGetter)
@@ -231,7 +233,7 @@ func TestBumpRun_GetterHasNoTagName(t *testing.T) {
 	rg.AssertExpectations(t)
 }
 
-func TestBumpRun_GetterShouldPresentNewVersion(t *testing.T) {
+func TestRun_BumGetterShouldPresentNewVersion(t *testing.T) {
 	a := assert.New(t)
 
 	rg := new(mocks.ReleaseGetter)

@@ -28,12 +28,13 @@ type ReleaseGetterInterface interface {
 }
 
 type Bump struct {
-	FS            afero.Fs
-	Git           *git.Instance
-	errChan       chan error
-	waitGroup     *sync.WaitGroup
-	Configuration Configuration
-	mutex         sync.Mutex
+	FS                      afero.Fs
+	Git                     *git.Instance
+	errChanVersionGathering chan error
+	errChanPostProcessing   chan error
+	WaitGroup               *sync.WaitGroup
+	Configuration           Configuration
+	mutex                   sync.Mutex
 }
 
 type ConfigDecoder struct {

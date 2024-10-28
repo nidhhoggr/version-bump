@@ -8,6 +8,7 @@ import (
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/js"
 	"path"
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
@@ -1180,6 +1181,7 @@ func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*
 			Worktree:   m2,
 		},
 		Configuration: testSuite.Configuration,
+		WaitGroup:     new(sync.WaitGroup),
 	}
 
 	shouldBeCommitted := false
