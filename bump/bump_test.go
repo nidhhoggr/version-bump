@@ -807,6 +807,75 @@ func main() {
 			PreReleaseType: version.NotAPreRelease,
 			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3,1.3.0"),
 		},
+		"Inconsistent Versioning w/ JsonFields": {
+			Version: "2.0.0",
+			Configuration: bump.Configuration{
+				langs.Config{
+					Name:        golang.Name,
+					Enabled:     true,
+					Directories: []string{"."},
+				},
+				langs.Config{
+					Name:        js.Name,
+					Enabled:     true,
+					Directories: []string{"."},
+				},
+			},
+			Files: allFiles{
+				Go: map[string][]file{
+					".": {
+						{
+							Name:                "main.go",
+							ExpectedToBeChanged: true,
+							Content: `package main
+
+import "fmt"
+
+const Version string = "1.3.0"
+
+func main() {
+	fmt.Println(Version)
+}`,
+						},
+					},
+				},
+				JavaScript: map[string][]file{
+					".": {
+						{
+							Name:                "package.json",
+							ExpectedToBeChanged: true,
+							Content: `{
+	"name": "some-package",
+	"version": "1.2.3",
+	"description": "An npm project",
+	"main": "wrapper.js",
+	"directories": {
+	  "doc": "docs"
+	},
+	"repository": {
+	  "type": "git",
+	  "url": "git+https://github.com/none/none.git"
+	},
+	"keywords": [],
+	"author": "None None",
+	"license": "MIT",
+	"bugs": {
+	  "url": "https://github.com/none/none/issues"
+	},
+	"homepage": "https://github.com/none/none#readme",
+	"dependencies": {
+	  "@actions/core": "^1.4.0"
+	},
+	"devDependencies": {}
+}`,
+						},
+					},
+				},
+			},
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
+			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3,1.3.0"),
+		},
 		"Save Error": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
@@ -1196,6 +1265,24 @@ func TestBump_DryRunJsonFields(t *testing.T) {
 	})
 	//currently we continue through the loop instead of returning an error
 	a.Nil(err)
+}
+
+func TestBump_DryRunFails(t *testing.T) {
+
+	a := assert.New(t)
+
+	testSuite := testSuites["Inconsistent Versioning w/ JsonFields"]
+
+	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
+		VersionType:    testSuite.VersionType,
+		PreReleaseType: testSuite.PreReleaseType,
+		PassphrasePrompt: func() (string, error) {
+			return "", nil
+		},
+		IsDryRun: true,
+	})
+	//currently we continue through the loop instead of returning an error
+	a.ErrorContains(err, testSuite.ExpectedError)
 }
 
 func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*bump.Bump, error) {

@@ -185,7 +185,6 @@ func (b *Bump) Bump(ra *RunArgs) error {
 	if !ra.IsDryRun {
 
 		if len(files) != 0 {
-			console.CommittingChanges()
 
 			var gpgEntity *openpgp.Entity
 
@@ -201,6 +200,8 @@ func (b *Bump) Bump(ra *RunArgs) error {
 					}
 				}
 			}
+
+			console.CommittingChanges()
 
 			if err := b.Git.Save(files, vbd.versionStr, gpgEntity); err != nil {
 				return err
