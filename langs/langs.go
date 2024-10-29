@@ -61,3 +61,10 @@ func init() {
 		Supported[Languages[li].Name] = &Languages[li]
 	}
 }
+
+func (c *Config) GetDirectories() []string {
+	if len(c.Directories) == 0 {
+		c.Directories = []string{"."}
+	}
+	return c.Directories
+}

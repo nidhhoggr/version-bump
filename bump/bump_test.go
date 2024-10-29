@@ -326,6 +326,43 @@ ENTRYPOINT [ "/app" ]`,
 			VersionType:    version.Major,
 			PreReleaseType: version.NotAPreRelease,
 		},
+		"Docker - Omitting Directories Should Default To .": {
+			Version: "2.0.0",
+			Configuration: bump.Configuration{
+				langs.Config{
+					Name:    docker.Name,
+					Enabled: true,
+				},
+			},
+			Files: allFiles{
+				Docker: map[string][]file{
+					".": {
+						{
+							Name:                "Dockerfile",
+							ExpectedToBeChanged: true,
+							Content: `FROM golang:1.16 as builder
+WORKDIR /opt/src
+COPY . .
+RUN groupadd -g 1000 appuser &&\
+	useradd -m -u 1000 -g appuser appuser
+
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /opt/app
+FROM scratch
+LABEL "repository"="https://github.com/none/none"
+LABEL "maintainer"="None None <none.none@gmail.com>"
+LABEL org.opencontainers.image.version=1.2.3
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/passwd /etc/passwd
+COPY LICENSE.md /LICENSE.md
+COPY --from=builder --chown=1000:0 /opt/app /app
+ENTRYPOINT [ "/app" ]`,
+						},
+					},
+				},
+			},
+			VersionType:    version.Major,
+			PreReleaseType: version.NotAPreRelease,
+		},
 		"Docker - Single, with Quotes": {
 			Version: "2.0.0",
 			Configuration: bump.Configuration{
@@ -1316,7 +1353,7 @@ func runBumpTest(t *testing.T, testSuite testBumpTestSuite, ra *bump.RunArgs) (*
 		langFileMap := sf.Interface().(fileMap)
 
 		if langConfig.Enabled {
-			for _, dir := range langConfig.Directories {
+			for _, dir := range langConfig.GetDirectories() {
 				for tgtDir, tgtFiles := range langFileMap {
 					if dir == tgtDir {
 						for _, tgtFile := range tgtFiles {

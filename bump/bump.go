@@ -151,7 +151,7 @@ func (b *Bump) Bump(ra *RunArgs) error {
 		langConfig := b.Configuration[i]
 		if langConfig.Enabled {
 			//fmt.Printf("%s %-v", langName, lang)
-			modifiedFiles, err := vbd.bumpComponent(langConfig, langs.Supported[langConfig.Name])
+			modifiedFiles, err := vbd.bumpComponent(&langConfig, langs.Supported[langConfig.Name])
 			if err != nil {
 				return errors.Wrapf(err, ErrStrFormattedIncrementingInLangProject, langConfig.Name)
 			}
@@ -233,18 +233,11 @@ func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, re
 	}
 }
 
-func (vbd *versionBumpData) bumpComponent(langConfig langs.Config, langSettings *langs.Settings) ([]string, error) {
+func (vbd *versionBumpData) bumpComponent(langConfig *langs.Config, langSettings *langs.Settings) ([]string, error) {
 
 	files := make([]string, 0)
 
-	langDirs := langConfig.Directories
-
-	//
-	if len(langDirs) == 0 {
-		langDirs = []string{"."}
-	}
-
-	for _, dir := range langDirs {
+	for _, dir := range langConfig.GetDirectories() {
 
 		console.Debug("Bump.bumpComponent()", fmt.Sprintf("lang: %s, dir: %s\n", langSettings.Name, dir))
 		f, err := getFiles(vbd.bump.FS, dir, langConfig.ExcludeFiles)
