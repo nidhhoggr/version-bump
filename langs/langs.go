@@ -24,6 +24,13 @@ type Config struct {
 	Enabled      bool
 }
 
+type ConfigDecoder struct {
+	Docker     Config
+	Go         Config
+	JavaScript Config
+	Generic    Config
+}
+
 var Languages = []Settings{
 	{
 		Name:  docker.Name,

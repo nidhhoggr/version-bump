@@ -87,7 +87,7 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		}
 	}
 
-	cf := new(ConfigDecoder)
+	cf := new(langs.ConfigDecoder)
 	_, err = toml.Decode(strings.Join(content, "\n"), cf)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrStrParsingConfigFile)

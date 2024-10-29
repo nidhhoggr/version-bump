@@ -37,13 +37,6 @@ type Bump struct {
 	mutex                   sync.Mutex
 }
 
-type ConfigDecoder struct {
-	Docker     langs.Config
-	Go         langs.Config
-	JavaScript langs.Config
-	Generic    langs.Config
-}
-
 type Configuration []langs.Config
 
 type RunArgs struct {
