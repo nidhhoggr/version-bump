@@ -99,7 +99,7 @@ versions can be optionally specified as an argument along with pre-release flags
 
 When incrementing a pre-release without updating the version, simply omit the version type argument.
 
-## PreRelease Automation
+## Prerelease Automation
 
 <a name="prerelease_types"></a>
 ### Types
@@ -122,7 +122,7 @@ Where the following criterion must be met:
 
 
 <a name="prerelease_alpha"></a>  
-### Alpha Pre-release
+### Alpha Prerelease
 
 must be released from an existing alpha release whose patch is the same by omitting the [version type](#version_types) argument:
 
@@ -133,7 +133,7 @@ Or from a new version by specifying the [version type](#version_types):
 ![Screenshot 2024-10-28 at 21 04 21](https://github.com/user-attachments/assets/8ef99cdf-8fa1-43b4-8d27-8be987b6f52b)
 
 <a name="prerelease_beta"></a>  
-### Beta Pre-release
+### Beta Prerelease
 
 must be released from an existing alpha or beta release whose patch is the same by omitting the [version type](#version_types) argument:
 
@@ -153,14 +153,14 @@ Attempting to release an [alpha release](#prerelease_alpha) or a [beta release](
 
 ![Screenshot 2024-10-28 at 21 23 48](https://github.com/user-attachments/assets/58dfe870-9d5c-4a04-87d0-8614b7fb62e3)
 
-### Incrementing a Pre-release Version
+### Incrementing aPrereleaseVersion
 
 Simply specify the same prerelease type of the existing prerelease while omitting the [version type](#version_types) argument. 
 It will automatically increment the prerelease version.
 
 ![Screenshot 2024-10-28 at 21 24 59](https://github.com/user-attachments/assets/5870f006-b41d-4de2-b7bd-df87ab5c545c)
 
-### Promoting a Pre-release
+### Promoting a Prerelease
 
 After our prerelease has been tested and you're ready for rollout you can simply `patch` as the [version type](#version_types) argument. 
 It will remove all of the prerelease versioning and metadata from the version.
