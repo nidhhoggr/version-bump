@@ -120,14 +120,8 @@ Where the following criterion must be met:
 * `Prerelease-version`: Must be an integer
 * `Prerelease-metadata`: A string without special characters seperated beginning with a `+`
 
-
-<<<<<<< Updated upstream
 <a name="prerelease_alpha"></a>  
 ### Alpha Prerelease
-=======
-<a name="Prerelease_alpha"></a>  
-### Alpha Prerelease
->>>>>>> Stashed changes
 
 must be released from an existing alpha release whose patch is the same by omitting the [version type](#version_types) argument:
 
@@ -137,13 +131,8 @@ Or from a new version by specifying the [version type](#version_types):
 
 ![Screenshot 2024-10-28 at 21 04 21](https://github.com/user-attachments/assets/8ef99cdf-8fa1-43b4-8d27-8be987b6f52b)
 
-<<<<<<< Updated upstream
 <a name="prerelease_beta"></a>  
 ### Beta Prerelease
-=======
-<a name="Prerelease_beta"></a>  
-### Beta Prerelease
->>>>>>> Stashed changes
 
 must be released from an existing alpha or beta release whose patch is the same by omitting the [version type](#version_types) argument:
 
