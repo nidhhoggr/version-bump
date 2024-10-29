@@ -200,7 +200,10 @@ Another option automate releases it to use interactive mode by specifying the `-
 
 ![Screenshot 2024-10-28 at 21 58 02](https://github.com/user-attachments/assets/556b3300-8b24-4787-8598-5459718c2600)
 
-## Remarks
+## Creating A New Language
 
-- Versions are expected to be consistent across all files
-- With the absence of a `.bump` configuration file,, **version-bump** has all languages enabled
+This will allow you to specify a new configuration directive in your `.bump` configuration. 
+The codebase has been refactored to a point to make this process as simple as possible. 
+In the future more refactoring can provide improvements. 
+
+See [issue #2](https://github.com/joe-at-startupmedia/version-bump/issues/2) for instructions and more specifically, this [commit](https://github.com/joe-at-startupmedia/version-bump/commit/505eb8c3f492bfd9f75be63cd3353354bef1dc46).
