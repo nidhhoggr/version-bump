@@ -65,9 +65,9 @@ directories = [ 'client' ]
 ## CLI Usage
 
 ```
-This application helps incrementing a semantic version of a project.
-It can bump the version in multiple different files at once,
-for example in package.json and a Dockerfile.
+This application increments the semantic version of a project.
+It can bump semantic versions in multiple different files at once,
+as well as automate prerelease versioning and promotion.
 
 Usage:
   version-bump [major|minor|patch] [flags]
