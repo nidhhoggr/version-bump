@@ -14,7 +14,9 @@ In automatic mode, **version-bump** will try to identify versions of all support
 In a manual mode, **version-bump** will read a configuration file to determine which modifications to make. It is expected be executed in the root of the project where the configuration file is located.
 
 
-| Settings      | Expected Patterns                             | Filename                              |
+### Default Settings
+
+| Language      | Expected Patterns                             | Filename                              |
 |:-------------:|:---------------------------------------------:|:-------------------------------------:|
 | Docker        | `org.opencontainers.image.version` label      | `Dockerfile`                          |
 | Go            | String constant named `Version`/`version`     | `*.go`                                |
