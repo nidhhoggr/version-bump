@@ -42,9 +42,9 @@ type Configuration []langs.Config
 type RunArgs struct {
 	ConfirmationPrompt func(string, string, string) (bool, error)
 	PassphrasePrompt   func() (string, error)
-	PreReleaseMetadata string
+	PrereleaseMetadata string
 	VersionType        version.Type
-	PreReleaseType     version.PreReleaseType
+	PrereleaseType     version.PrereleaseType
 	IsDryRun           bool
 	ShouldDebug        bool
 }

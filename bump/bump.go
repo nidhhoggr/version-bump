@@ -390,7 +390,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 func (vbd *versionBumpData) incrementAndCompareVersions(oldVersion *version.Version) (bool, error) {
 	oldVersionStr := oldVersion.String()
 	vbd.versionsDetected[oldVersionStr]++
-	err := oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PreReleaseType, vbd.runArgs.PreReleaseMetadata)
+	err := oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PrereleaseType, vbd.runArgs.PrereleaseMetadata)
 	if err != nil {
 		return false, err
 	}

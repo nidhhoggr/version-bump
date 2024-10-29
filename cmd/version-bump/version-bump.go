@@ -18,15 +18,15 @@ const currentDir = "."
 var yesOrNo = []string{"Yes", "No"}
 
 var flags = &struct {
-	preReleaseTypeAlpha      bool
-	preReleaseTypeBeta       bool
-	preReleaseTypeRc         bool
+	PrereleaseTypeAlpha      bool
+	PrereleaseTypeBeta       bool
+	PrereleaseTypeRc         bool
 	interactiveMode          bool
 	autoConfirm              bool
 	disablePrompts           bool
 	isDryRun                 bool
 	shouldDebug              bool
-	preReleaseMetadataString string
+	PrereleaseMetadataString string
 	passphrase               string
 }{}
 
@@ -49,41 +49,41 @@ for example in package.json and a Dockerfile.`,
 }
 
 func main() {
-	rootCmd.PersistentFlags().BoolVar(&flags.preReleaseTypeAlpha, "alpha", false, "alpha prerelease")
-	rootCmd.PersistentFlags().BoolVar(&flags.preReleaseTypeBeta, "beta", false, "beta prerelease")
-	rootCmd.PersistentFlags().BoolVar(&flags.preReleaseTypeRc, "rc", false, "release candidate prerelease")
+	rootCmd.PersistentFlags().BoolVar(&flags.PrereleaseTypeAlpha, "alpha", false, "alpha Prerelease")
+	rootCmd.PersistentFlags().BoolVar(&flags.PrereleaseTypeBeta, "beta", false, "beta Prerelease")
+	rootCmd.PersistentFlags().BoolVar(&flags.PrereleaseTypeRc, "rc", false, "release candidate Prerelease")
 	rootCmd.PersistentFlags().BoolVar(&flags.interactiveMode, "interactive", false, "enable interactive mode")
 	rootCmd.PersistentFlags().BoolVar(&flags.autoConfirm, "auto-confirm", false, "disable confirmation prompts and automatically confirm")
 	rootCmd.PersistentFlags().BoolVar(&flags.disablePrompts, "disable-prompts", false, "disable passphrase and confirmation prompts. Caution: this will result in unsigned commits, tags and releases!")
 	rootCmd.PersistentFlags().BoolVar(&flags.isDryRun, "dry-run", false, "perform a dry run without modifying any files or interacting with git")
 	rootCmd.PersistentFlags().BoolVar(&flags.shouldDebug, "debug", false, "output debug information to the console")
-	rootCmd.PersistentFlags().StringVar(&flags.preReleaseMetadataString, "metadata", "", "provide metadata for the prerelease")
+	rootCmd.PersistentFlags().StringVar(&flags.PrereleaseMetadataString, "metadata", "", "provide metadata for the Prerelease")
 	rootCmd.PersistentFlags().StringVar(&flags.passphrase, "passphrase", "", "provide gpg passphrase as a flag instead of a secure prompt. Caution!")
 	cobra.CheckErr(rootCmd.Execute())
 }
 
 func runPromptMode(cmd *cobra.Command, args []string) {
-	hasPreRelease := flags.preReleaseTypeAlpha || flags.preReleaseTypeBeta || flags.preReleaseTypeRc
-	if len(args) == 1 || hasPreRelease {
+	hasPrerelease := flags.PrereleaseTypeAlpha || flags.PrereleaseTypeBeta || flags.PrereleaseTypeRc
+	if len(args) == 1 || hasPrerelease {
 		b, err := bump.New(currentDir)
 		if err != nil {
 			console.Fatal(errors.Wrap(err, "error preparing project configuration"))
 		}
 
 		versionType := version.NotAVersion
-		preReleaseType := version.NotAPreRelease
+		PrereleaseType := version.NotAPrerelease
 
 		if len(args) == 1 {
 			versionType = version.FromString(args[0])
 		}
 
-		if hasPreRelease {
-			if flags.preReleaseTypeAlpha {
-				preReleaseType = version.AlphaPreRelease
-			} else if flags.preReleaseTypeBeta {
-				preReleaseType = version.BetaPreRelease
-			} else if flags.preReleaseTypeRc {
-				preReleaseType = version.ReleaseCandidate
+		if hasPrerelease {
+			if flags.PrereleaseTypeAlpha {
+				PrereleaseType = version.AlphaPrerelease
+			} else if flags.PrereleaseTypeBeta {
+				PrereleaseType = version.BetaPrerelease
+			} else if flags.PrereleaseTypeRc {
+				PrereleaseType = version.ReleaseCandidate
 			}
 		}
 
@@ -91,8 +91,8 @@ func runPromptMode(cmd *cobra.Command, args []string) {
 			ConfirmationPrompt: confirmationPrompt,
 			PassphrasePrompt:   passphrasePrompt,
 			VersionType:        versionType,
-			PreReleaseType:     preReleaseType,
-			PreReleaseMetadata: flags.preReleaseMetadataString,
+			PrereleaseType:     PrereleaseType,
+			PrereleaseMetadata: flags.PrereleaseMetadataString,
 			IsDryRun:           flags.isDryRun,
 			ShouldDebug:        flags.shouldDebug,
 		})
@@ -107,8 +107,8 @@ func runPromptMode(cmd *cobra.Command, args []string) {
 func runInteractiveMode() {
 
 	versionType := version.NotAVersion
-	preReleaseType := version.NotAPreRelease
-	preReleaseMetadata := ""
+	PrereleaseType := version.NotAPrerelease
+	PrereleaseMetadata := ""
 
 	s, err := prompt.New().Ask("Would you like to increment the major, minor or patch version?").Choose(yesOrNo)
 	if err != nil {
@@ -122,16 +122,16 @@ func runInteractiveMode() {
 		}
 	}
 
-	s, err = prompt.New().Ask("Is this a prerelease?").Choose(yesOrNo)
+	s, err = prompt.New().Ask("Is this a Prerelease?").Choose(yesOrNo)
 	if err != nil {
 		console.Fatal(err)
 	} else if s == "Yes" {
-		s, err = prompt.New().Ask(fmt.Sprintf("select prerelease type")).Choose(version.PreReleaseTypeStrings)
+		s, err = prompt.New().Ask(fmt.Sprintf("select Prerelease type")).Choose(version.PrereleaseTypeStrings)
 		if err != nil {
 			console.Fatal(err)
 		} else {
-			preReleaseType = version.FromPreReleaseTypeString(s)
-			preReleaseMetadata, err = prompt.New().Ask("enter prerelease metadata. (leave empty for none)").Input(flags.preReleaseMetadataString)
+			PrereleaseType = version.FromPrereleaseTypeString(s)
+			PrereleaseMetadata, err = prompt.New().Ask("enter Prerelease metadata. (leave empty for none)").Input(flags.PrereleaseMetadataString)
 			if err != nil {
 				console.Fatal(err)
 			}
@@ -146,8 +146,8 @@ func runInteractiveMode() {
 		ConfirmationPrompt: confirmationPrompt,
 		PassphrasePrompt:   passphrasePrompt,
 		VersionType:        versionType,
-		PreReleaseType:     preReleaseType,
-		PreReleaseMetadata: preReleaseMetadata,
+		PrereleaseType:     PrereleaseType,
+		PrereleaseMetadata: PrereleaseMetadata,
 		IsDryRun:           flags.isDryRun,
 		ShouldDebug:        flags.shouldDebug,
 	})

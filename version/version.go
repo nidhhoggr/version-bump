@@ -10,17 +10,17 @@ import (
 )
 
 var (
-	ErrStrPreReleasingNonPreRelease    = "cannot prerelease a non-prerelease without incrementing a version type"
-	ErrStrPreReleaseEmptyType          = "cannot prerelease an empty type"
-	ErrStrPreReleaseAlphaFromBeta      = "cannot prerelease an alpha from an existing beta pre-release"
-	ErrStrPreReleaseNonRcFromRc        = "cannot prerelease a non-rc from a release candidate"
-	ErrStrParsePreReleaseTag           = "could not parse pre-release tag"
-	ErrStrIncrementerGettingPreRelease = "incrementing: could not get pre-release"
-	ErrStrIncrementingPreRelease       = "incrementing pre-release"
+	ErrStrPreReleasingNonPrerelease    = "cannot Prerelease a non-Prerelease without incrementing a version type"
+	ErrStrPrereleaseEmptyType          = "cannot Prerelease an empty type"
+	ErrStrPrereleaseAlphaFromBeta      = "cannot Prerelease an alpha from an existing beta pre-release"
+	ErrStrPrereleaseNonRcFromRc        = "cannot Prerelease a non-rc from a release candidate"
+	ErrStrParsePrereleaseTag           = "could not parse pre-release tag"
+	ErrStrIncrementerGettingPrerelease = "incrementing: could not get pre-release"
+	ErrStrIncrementingPrerelease       = "incrementing pre-release"
 
 	ErrStrFormattedUnsupportedReleaseType  = "unsupported release type: %d"
 	ErrStrFormattedRegexParsingResultEmpty = "empty result when parsing versionStr from regex: %s %s"
-	ErrStrFormattedNotAPrerelease          = "%v is not a prerelease"
+	ErrStrFormattedNotAPrerelease          = "%v is not a Prerelease"
 )
 
 const Regex = `[vV]?([0-9]*)\.([0-9]*)\.([0-9]*)(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
@@ -93,22 +93,22 @@ func NewFromRegex(versionString string, regex *regexp.Regexp) (*Version, error) 
 	return New(replaced)
 }
 
-func (v *Version) Increment(versionType Type, preReleaseType PreReleaseType, preReleaseMetadata string) error {
+func (v *Version) Increment(versionType Type, PrereleaseType PrereleaseType, PrereleaseMetadata string) error {
 	var newVersion semver.Version
 
 	isVersionBumping := versionType > NotAVersion
-	isPreReleasing := preReleaseType > NotAPreRelease
+	isPreReleasing := PrereleaseType > NotAPrerelease
 
 	// see https://github.com/Masterminds/semver/issues/251
-	if v.IsPreRelease() &&
+	if v.IsPrerelease() &&
 		isVersionBumping &&
 		isPreReleasing &&
 		versionType == Patch {
-		_ = v.SetPreReleaseString("")
-	} else if !v.IsPreRelease() &&
+		_ = v.SetPrereleaseString("")
+	} else if !v.IsPrerelease() &&
 		isPreReleasing &&
 		!isVersionBumping {
-		return errors.New(ErrStrPreReleasingNonPreRelease)
+		return errors.New(ErrStrPreReleasingNonPrerelease)
 	}
 
 	if isVersionBumping {
@@ -124,7 +124,7 @@ func (v *Version) Increment(versionType Type, preReleaseType PreReleaseType, pre
 	}
 
 	if isPreReleasing {
-		err := v.PreRelease(preReleaseType, preReleaseMetadata)
+		err := v.Prerelease(PrereleaseType, PrereleaseMetadata)
 		if err != nil {
 			console.Error(err)
 			return err
@@ -134,62 +134,62 @@ func (v *Version) Increment(versionType Type, preReleaseType PreReleaseType, pre
 	return nil
 }
 
-func (v *Version) IsPreRelease() bool {
+func (v *Version) IsPrerelease() bool {
 	return len(v.semverPtr.Prerelease()) > 0
 }
 
-func (v *Version) PreRelease(preReleaseType PreReleaseType, preReleaseMetadata string) error {
-	if preReleaseType == NotAPreRelease {
-		return errors.New(ErrStrPreReleaseEmptyType)
+func (v *Version) Prerelease(PrereleaseType PrereleaseType, PrereleaseMetadata string) error {
+	if PrereleaseType == NotAPrerelease {
+		return errors.New(ErrStrPrereleaseEmptyType)
 	}
-	if v.IsPreRelease() {
-		preRelease, err := v.GetPreRelease()
+	if v.IsPrerelease() {
+		Prerelease, err := v.GetPrerelease()
 		if err != nil {
 			return err
 		}
-		firstSegment := preRelease.Segments[0]
-		if strings.Contains(fmt.Sprintf("%s", firstSegment), PreReleaseString(AlphaPreRelease)) {
-			if preReleaseType != AlphaPreRelease {
-				err = v.SetPreReleaseString(PreReleaseString(preReleaseType))
+		firstSegment := Prerelease.Segments[0]
+		if strings.Contains(fmt.Sprintf("%s", firstSegment), PrereleaseString(AlphaPrerelease)) {
+			if PrereleaseType != AlphaPrerelease {
+				err = v.SetPrereleaseString(PrereleaseString(PrereleaseType))
 				if err != nil {
 					return err
 				}
 			}
-		} else if strings.Contains(fmt.Sprintf("%s", firstSegment), PreReleaseString(BetaPreRelease)) {
-			if preReleaseType == AlphaPreRelease {
-				return errors.New(ErrStrPreReleaseAlphaFromBeta)
-			} else if preReleaseType != BetaPreRelease { //only other option is rc
-				err = v.SetPreReleaseString(PreReleaseString(preReleaseType))
+		} else if strings.Contains(fmt.Sprintf("%s", firstSegment), PrereleaseString(BetaPrerelease)) {
+			if PrereleaseType == AlphaPrerelease {
+				return errors.New(ErrStrPrereleaseAlphaFromBeta)
+			} else if PrereleaseType != BetaPrerelease { //only other option is rc
+				err = v.SetPrereleaseString(PrereleaseString(PrereleaseType))
 				if err != nil {
 					return err
 				}
 			}
-		} else if strings.Contains(fmt.Sprintf("%s", firstSegment), PreReleaseString(ReleaseCandidate)) {
-			if preReleaseType == AlphaPreRelease || preReleaseType == BetaPreRelease {
-				return errors.New(ErrStrPreReleaseNonRcFromRc)
+		} else if strings.Contains(fmt.Sprintf("%s", firstSegment), PrereleaseString(ReleaseCandidate)) {
+			if PrereleaseType == AlphaPrerelease || PrereleaseType == BetaPrerelease {
+				return errors.New(ErrStrPrereleaseNonRcFromRc)
 			}
 		}
 	} else {
-		switch preReleaseType {
-		case AlphaPreRelease:
+		switch PrereleaseType {
+		case AlphaPrerelease:
 			fallthrough
-		case BetaPreRelease:
+		case BetaPrerelease:
 			fallthrough
 		case ReleaseCandidate:
-			err := v.SetPreReleaseString(PreReleaseString(preReleaseType))
+			err := v.SetPrereleaseString(PrereleaseString(PrereleaseType))
 			if err != nil {
 				return err
 			}
 		default:
-			return fmt.Errorf(ErrStrFormattedUnsupportedReleaseType, preReleaseType)
+			return fmt.Errorf(ErrStrFormattedUnsupportedReleaseType, PrereleaseType)
 		}
 	}
-	err := v.IncrementPreRelease()
+	err := v.IncrementPrerelease()
 	if err != nil {
 		return err
 	}
-	if preReleaseMetadata != "" || v.GetMetaData() != "" {
-		err = v.SetPreReleaseMetadata(preReleaseMetadata)
+	if PrereleaseMetadata != "" || v.GetMetaData() != "" {
+		err = v.SetPrereleaseMetadata(PrereleaseMetadata)
 		if err != nil {
 			return err
 		}
@@ -204,22 +204,22 @@ func (v *Version) String() string {
 	return v.semverPtr.String()
 }
 
-func (v *Version) GetPreRelease() (*PreRelease, error) {
-	preReleaseStr := v.GetPreReleaseString()
-	preRelease, err := parsePreRelease(preReleaseStr)
+func (v *Version) GetPrerelease() (*Prerelease, error) {
+	PrereleaseStr := v.GetPrereleaseString()
+	Prerelease, err := parsePrerelease(PrereleaseStr)
 	if err != nil {
-		return nil, errors.WithMessage(err, ErrStrParsePreReleaseTag)
+		return nil, errors.WithMessage(err, ErrStrParsePrereleaseTag)
 	}
-	return preRelease, nil
+	return Prerelease, nil
 }
 
-func (v *Version) GetPreReleaseString() string {
+func (v *Version) GetPrereleaseString() string {
 	return v.semverPtr.Prerelease()
 }
 
-func (v *Version) SetPreReleaseString(preReleaseStr string) error {
-	//fmt.Printf("setting prerelease string: %s\n", preReleaseStr)
-	setPrerelease, err := v.semverPtr.SetPrerelease(preReleaseStr)
+func (v *Version) SetPrereleaseString(PrereleaseStr string) error {
+	//fmt.Printf("setting Prerelease string: %s\n", PrereleaseStr)
+	setPrerelease, err := v.semverPtr.SetPrerelease(PrereleaseStr)
 	if err != nil {
 		return err
 	}
@@ -227,8 +227,8 @@ func (v *Version) SetPreReleaseString(preReleaseStr string) error {
 	return nil
 }
 
-func (v *Version) SetPreReleaseMetadata(metadataStr string) error {
-	//fmt.Printf("setting prerelease string: %s\n", preReleaseStr)
+func (v *Version) SetPrereleaseMetadata(metadataStr string) error {
+	//fmt.Printf("setting Prerelease string: %s\n", PrereleaseStr)
 	setPrerelease, err := v.semverPtr.SetMetadata(metadataStr)
 	if err != nil {
 		return err
@@ -241,17 +241,17 @@ func (v *Version) GetMetaData() string {
 	return v.semverPtr.Metadata()
 }
 
-func (v *Version) IncrementPreRelease() error {
-	if v.IsPreRelease() {
-		preRelease, err := v.GetPreRelease()
+func (v *Version) IncrementPrerelease() error {
+	if v.IsPrerelease() {
+		Prerelease, err := v.GetPrerelease()
 		if err != nil {
-			return errors.Wrap(err, ErrStrIncrementerGettingPreRelease)
+			return errors.Wrap(err, ErrStrIncrementerGettingPrerelease)
 		}
-		preRelease.Increment()
-		if preRelease.Length() > 0 {
-			err = v.SetPreReleaseString(preRelease.String())
+		Prerelease.Increment()
+		if Prerelease.Length() > 0 {
+			err = v.SetPrereleaseString(Prerelease.String())
 		} else {
-			err = errors.Wrap(err, ErrStrIncrementingPreRelease)
+			err = errors.Wrap(err, ErrStrIncrementingPrerelease)
 		}
 		return err
 

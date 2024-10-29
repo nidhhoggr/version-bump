@@ -268,7 +268,7 @@ type testBumpTestSuite struct {
 	Configuration         bump.Configuration
 	Files                 allFiles
 	VersionType           version.Type
-	PreReleaseType        version.PreReleaseType
+	PrereleaseType        version.PrereleaseType
 	MockAddError          error
 	MockCommitError       error
 	MockCreateTagError    error
@@ -285,7 +285,7 @@ func TestBump_Bump(t *testing.T) {
 			Configuration:  bump.Configuration{},
 			Files:          allFiles{},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 			ExpectedError:  bump.ErrStrZeroFilesUpdated,
 		},
 		"Docker - Single, without Quotes": {
@@ -324,7 +324,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Docker - Omitting Directories Should Default To .": {
 			Version: "2.0.0",
@@ -361,7 +361,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Docker - Single, with Quotes": {
 			Version: "2.0.0",
@@ -399,7 +399,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Docker - Multiple, with Quotes": {
 			Version: "4.0.0",
@@ -436,7 +436,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:        version.Major,
-			PreReleaseType:     version.NotAPreRelease,
+			PrereleaseType:     version.NotAPrerelease,
 			MockAddError:       nil,
 			MockCommitError:    nil,
 			MockCreateTagError: nil,
@@ -477,7 +477,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Docker - Multi-line, with Quotes": {
 			Version: "2.0.0",
@@ -515,7 +515,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Docker - Multi-line, without Quotes": {
 			Version: "2.0.0",
@@ -553,7 +553,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Go - Single Constant": {
 			Version: "1.3.0",
@@ -584,7 +584,7 @@ func main() {
 				},
 			},
 			VersionType:    version.Minor,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Go - Single Constant #2": {
 			Version: "1.2.4",
@@ -615,7 +615,7 @@ func main() {
 				},
 			},
 			VersionType:    version.Patch,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Go - Multiple Constants": {
 			Version: "2.0.0",
@@ -649,7 +649,7 @@ func main() {
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"JavaScript - Multiple Constants": {
 			Version: "2.0.0",
@@ -727,7 +727,7 @@ func main() {
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 		"Docker - Get Files Error": {
 			Version: "2.0.0",
@@ -740,7 +740,7 @@ func main() {
 			},
 			Files:          allFiles{},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 			ExpectedErrorContains: []string{
 				fmt.Sprintf(bump.ErrStrFormattedIncrementingInLangProject, docker.Name),
 				bump.ErrStrListingDirectoryFiles,
@@ -758,7 +758,7 @@ func main() {
 			},
 			Files:          allFiles{},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 			ExpectedErrorContains: []string{
 				fmt.Sprintf(bump.ErrStrFormattedIncrementingInLangProject, golang.Name),
 				bump.ErrStrListingDirectoryFiles,
@@ -776,7 +776,7 @@ func main() {
 			},
 			Files:          allFiles{},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 			ExpectedErrorContains: []string{
 				fmt.Sprintf(bump.ErrStrFormattedIncrementingInLangProject, js.Name),
 				bump.ErrStrListingDirectoryFiles,
@@ -841,7 +841,7 @@ func main() {
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3,1.3.0"),
 		},
 		"Inconsistent Versioning w/ JsonFields": {
@@ -910,7 +910,7 @@ func main() {
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3,1.3.0"),
 		},
 		"Save Error": {
@@ -949,7 +949,7 @@ ENTRYPOINT [ "/app" ]`,
 				},
 			},
 			VersionType:     version.Major,
-			PreReleaseType:  version.NotAPreRelease,
+			PrereleaseType:  version.NotAPrerelease,
 			MockCommitError: errors.New("reason"),
 			ExpectedError:   fmt.Sprintf("%s: %s", git.ErrStrCommittingChanges, "reason"),
 		},
@@ -1032,7 +1032,7 @@ const Version string = "1.2.3"`,
 				},
 			},
 			VersionType:    version.Major,
-			PreReleaseType: version.NotAPreRelease,
+			PrereleaseType: version.NotAPrerelease,
 		},
 	}
 
@@ -1043,7 +1043,7 @@ const Version string = "1.2.3"`,
 
 		_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 			VersionType:    testSuite.VersionType,
-			PreReleaseType: testSuite.PreReleaseType,
+			PrereleaseType: testSuite.PrereleaseType,
 		})
 
 		if testSuite.ExpectedError != "" {
@@ -1083,7 +1083,7 @@ func TestBump_ConfirmationError(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		ConfirmationPrompt: func(_ string, _ string, _ string) (bool, error) {
 			return true, fmt.Errorf("confirmation_error")
 		},
@@ -1098,7 +1098,7 @@ func TestBump_ConfirmationDenied(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		ConfirmationPrompt: func(_ string, _ string, _ string) (bool, error) {
 			return false, nil
 		},
@@ -1125,7 +1125,7 @@ func TestBump_PassphraseError(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", fmt.Errorf("custom_passphrase_err")
 		},
@@ -1144,7 +1144,7 @@ func TestBump_PassphraseGetSigningKeyError(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1167,7 +1167,7 @@ func TestBump_PassphraseGetGpgEntityError(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1191,7 +1191,7 @@ func TestBump_PassphraseGetGpgDoesntError(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1213,7 +1213,7 @@ func TestBump_PassphraseGetShouldNotSign(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1237,7 +1237,7 @@ func TestBump_PassphraseGetShouldNotSignLoadConfigFails(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1261,7 +1261,7 @@ func TestBump_PassphraseGetShouldNotSignLoadConfigPasses(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1277,7 +1277,7 @@ func TestBump_DryRunRegex(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1294,7 +1294,7 @@ func TestBump_DryRunJsonFields(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},
@@ -1312,7 +1312,7 @@ func TestBump_DryRunFails(t *testing.T) {
 
 	_, err := runBumpTest(t, testSuite, &bump.RunArgs{
 		VersionType:    testSuite.VersionType,
-		PreReleaseType: testSuite.PreReleaseType,
+		PrereleaseType: testSuite.PrereleaseType,
 		PassphrasePrompt: func() (string, error) {
 			return "", nil
 		},

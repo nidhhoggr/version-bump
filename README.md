@@ -73,17 +73,17 @@ Usage:
   version-bump [major|minor|patch] [flags]
 
 Flags:
-      --alpha               alpha prerelease
+      --alpha               alpha Prerelease
       --auto-confirm        disable confirmation prompts and automatically confirm
-      --beta                beta prerelease
+      --beta                beta Prerelease
       --debug               output debug information to the console
       --disable-prompts     disable passphrase and confirmation prompts. Caution: this will result in unsigned commits, tags and releases!
       --dry-run             perform a dry run without modifying any files or interacting with git
   -h, --help                help for version-bump
       --interactive         enable interactive mode
-      --metadata string     provide metadata for the prerelease
+      --metadata string     provide metadata for the Prerelease
       --passphrase string   provide gpg passphrase as a flag instead of a secure prompt. Caution!
-      --rc                  release candidate prerelease
+      --rc                  release candidate Prerelease
   -v, --version             version for version-bump
 ```
 
@@ -101,28 +101,33 @@ When incrementing a pre-release without updating the version, simply omit the ve
 
 ## Prerelease Automation
 
-<a name="prerelease_types"></a>
+<a name="Prerelease_types"></a>
 ### Types
-prereleases can be specified as a flag along with metadata. The currently supported pre-release types are the following:
+Prereleases can be specified as a flag along with metadata. The currently supported pre-release types are the following:
 
 * `alpha`
 * `beta`
 * `rc`
 
 ### Format
-conforming to the Semver specification, prereleases must be in the following format:
+conforming to the Semver specification, Prereleases must be in the following format:
 
-`prerelease-type`.`prerelease-version`+`prerelease-metadata`
+`Prerelease-type`.`Prerelease-version`+`Prerelease-metadata`
 
 Where the following criterion must be met:
 
-* `prerelease-type`: Must be a string value matching one of the [prerelease types](#prerelease_types)
-* `prerelease-version`: Must be an integer
-* `prerelease-metadata`: A string without special characters seperated beginning with a `+`
+* `Prerelease-type`: Must be a string value matching one of the [Prerelease types](#Prerelease_types)
+* `Prerelease-version`: Must be an integer
+* `Prerelease-metadata`: A string without special characters seperated beginning with a `+`
 
 
+<<<<<<< Updated upstream
 <a name="prerelease_alpha"></a>  
 ### Alpha Prerelease
+=======
+<a name="Prerelease_alpha"></a>  
+### Alpha Pre-release
+>>>>>>> Stashed changes
 
 must be released from an existing alpha release whose patch is the same by omitting the [version type](#version_types) argument:
 
@@ -132,38 +137,43 @@ Or from a new version by specifying the [version type](#version_types):
 
 ![Screenshot 2024-10-28 at 21 04 21](https://github.com/user-attachments/assets/8ef99cdf-8fa1-43b4-8d27-8be987b6f52b)
 
+<<<<<<< Updated upstream
 <a name="prerelease_beta"></a>  
 ### Beta Prerelease
+=======
+<a name="Prerelease_beta"></a>  
+### Beta Pre-release
+>>>>>>> Stashed changes
 
 must be released from an existing alpha or beta release whose patch is the same by omitting the [version type](#version_types) argument:
 
 ![Screenshot 2024-10-28 at 21 11 32](https://github.com/user-attachments/assets/cdff9fa2-539a-4c1c-907a-b248d5840ad4)
 
-Attempting to release an [alpha release](#prerelease_alpha) from a [beta release](#prerelease_beta) without specifying the [version type](#version_types)  will throw an error:
+Attempting to release an [alpha release](#Prerelease_alpha) from a [beta release](#Prerelease_beta) without specifying the [version type](#version_types)  will throw an error:
 
 ![Screenshot 2024-10-28 at 21 15 44](https://github.com/user-attachments/assets/44006c13-82e4-4bc5-9403-d865d9868654)
 
-<a name="prerelease_rc"></a>  
+<a name="Prerelease_rc"></a>  
 ### Release Candidate
 
-Similar to [alpha releases](#prerelease_alpha) and [beta releases](#prerelease_beta), the flags must be specified appropriately
+Similar to [alpha releases](#Prerelease_alpha) and [beta releases](#Prerelease_beta), the flags must be specified appropriately
 ![Screenshot 2024-10-28 at 21 22 35](https://github.com/user-attachments/assets/60b6cf57-21e0-4f21-a05b-724714766c5f)
 
-Attempting to release an [alpha release](#prerelease_alpha) or a [beta release](#prerelease_beta) and omitting the [version type](#version_types) argument will produce errors:
+Attempting to release an [alpha release](#Prerelease_alpha) or a [beta release](#Prerelease_beta) and omitting the [version type](#version_types) argument will produce errors:
 
 ![Screenshot 2024-10-28 at 21 23 48](https://github.com/user-attachments/assets/58dfe870-9d5c-4a04-87d0-8614b7fb62e3)
 
 ### Incrementing aPrereleaseVersion
 
-Simply specify the same prerelease type of the existing prerelease while omitting the [version type](#version_types) argument. 
-It will automatically increment the prerelease version.
+Simply specify the same Prerelease type of the existing Prerelease while omitting the [version type](#version_types) argument. 
+It will automatically increment the Prerelease version.
 
 ![Screenshot 2024-10-28 at 21 24 59](https://github.com/user-attachments/assets/5870f006-b41d-4de2-b7bd-df87ab5c545c)
 
 ### Promoting a Prerelease
 
-After our prerelease has been tested and you're ready for rollout you can simply `patch` as the [version type](#version_types) argument. 
-It will remove all of the prerelease versioning and metadata from the version.
+After our Prerelease has been tested and you're ready for rollout you can simply `patch` as the [version type](#version_types) argument. 
+It will remove all of the Prerelease versioning and metadata from the version.
 
 ![Screenshot 2024-10-28 at 21 30 13](https://github.com/user-attachments/assets/18a0e8e2-f351-4dac-82c6-d84e34ddcfd7)
 

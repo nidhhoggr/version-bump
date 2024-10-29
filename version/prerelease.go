@@ -9,50 +9,50 @@ import (
 )
 
 var (
-	ErrStrFormattedPreReleaseContainsInvalidValue = "prerelease contains invalid value: %s"
-	ErrStrFormattedParsingPreReleasePart          = "Could not parse part '%-v' as int64"
+	ErrStrFormattedPrereleaseContainsInvalidValue = "Prerelease contains invalid value: %s"
+	ErrStrFormattedParsingPrereleasePart          = "Could not parse part '%-v' as int64"
 )
 
-type PreRelease struct {
+type Prerelease struct {
 	Segments   []interface{}
 	segmentLen int
 }
 
-type PreReleaseType int
+type PrereleaseType int
 
 const (
-	NotAPreRelease PreReleaseType = iota
-	AlphaPreRelease
-	BetaPreRelease
+	NotAPrerelease PrereleaseType = iota
+	AlphaPrerelease
+	BetaPrerelease
 	ReleaseCandidate
 )
 
-var PreReleaseTypeStrings = []string{"alpha", "beta", "rc"}
+var PrereleaseTypeStrings = []string{"alpha", "beta", "rc"}
 
-func PreReleaseString(ptr PreReleaseType) string {
-	if ptr == NotAPreRelease {
+func PrereleaseString(ptr PrereleaseType) string {
+	if ptr == NotAPrerelease {
 		return ""
 	}
-	return PreReleaseTypeStrings[ptr-1]
+	return PrereleaseTypeStrings[ptr-1]
 }
 
-func FromPreReleaseTypeString(s string) PreReleaseType {
+func FromPrereleaseTypeString(s string) PrereleaseType {
 	switch s {
-	case PreReleaseTypeStrings[0]:
-		return AlphaPreRelease
-	case PreReleaseTypeStrings[1]:
-		return BetaPreRelease
-	case PreReleaseTypeStrings[2]:
+	case PrereleaseTypeStrings[0]:
+		return AlphaPrerelease
+	case PrereleaseTypeStrings[1]:
+		return BetaPrerelease
+	case PrereleaseTypeStrings[2]:
 		return ReleaseCandidate
 	}
-	return NotAPreRelease
+	return NotAPrerelease
 }
 
-func (p *PreRelease) Length() int {
+func (p *Prerelease) Length() int {
 	return p.segmentLen
 }
 
-func (p *PreRelease) String() string {
+func (p *Prerelease) String() string {
 	prElements := make([]string, 0, p.Length())
 	for _, prElement := range p.Segments {
 		prElements = append(prElements, fmt.Sprintf("%v", prElement))
@@ -60,13 +60,13 @@ func (p *PreRelease) String() string {
 	return fmt.Sprintf("%s", strings.Join(prElements, "."))
 }
 
-func (p *PreRelease) Append(segment interface{}) {
+func (p *Prerelease) Append(segment interface{}) {
 	newSegments := append(make([]interface{}, 0, p.segmentLen), p.Segments...)
 	p.Segments = append(newSegments, segment)
 	p.segmentLen++
 }
 
-func (p *PreRelease) Increment() {
+func (p *Prerelease) Increment() {
 	lastIndex := p.segmentLen - 1
 	lastSegment := p.Segments[lastIndex]
 	sType := segmentType(lastSegment)
@@ -95,7 +95,7 @@ func containsOnly(s string, comp string) bool {
 	}) == -1
 }
 
-func parsePreRelease(str string) (*PreRelease, error) {
+func parsePrerelease(str string) (*Prerelease, error) {
 
 	if len(str) == 0 {
 		return nil, nil
@@ -103,12 +103,12 @@ func parsePreRelease(str string) (*PreRelease, error) {
 
 	parts := strings.Split(str, ".")
 
-	preReleaseTags := make([]interface{}, 0, len(parts)+1)
+	PrereleaseTags := make([]interface{}, 0, len(parts)+1)
 
 	for _, part := range parts {
 
 		if !containsOnly(part, allowed) {
-			return nil, fmt.Errorf(ErrStrFormattedPreReleaseContainsInvalidValue, part)
+			return nil, fmt.Errorf(ErrStrFormattedPrereleaseContainsInvalidValue, part)
 		}
 
 		parsedPart, err := strconv.ParseInt(part, 10, 64)
@@ -117,18 +117,18 @@ func parsePreRelease(str string) (*PreRelease, error) {
 			numErr, ok := err.(*strconv.NumError)
 
 			if !ok || !errors.Is(numErr.Err, strconv.ErrSyntax) {
-				return nil, errors.WithMessage(err, fmt.Sprintf(ErrStrFormattedParsingPreReleasePart, part))
+				return nil, errors.WithMessage(err, fmt.Sprintf(ErrStrFormattedParsingPrereleasePart, part))
 			}
 
-			preReleaseTags = append(preReleaseTags, part)
+			PrereleaseTags = append(PrereleaseTags, part)
 		} else {
-			preReleaseTags = append(preReleaseTags, parsedPart)
+			PrereleaseTags = append(PrereleaseTags, parsedPart)
 		}
 
 	}
 
-	return &PreRelease{
-		preReleaseTags,
-		len(preReleaseTags),
+	return &Prerelease{
+		PrereleaseTags,
+		len(PrereleaseTags),
 	}, nil
 }

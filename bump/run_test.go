@@ -160,7 +160,7 @@ func TestRun_Bump(t *testing.T) {
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
-		PreReleaseType: version.NotAPreRelease,
+		PrereleaseType: version.NotAPrerelease,
 	})
 	a.Nil(err)
 }
@@ -171,9 +171,9 @@ func TestRun_BumpFails(t *testing.T) {
 	b := getBumpInstance(runTestSuites[1])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.NotAVersion,
-		PreReleaseType: version.AlphaPreRelease,
+		PrereleaseType: version.AlphaPrerelease,
 	})
-	a.ErrorContains(err, version.ErrStrPreReleasingNonPreRelease)
+	a.ErrorContains(err, version.ErrStrPreReleasingNonPrerelease)
 }
 
 func TestRun_BumpFailingUrl(t *testing.T) {
@@ -183,7 +183,7 @@ func TestRun_BumpFailingUrl(t *testing.T) {
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
-		PreReleaseType: version.NotAPreRelease,
+		PrereleaseType: version.NotAPrerelease,
 	})
 	a.ErrorContains(err, fmt.Sprintf(bump.ErrStrFormattedUnsuccessfulStatusCode, 404))
 }
@@ -197,7 +197,7 @@ func TestRun_BumGetterHasError(t *testing.T) {
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
-		PreReleaseType: version.NotAPreRelease,
+		PrereleaseType: version.NotAPrerelease,
 	})
 	a.ErrorContains(err, "mock scenario 1 with error")
 	rg.AssertExpectations(t)
@@ -212,7 +212,7 @@ func TestRun_BumGetterHasJunkJson(t *testing.T) {
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
-		PreReleaseType: version.NotAPreRelease,
+		PrereleaseType: version.NotAPrerelease,
 	})
 	a.ErrorContains(err, "unexpected EOF")
 	rg.AssertExpectations(t)
@@ -227,7 +227,7 @@ func TestRun_BumGetterHasNoTagName(t *testing.T) {
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
-		PreReleaseType: version.NotAPreRelease,
+		PrereleaseType: version.NotAPrerelease,
 	})
 	a.ErrorContains(err, bump.ErrStrResponseHasEmptyTag)
 	rg.AssertExpectations(t)
@@ -242,7 +242,7 @@ func TestRun_BumGetterShouldPresentNewVersion(t *testing.T) {
 	b := getBumpInstance(runTestSuites[0])
 	err := b.Run(&bump.RunArgs{
 		VersionType:    version.Minor,
-		PreReleaseType: version.NotAPreRelease,
+		PrereleaseType: version.NotAPrerelease,
 	})
 	a.Empty(err)
 	rg.AssertExpectations(t)
