@@ -284,16 +284,6 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 
 							oldVersionStr := oldVersion.String()
 
-							if !vbd.runArgs.IsDryRun {
-								confirmed, err := vbd.versionConfirmationPrompt(oldVersionStr, file)
-								if err != nil {
-									return []string{}, errors.Wrap(err, ErrStrDuringConfirmationPrompt)
-								} else if !confirmed {
-									//continue allows scenarios where denying changes in specific file(s) is necessary
-									continue
-								}
-							}
-
 							versionsAreSame, err := vbd.incrementAndCompareVersions(oldVersion)
 
 							if err != nil {
@@ -303,6 +293,16 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 							}
 
 							identified = true
+
+							if !vbd.runArgs.IsDryRun {
+								confirmed, err := vbd.versionConfirmationPrompt(oldVersionStr, file)
+								if err != nil {
+									return []string{}, errors.Wrap(err, ErrStrDuringConfirmationPrompt)
+								} else if !confirmed {
+									//continue allows scenarios where denying changes in specific file(s) is necessary
+									continue
+								}
+							}
 
 							go vbd.runRegexReplacement(langSettings, line, filepath, oldVersionStr)
 
@@ -324,16 +324,6 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 
 					oldVersionStr := oldVersion.String()
 
-					if !vbd.runArgs.IsDryRun {
-						confirmed, err := vbd.versionConfirmationPrompt(oldVersionStr, file)
-						if err != nil {
-							return []string{}, errors.Wrap(err, ErrStrDuringConfirmationPrompt)
-						} else if !confirmed {
-							//continue allows scenarios where denying changes in specific file(s) is necessary
-							continue
-						}
-					}
-
 					versionsAreSame, err := vbd.incrementAndCompareVersions(oldVersion)
 
 					if err != nil {
@@ -343,6 +333,16 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 					}
 
 					identified = true
+
+					if !vbd.runArgs.IsDryRun {
+						confirmed, err := vbd.versionConfirmationPrompt(oldVersionStr, file)
+						if err != nil {
+							return []string{}, errors.Wrap(err, ErrStrDuringConfirmationPrompt)
+						} else if !confirmed {
+							//continue allows scenarios where denying changes in specific file(s) is necessary
+							continue
+						}
+					}
 
 					go vbd.runJsonFieldReplacement(langSettings, fileContent, field, filepath, oldVersionStr)
 
@@ -362,7 +362,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 
 func (vbd *versionBumpData) incrementAndCompareVersions(oldVersion *version.Version) (bool, error) {
 	oldVersionStr := oldVersion.String()
-	(vbd.versionsDetected)[oldVersionStr]++
+	vbd.versionsDetected[oldVersionStr]++
 	err := oldVersion.Increment(vbd.runArgs.VersionType, vbd.runArgs.PreReleaseType, vbd.runArgs.PreReleaseMetadata)
 	if err != nil {
 		return false, err

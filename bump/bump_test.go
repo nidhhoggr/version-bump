@@ -1067,7 +1067,7 @@ func TestBump_ConfirmationDenied(t *testing.T) {
 		},
 	})
 	//currently we continue through the loop instead of returning an error
-	a.ErrorContains(err, bump.ErrStrZeroFilesUpdated)
+	a.Nil(err)
 }
 
 func GitConfigParserMockScenarioOne() *mocks.GitConfigParser {
