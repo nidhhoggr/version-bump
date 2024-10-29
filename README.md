@@ -89,7 +89,7 @@ Flags:
 
 <a name="version_types"></a>
 ## Version Types
-versions can be optionally specified as an argument along with pre-release flags and metadata. Must be one of the following:
+versions can be optionally specified as an argument along with prerelease flags and metadata. Must be one of the following:
 
 * `major`
 * `minor`
@@ -97,13 +97,13 @@ versions can be optionally specified as an argument along with pre-release flags
   
 ![Screenshot 2024-10-28 at 21 06 20](https://github.com/user-attachments/assets/eb9fcace-246d-495d-b744-fb1152ddfa76)
 
-When incrementing a pre-release without updating the version, simply omit the version type argument.
+When incrementing a prerelease without updating the version, simply omit the version type argument.
 
 ## Prerelease Automation
 
 <a name="Prerelease_types"></a>
 ### Types
-Prereleases can be specified as a flag along with metadata. The currently supported pre-release types are the following:
+Prereleases can be specified as a flag along with metadata. The currently supported prerelease types are the following:
 
 * `alpha`
 * `beta`
@@ -126,7 +126,7 @@ Where the following criterion must be met:
 ### Alpha Prerelease
 =======
 <a name="Prerelease_alpha"></a>  
-### Alpha Pre-release
+### Alpha Prerelease
 >>>>>>> Stashed changes
 
 must be released from an existing alpha release whose patch is the same by omitting the [version type](#version_types) argument:
@@ -142,7 +142,7 @@ Or from a new version by specifying the [version type](#version_types):
 ### Beta Prerelease
 =======
 <a name="Prerelease_beta"></a>  
-### Beta Pre-release
+### Beta Prerelease
 >>>>>>> Stashed changes
 
 must be released from an existing alpha or beta release whose patch is the same by omitting the [version type](#version_types) argument:

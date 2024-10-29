@@ -12,11 +12,11 @@ import (
 var (
 	ErrStrPreReleasingNonPrerelease    = "cannot Prerelease a non-Prerelease without incrementing a version type"
 	ErrStrPrereleaseEmptyType          = "cannot Prerelease an empty type"
-	ErrStrPrereleaseAlphaFromBeta      = "cannot Prerelease an alpha from an existing beta pre-release"
+	ErrStrPrereleaseAlphaFromBeta      = "cannot Prerelease an alpha from an existing beta prerelease"
 	ErrStrPrereleaseNonRcFromRc        = "cannot Prerelease a non-rc from a release candidate"
-	ErrStrParsePrereleaseTag           = "could not parse pre-release tag"
-	ErrStrIncrementerGettingPrerelease = "incrementing: could not get pre-release"
-	ErrStrIncrementingPrerelease       = "incrementing pre-release"
+	ErrStrParsePrereleaseTag           = "could not parse prerelease tag"
+	ErrStrIncrementerGettingPrerelease = "incrementing: could not get prerelease"
+	ErrStrIncrementingPrerelease       = "incrementing prerelease"
 
 	ErrStrFormattedUnsupportedReleaseType  = "unsupported release type: %d"
 	ErrStrFormattedRegexParsingResultEmpty = "empty result when parsing versionStr from regex: %s %s"
