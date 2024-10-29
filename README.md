@@ -13,8 +13,6 @@
 In automatic mode, **version-bump** will try to identify versions of all supported languages in a root of the project (wherever executed).
 In a manual mode, **version-bump** will read a configuration file to determine which modifications to make. It is expected be executed in the root of the project where the configuration file is located.
 
-Some languages, have a constant value in a specific file that contains a version, which are fairly easy to increment.
-But some languages are leaving that decision to a developer, thus **version-bump** assumes a constant position/value for them as well.
 
 | Settings      | Expected Patterns                             | Filename                              |
 |:-------------:|:---------------------------------------------:|:-------------------------------------:|
@@ -89,7 +87,7 @@ Flags:
 
 <a name="version_types"></a>
 ## Version Types
-versions can be optionally specified as an argument along with prerelease flags and metadata. Must be one of the following:
+Versions can be optionally specified as an argument along with prerelease flags and metadata. Must be one of the following:
 
 * `major`
 * `minor`
@@ -110,7 +108,7 @@ Prereleases can be specified as a flag along with metadata. The currently suppor
 * `rc`
 
 ### Format
-conforming to the Semver specification, Prereleases must be in the following format:
+conforming to the [Semver specification](https://semver.org/), Prereleases must be in the following format:
 
 `prerelease-type`.`prerelease-version`+`prerelease-metadata`
 
@@ -118,12 +116,12 @@ Where the following criterion must be met:
 
 * `prerelease-type`: Must be a string value matching one of the [prerelease types](#prerelease_types)
 * `prerelease-version`: Must be an integer
-* `prerelease-metadata`: A string without special characters seperated beginning with a `+`
+* `prerelease-metadata`: An alphanumberic string without special characters beginning with a `+`
 
 <a name="prerelease_alpha"></a>  
 ### Alpha Prerelease
 
-must be released from an existing alpha release whose patch is the same by omitting the [version type](#version_types) argument:
+Must be released from an existing alpha release whose patch is the same by omitting the [version type](#version_types) argument:
 
 ![Screenshot 2024-10-28 at 20 58 55](https://github.com/user-attachments/assets/f1679ed9-7464-430c-9396-704128e94435)
 
@@ -134,18 +132,19 @@ Or from a new version by specifying the [version type](#version_types):
 <a name="prerelease_beta"></a>  
 ### Beta Prerelease
 
-must be released from an existing alpha or beta release whose patch is the same by omitting the [version type](#version_types) argument:
+Must be released from an existing alpha or beta release whose patch is the same by omitting the [version type](#version_types) argument:
 
 ![Screenshot 2024-10-28 at 21 11 32](https://github.com/user-attachments/assets/cdff9fa2-539a-4c1c-907a-b248d5840ad4)
 
-Attempting to release an [alpha release](#prerelease_alpha) from a [beta release](#prerelease_beta) without specifying the [version type](#version_types)  will throw an error:
+Attempting to release an [alpha release](#prerelease_alpha) from a [beta release](#prerelease_beta) without specifying the [version type](#version_types) will throw an error:
 
 ![Screenshot 2024-10-28 at 21 15 44](https://github.com/user-attachments/assets/44006c13-82e4-4bc5-9403-d865d9868654)
 
 <a name="Prerelease_rc"></a>  
 ### Release Candidate
 
-Similar to [alpha releases](#prerelease_alpha) and [beta releases](#prerelease_beta), the flags must be specified appropriately
+Similar to [alpha releases](#prerelease_alpha) and [beta releases](#prerelease_beta), the flags must be specified appropriately.
+
 ![Screenshot 2024-10-28 at 21 22 35](https://github.com/user-attachments/assets/60b6cf57-21e0-4f21-a05b-724714766c5f)
 
 Attempting to release an [alpha release](#prerelease_alpha) or a [beta release](#prerelease_beta) and omitting the [version type](#version_types) argument will produce errors:
@@ -170,7 +169,6 @@ It will remove all of the Prerelease versioning and metadata from the version.
 
 Before any modifications are made to the repository, if any version consistencies are detected, `version-bump` will prematurely exit.
 This frees you from the hassle of having to run `git stash`.
-
 
 No modifications will be made with or without the [auto confirmation](#autoconfirm) flag specified. 
 This screenshot demonstrates the inconsistent versioning error being triggered without [auto confirmation](#autoconfirm) enabled.
