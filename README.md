@@ -160,7 +160,7 @@ It will automatically increment the prerelease version.
 
 ### Promote Prerelease
 
-After our Prerelease has been tested and you're ready for rollout you can simply `patch` as the [version type](#version_types) argument. 
+After our Prerelease has been tested and ready for rollout, you can simply provide `patch` as the [version type](#version_types) argument. 
 It will remove all of the Prerelease versioning and metadata from the version.
 
 ![Screenshot 2024-10-28 at 21 30 13](https://github.com/user-attachments/assets/18a0e8e2-f351-4dac-82c6-d84e34ddcfd7)
