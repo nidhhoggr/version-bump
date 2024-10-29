@@ -2,6 +2,7 @@ package langs_test
 
 import (
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/docker"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/generic"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/js"
 	"testing"
@@ -37,6 +38,12 @@ func TestLangs_New(t *testing.T) {
 				Name:       js.Name,
 				Files:      js.Files,
 				JSONFields: &js.JSONFields,
+			},
+		},
+		"Generic": {
+			ExpectedResult: &langs.Settings{
+				Name:  generic.Name,
+				Regex: &generic.Regex,
 			},
 		},
 		"Not Supported Settings": {

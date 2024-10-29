@@ -41,6 +41,7 @@ type ConfigDecoder struct {
 	Docker     langs.Config
 	Go         langs.Config
 	JavaScript langs.Config
+	Generic    langs.Config
 }
 
 type Configuration []langs.Config
@@ -52,6 +53,7 @@ type RunArgs struct {
 	VersionType        version.Type
 	PreReleaseType     version.PreReleaseType
 	IsDryRun           bool
+	ShouldDebug        bool
 }
 
 type versionBumpData struct {

@@ -25,6 +25,7 @@ var flags = &struct {
 	autoConfirm              bool
 	disablePrompts           bool
 	isDryRun                 bool
+	shouldDebug              bool
 	preReleaseMetadataString string
 	passphrase               string
 }{}
@@ -55,6 +56,7 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&flags.autoConfirm, "auto-confirm", false, "disable confirmation prompts and automatically confirm")
 	rootCmd.PersistentFlags().BoolVar(&flags.disablePrompts, "disable-prompts", false, "disable passphrase and confirmation prompts. Caution: this will result in unsigned commits, tags and releases!")
 	rootCmd.PersistentFlags().BoolVar(&flags.isDryRun, "dry-run", false, "perform a dry run without modifying any files or interacting with git")
+	rootCmd.PersistentFlags().BoolVar(&flags.shouldDebug, "debug", false, "output debug information to the console")
 	rootCmd.PersistentFlags().StringVar(&flags.preReleaseMetadataString, "metadata", "", "provide metadata for the prerelease")
 	rootCmd.PersistentFlags().StringVar(&flags.passphrase, "passphrase", "", "provide gpg passphrase as a flag instead of a secure prompt. Caution!")
 	cobra.CheckErr(rootCmd.Execute())
@@ -92,6 +94,7 @@ func runPromptMode(cmd *cobra.Command, args []string) {
 			PreReleaseType:     preReleaseType,
 			PreReleaseMetadata: flags.preReleaseMetadataString,
 			IsDryRun:           flags.isDryRun,
+			ShouldDebug:        flags.shouldDebug,
 		})
 		if err != nil {
 			console.Fatal(err)
@@ -146,6 +149,7 @@ func runInteractiveMode() {
 		PreReleaseType:     preReleaseType,
 		PreReleaseMetadata: preReleaseMetadata,
 		IsDryRun:           flags.isDryRun,
+		ShouldDebug:        flags.shouldDebug,
 	})
 	if err != nil {
 		console.Fatal(err)

@@ -105,6 +105,8 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 		}
 	}
 
+	console.Debug("Bump.From()", fmt.Sprintf("configuration: %-v", o))
+
 	return o, nil
 }
 
@@ -130,6 +132,8 @@ func (b *Bump) withConfiguration(dirs []string, enabledByDefault bool) *Bump {
 }
 
 func (b *Bump) Bump(ra *RunArgs) error {
+
+	console.DebuggingEnabled = ra.ShouldDebug
 	console.IncrementProjectVersion(ra.IsDryRun)
 
 	vbd := &versionBumpData{
@@ -233,19 +237,44 @@ func (vbd *versionBumpData) bumpComponent(langConfig langs.Config, langSettings 
 
 	files := make([]string, 0)
 
-	for _, dir := range langConfig.Directories {
+	langDirs := langConfig.Directories
+
+	//
+	if len(langDirs) == 0 {
+		langDirs = []string{"."}
+	}
+
+	for _, dir := range langDirs {
+
+		console.Debug("Bump.bumpComponent()", fmt.Sprintf("lang: %s, dir: %s\n", langSettings.Name, dir))
 		f, err := getFiles(vbd.bump.FS, dir, langConfig.ExcludeFiles)
 		if err != nil {
 			return []string{}, errors.Wrap(err, ErrStrListingDirectoryFiles)
 		}
 
-		filteredFiles := filterFiles(langSettings.Files, f)
+		langFiles := langSettings.Files
+
+		if len(langConfig.Files) > 0 {
+			langFiles = langConfig.Files
+		}
+
+		if len(langConfig.Regex) > 0 {
+			langSettings.Regex = &langConfig.Regex
+		}
+
+		if len(langConfig.JSONFields) > 0 {
+			langSettings.JSONFields = &langConfig.JSONFields
+		}
+
+		filteredFiles := filterFiles(langFiles, f)
+
+		console.Debug("Bump.bumpComponent()", fmt.Sprintf("langfiles: %-v, f: %-v, filteredFiled: %-v\n", langSettings.Files, f, filteredFiles))
 
 		if len(filteredFiles) > 0 {
 
 			modifiedFiles, err := vbd.incrementVersion(
 				dir,
-				filterFiles(langSettings.Files, f),
+				filteredFiles,
 				langSettings,
 			)
 			if err != nil {
@@ -265,6 +294,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 
 	for _, file := range files {
 		filepath := path.Join(dir, file)
+		console.Debug("Bump.incrementVersion()", fmt.Sprintf("lang: %s, file: %s, dir: %s\n", langSettings.Name, file, dir))
 		fileContent, err := readFile(vbd.bump.FS, filepath)
 		if err != nil {
 			return []string{}, errors.Wrapf(err, ErrStrFormattedReadingAFile, file)
@@ -273,13 +303,13 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 		// get current version
 		if langSettings.Regex != nil {
 		outerR:
-			for _, line := range fileContent {
+			for lineNumber, line := range fileContent {
 				for _, expression := range *langSettings.Regex {
 					regex := regexp.MustCompile(expression)
 					if regex.MatchString(line) {
 						oldVersion, err = version.NewFromRegex(line, regex)
 						if err != nil {
-							return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
+							return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, fmt.Sprintf("%s %s %s", filepath, line, regex), oldVersion)
 						} else if oldVersion != nil {
 
 							oldVersionStr := oldVersion.String()
@@ -304,7 +334,7 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 								}
 							}
 
-							go vbd.runRegexReplacement(langSettings, line, filepath, oldVersionStr)
+							go vbd.runRegexReplacement(langSettings, fileContent, lineNumber, filepath, oldVersionStr)
 
 							modifiedFiles = append(modifiedFiles, filepath)
 						}
@@ -317,7 +347,11 @@ func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSet
 		if langSettings.JSONFields != nil {
 		outerJ:
 			for _, field := range *langSettings.JSONFields {
-				oldVersion, err = version.New(gjson.Get(strings.Join(fileContent, ""), field).String())
+				matched := gjson.Get(strings.Join(fileContent, ""), field).String()
+				if matched == "" {
+					continue
+				}
+				oldVersion, err = version.New(matched)
 				if err != nil {
 					return []string{}, errors.Wrapf(err, ErrStrFormattedParsingVersionFromFileAndVersion, filepath, oldVersion)
 				} else if oldVersion != nil {
@@ -375,7 +409,7 @@ func (vbd *versionBumpData) incrementAndCompareVersions(oldVersion *version.Vers
 	return false, nil
 }
 
-func (vbd *versionBumpData) runRegexReplacement(langSettings *langs.Settings, line string, filepath string, oldVersionStr string) {
+func (vbd *versionBumpData) runRegexReplacement(langSettings *langs.Settings, fileContent []string, lineNumber int, filepath string, oldVersionStr string) {
 	err := <-vbd.bump.errChanVersionGathering
 	if err != nil {
 		return
@@ -387,13 +421,14 @@ func (vbd *versionBumpData) runRegexReplacement(langSettings *langs.Settings, li
 
 	console.Language(langSettings.Name, vbd.runArgs.IsDryRun)
 
-	if !vbd.runArgs.IsDryRun {
-		newContent := make([]string, 0)
-		l := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
-		newContent = append(newContent, l)
+	line := fileContent[lineNumber]
 
-		newContent = append(newContent, "")
-		if err := writeFile(vbd.bump.FS, filepath, strings.Join(newContent, "\n")); err != nil {
+	if !vbd.runArgs.IsDryRun {
+		console.Debug("Bump.runRegexReplacement()", fmt.Sprintf("line: %s\n", line))
+		replacedLine := strings.ReplaceAll(line, oldVersionStr, vbd.versionStr)
+		fileContent[lineNumber] = strings.ReplaceAll(fileContent[lineNumber], line, replacedLine)
+		fileContent = append(fileContent, "")
+		if err := writeFile(vbd.bump.FS, filepath, strings.Join(fileContent, "\n")); err != nil {
 			vbd.bump.errChanPostProcessing <- errors.Wrapf(err, ErrStrFormattedWritingToFile, filepath)
 		}
 	}

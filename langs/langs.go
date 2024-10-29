@@ -2,6 +2,7 @@ package langs
 
 import (
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/docker"
+	"github.com/joe-at-startupmedia/version-bump/v2/langs/generic"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/js"
 )
@@ -14,8 +15,11 @@ type Settings struct {
 }
 
 type Config struct {
+	Regex        []string
+	JSONFields   []string
 	Name         string
 	Directories  []string
+	Files        []string
 	ExcludeFiles []string `toml:"exclude_files"`
 	Enabled      bool
 }
@@ -35,6 +39,10 @@ var Languages = []Settings{
 		Name:       js.Name,
 		Files:      js.Files,
 		JSONFields: &js.JSONFields,
+	},
+	{
+		Name:  generic.Name,
+		Regex: &generic.Regex,
 	},
 }
 

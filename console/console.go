@@ -13,6 +13,12 @@ const (
 	colorCyan   string = "\033[36m"
 )
 
+var DebuggingEnabled bool
+
+func init() {
+	DebuggingEnabled = false
+}
+
 func IncrementProjectVersion(isDryRun bool) {
 	if isDryRun {
 		fmt.Println("Dry Run: Incrementing project version...")
@@ -73,6 +79,17 @@ func UpdateAvailable(version string, repoName string) {
 
 func ErrorCheckingForUpdate(msg interface{}) {
 	fmt.Printf("%vError checking for update: %v%v\n",
+		colorYellow, msg, colorReset,
+	)
+}
+
+func Debug(from string, msg interface{}) {
+	if !DebuggingEnabled {
+		return
+	}
+	fmt.Printf("%vdebug:%v %v%s%v -> %v%v%v\n",
+		colorYellow, colorReset,
+		colorGreen, from, colorReset,
 		colorYellow, msg, colorReset,
 	)
 }

@@ -69,12 +69,12 @@ func (v *Version) SetSemverPtr(semverPtr SemverInterface) {
 
 func New(versionString string) (*Version, error) {
 	versionString = strings.TrimLeft(versionString, "vV")
-	//fmt.Printf("Get version from string %s \n", versionString)
+	console.Debug("Version.New()", fmt.Sprintf("get version from string %s \n", versionString))
 	semverPtr, err := semver.StrictNewVersion(versionString)
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Printf("Got version from string %s \n", semverPtr)
+	//console.Debug("Version.New()", fmt.Sprintf("got version from string %s \n", semverPtr))
 
 	return &Version{
 		semverPtr: semverPtr,
@@ -82,12 +82,14 @@ func New(versionString string) (*Version, error) {
 }
 
 func NewFromRegex(versionString string, regex *regexp.Regexp) (*Version, error) {
-	//fmt.Printf("Get versionStr from regex: %s %s\n", versionString, regex)
+	//trim surrounding whitespace
+	versionString = strings.Trim(versionString, " ")
+	console.Debug("Version.NewFromRegex()", fmt.Sprintf("get versionStr from regex: %s %s\n", versionString, regex))
 	replaced := regex.ReplaceAllString(versionString, "${1}")
 	if replaced == "" {
 		return nil, fmt.Errorf(ErrStrFormattedRegexParsingResultEmpty, versionString, regex)
 	}
-	//fmt.Printf("Got versionStr: %s\n", replaced)
+	console.Debug("Version.NewFromRegex()", fmt.Sprintf("got versionStr: %s\n", replaced))
 	return New(replaced)
 }
 
