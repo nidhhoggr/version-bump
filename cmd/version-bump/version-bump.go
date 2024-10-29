@@ -33,9 +33,9 @@ var flags = &struct {
 var rootCmd = &cobra.Command{
 	Use:   fmt.Sprintf("version-bump [%s]", strings.Join(version.TypeStrings, "|")),
 	Short: "Bump a semantic version of the project",
-	Long: `This application helps incrementing a semantic version of a project.
-It can bump the version in multiple different files at once,
-for example in package.json and a Dockerfile.`,
+	Long: `This application increments the semantic version of a project.
+It can bump semantic versions in multiple different files at once,
+as well as automate prerelease versioning and promotion.`,
 	ValidArgs: version.TypeStrings,
 	Args:      cobra.OnlyValidArgs,
 	Run: func(cmd *cobra.Command, args []string) {
