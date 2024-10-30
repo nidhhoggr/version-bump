@@ -842,7 +842,7 @@ func main() {
 			},
 			VersionType:    version.Major,
 			PrereleaseType: version.NotAPrerelease,
-			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3,1.3.0"),
+			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3 • 1.3.0"),
 		},
 		"Inconsistent Versioning w/ JsonFields": {
 			Version: "2.0.0",
@@ -911,7 +911,7 @@ func main() {
 			},
 			VersionType:    version.Major,
 			PrereleaseType: version.NotAPrerelease,
-			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3,1.3.0"),
+			ExpectedError:  fmt.Sprintf(bump.ErrStrFormattedInconsistentVersioning, "1.2.3 • 1.3.0"),
 		},
 		"Save Error": {
 			Version: "2.0.0",

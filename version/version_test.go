@@ -384,7 +384,7 @@ func TestVersion_NewWithBadRegex(t *testing.T) {
 	compile, err := regexp.Compile(version.Regex)
 	a.Empty(err)
 	_, err = version.NewFromRegex("", compile)
-	a.ErrorContains(err, fmt.Sprintf(version.ErrStrFormattedRegexParsingResultEmpty, "", ""))
+	a.ErrorContains(err, fmt.Sprintf(version.ErrStrFormattedRegexParsingResultEmpty, "", version.Regex))
 }
 
 func TestVersion_SetPrereleaseWithEmptyVersion(t *testing.T) {

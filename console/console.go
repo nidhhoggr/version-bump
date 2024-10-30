@@ -3,6 +3,7 @@ package console
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 const (
@@ -95,12 +96,18 @@ func Debug(from string, msg interface{}) {
 }
 
 func Error(msg interface{}) {
-	fmt.Printf("%verror: %v%v\n",
+	fmt.Printf("%v%v%v\n",
 		colorRed, msg, colorReset,
 	)
 }
 
-func Fatal(msg interface{}) {
-	Error(msg)
+func Fatal(err error) {
+	errStrings := strings.Split(err.Error(), ": ")
+	if len(errStrings) > 0 {
+		Error("error encountered:")
+		for i := range errStrings {
+			Error(fmt.Errorf("%s┕ %s", strings.Repeat(" ", (i+1)*2), errStrings[i]))
+		}
+	}
 	os.Exit(1)
 }

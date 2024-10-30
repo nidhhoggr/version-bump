@@ -18,8 +18,8 @@ var (
 	ErrStrIncrementerGettingPrerelease = "incrementing: could not get prerelease"
 	ErrStrIncrementingPrerelease       = "incrementing prerelease"
 
-	ErrStrFormattedUnsupportedReleaseType  = "unsupported release type: %d"
-	ErrStrFormattedRegexParsingResultEmpty = "empty result when parsing versionStr from regex: %s %s"
+	ErrStrFormattedUnsupportedReleaseType  = "unsupported release type (%d)"
+	ErrStrFormattedRegexParsingResultEmpty = "empty result when parsing versionStr(%s)from regex(%s)"
 	ErrStrFormattedNotAPrerelease          = "%v is not a Prerelease"
 )
 

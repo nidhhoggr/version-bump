@@ -41,10 +41,10 @@ var (
 	ErrStrFormattedIncrementingInLangProject        = "incrementing version in %s project"
 	ErrStrFormattedReadingAFile                     = "reading a file %v"
 	ErrStrFormattedWritingToFile                    = "writing to file %v"
-	ErrStrFormattedParsingVersionFromFileAndVersion = "parsing semantic version at file %v from version: %s"
+	ErrStrFormattedParsingVersionFromFileAndVersion = "parsing semantic version at file %v from version (%s)"
 	ErrStrFormattedBumpingVersion                   = "bumping version %v"
 	ErrStrFormattedSettingVersionInFile             = "setting new version on content of a file %v"
-	ErrStrFormattedInconsistentVersioning           = "inconsistent versioning %s"
+	ErrStrFormattedInconsistentVersioning           = "inconsistent versioning: %s"
 )
 
 func init() {
@@ -252,6 +252,11 @@ func (vbd *versionBumpData) bumpComponent(langConfig *langs.Config, langSettings
 		}
 
 		if len(langConfig.Regex) > 0 {
+			for i := range langConfig.Regex {
+				if strings.Contains(langConfig.Regex[i], "{{SEMVER_REGEX}}") {
+					langConfig.Regex[i] = strings.ReplaceAll(langConfig.Regex[i], "{{SEMVER_REGEX}}", version.Regex)
+				}
+			}
 			langSettings.Regex = &langConfig.Regex
 		}
 
@@ -491,5 +496,5 @@ func (vd *VersionsDetected) String() string {
 		vdStr = append(vdStr, key)
 	}
 	sort.Strings(vdStr)
-	return strings.Join(vdStr, ",")
+	return strings.Join(vdStr, " • ")
 }

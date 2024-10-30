@@ -6,7 +6,6 @@ import (
 	"github.com/cqroot/prompt/input"
 	"github.com/joe-at-startupmedia/version-bump/v2/console"
 	"github.com/joe-at-startupmedia/version-bump/v2/version"
-	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/joe-at-startupmedia/version-bump/v2/bump"
@@ -67,7 +66,7 @@ func runPromptMode(cmd *cobra.Command, args []string) {
 	if len(args) == 1 || hasPrerelease {
 		b, err := bump.New(currentDir)
 		if err != nil {
-			console.Fatal(errors.Wrap(err, "error preparing project configuration"))
+			console.Fatal(err)
 		}
 
 		versionType := version.NotAVersion
@@ -140,7 +139,7 @@ func runInteractiveMode() {
 
 	b, err := bump.New(currentDir)
 	if err != nil {
-		console.Fatal(errors.Wrap(err, "error preparing project configuration"))
+		console.Fatal(err)
 	}
 	err = b.Run(&bump.RunArgs{
 		ConfirmationPrompt: confirmationPrompt,
