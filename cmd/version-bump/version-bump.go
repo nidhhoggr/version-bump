@@ -64,6 +64,7 @@ func main() {
 func runPromptMode(cmd *cobra.Command, args []string) {
 	hasPrerelease := flags.PrereleaseTypeAlpha || flags.PrereleaseTypeBeta || flags.PrereleaseTypeRc
 	if len(args) == 1 || hasPrerelease {
+		console.DebuggingEnabled = flags.shouldDebug
 		b, err := bump.New(currentDir)
 		if err != nil {
 			console.Fatal(err)
@@ -93,7 +94,6 @@ func runPromptMode(cmd *cobra.Command, args []string) {
 			PrereleaseType:     PrereleaseType,
 			PrereleaseMetadata: flags.PrereleaseMetadataString,
 			IsDryRun:           flags.isDryRun,
-			ShouldDebug:        flags.shouldDebug,
 		})
 		if err != nil {
 			console.Fatal(err)
@@ -137,6 +137,7 @@ func runInteractiveMode() {
 		}
 	}
 
+	console.DebuggingEnabled = flags.shouldDebug
 	b, err := bump.New(currentDir)
 	if err != nil {
 		console.Fatal(err)
@@ -148,7 +149,6 @@ func runInteractiveMode() {
 		PrereleaseType:     PrereleaseType,
 		PrereleaseMetadata: PrereleaseMetadata,
 		IsDryRun:           flags.isDryRun,
-		ShouldDebug:        flags.shouldDebug,
 	})
 	if err != nil {
 		console.Fatal(err)

@@ -98,10 +98,23 @@ func From(fs afero.Fs, meta, data billy.Filesystem, dir string) (*Bump, error) {
 	bcrType := bcr.Type()
 	for i := 0; i < bcr.NumField(); i++ {
 		langI := bcr.Field(i).Interface()
-		lang := langI.(langs.Config)
-		if lang.Enabled {
-			lang.Name = bcrType.Field(i).Name
-			o.Configuration = append(o.Configuration, lang)
+		if bcr.Field(i).Type() == reflect.TypeOf([]langs.Config{}) {
+			langsArr := langI.([]langs.Config)
+			for j := range langsArr {
+				lang := langsArr[j]
+				if lang.Enabled {
+					if lang.Name == "" {
+						lang.Name = "Generic"
+					}
+					o.Configuration = append(o.Configuration, lang)
+				}
+			}
+		} else {
+			lang := langI.(langs.Config)
+			if lang.Enabled {
+				lang.Name = bcrType.Field(i).Name
+				o.Configuration = append(o.Configuration, lang)
+			}
 		}
 	}
 
@@ -133,7 +146,6 @@ func (b *Bump) withConfiguration(dirs []string, enabledByDefault bool) *Bump {
 
 func (b *Bump) Bump(ra *RunArgs) error {
 
-	console.DebuggingEnabled = ra.ShouldDebug
 	console.IncrementProjectVersion(ra.IsDryRun)
 
 	vbd := &versionBumpData{
@@ -150,8 +162,10 @@ func (b *Bump) Bump(ra *RunArgs) error {
 	for i := range b.Configuration {
 		langConfig := b.Configuration[i]
 		if langConfig.Enabled {
-			//fmt.Printf("%s %-v", langName, lang)
-			modifiedFiles, err := vbd.bumpComponent(&langConfig, langs.Supported[langConfig.Name])
+
+			langSettings := langs.GetLanguageByName(langConfig.Name)
+			console.Debug("Bump.Bump()", fmt.Sprintf("loading lang settings %-v from %s", langSettings, langConfig.Name))
+			modifiedFiles, err := vbd.bumpComponent(&langConfig, langSettings)
 			if err != nil {
 				return errors.Wrapf(err, ErrStrFormattedIncrementingInLangProject, langConfig.Name)
 			}
@@ -233,7 +247,7 @@ func (vbd *versionBumpData) passphrasePromptWithRetries(gpgSigningKey string, re
 	}
 }
 
-func (vbd *versionBumpData) bumpComponent(langConfig *langs.Config, langSettings *langs.Settings) ([]string, error) {
+func (vbd *versionBumpData) bumpComponent(langConfig *langs.Config, langSettings *langs.DefaultSettings) ([]string, error) {
 
 	files := make([]string, 0)
 
@@ -286,7 +300,7 @@ func (vbd *versionBumpData) bumpComponent(langConfig *langs.Config, langSettings
 	return files, nil
 }
 
-func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSettings *langs.Settings) ([]string, error) {
+func (vbd *versionBumpData) incrementVersion(dir string, files []string, langSettings *langs.DefaultSettings) ([]string, error) {
 	var identified bool
 	modifiedFiles := make([]string, 0)
 
@@ -407,7 +421,7 @@ func (vbd *versionBumpData) incrementAndCompareVersions(oldVersion *version.Vers
 	return false, nil
 }
 
-func (vbd *versionBumpData) runRegexReplacement(langSettings *langs.Settings, fileContent []string, lineNumber int, filepath string, oldVersionStr string) {
+func (vbd *versionBumpData) runRegexReplacement(langSettings *langs.DefaultSettings, fileContent []string, lineNumber int, filepath string, oldVersionStr string) {
 	err := <-vbd.bump.errChanVersionGathering
 	if err != nil {
 		return
@@ -440,7 +454,7 @@ func (vbd *versionBumpData) runRegexReplacement(langSettings *langs.Settings, fi
 	return
 }
 
-func (vbd *versionBumpData) runJsonFieldReplacement(langSettings *langs.Settings, fileContent []string, field string, filepath string, oldVersionStr string) {
+func (vbd *versionBumpData) runJsonFieldReplacement(langSettings *langs.DefaultSettings, fileContent []string, field string, filepath string, oldVersionStr string) {
 
 	err := <-vbd.bump.errChanVersionGathering
 	if err != nil {

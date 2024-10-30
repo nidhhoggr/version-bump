@@ -46,7 +46,6 @@ type RunArgs struct {
 	VersionType        version.Type
 	PrereleaseType     version.PrereleaseType
 	IsDryRun           bool
-	ShouldDebug        bool
 }
 
 type versionBumpData struct {

@@ -1,37 +1,41 @@
 package langs
 
 import (
+	"fmt"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/docker"
-	"github.com/joe-at-startupmedia/version-bump/v2/langs/generic"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/golang"
 	"github.com/joe-at-startupmedia/version-bump/v2/langs/js"
+	"github.com/joe-at-startupmedia/version-bump/v2/version"
 )
 
-type Settings struct {
+// DefaultSettings these settings can be overridden by Config
+type DefaultSettings struct {
 	Regex      *[]string
 	JSONFields *[]string
 	Name       string
 	Files      []string
 }
 
+// Config value populated from the .bump file which override DefaultSettings
 type Config struct {
 	Regex        []string
 	JSONFields   []string
 	Name         string
-	Directories  []string
 	Files        []string
+	Directories  []string
 	ExcludeFiles []string `toml:"exclude_files"`
 	Enabled      bool
 }
 
+// ConfigDecoder used to parse the .bump toml file
 type ConfigDecoder struct {
+	Generic    []Config
 	Docker     Config
 	Go         Config
 	JavaScript Config
-	Generic    Config
 }
 
-var Languages = []Settings{
+var Languages = []DefaultSettings{
 	{
 		Name:  docker.Name,
 		Files: docker.Files,
@@ -47,19 +51,28 @@ var Languages = []Settings{
 		Files:      js.Files,
 		JSONFields: &js.JSONFields,
 	},
-	{
-		Name:  generic.Name,
-		Regex: &generic.Regex,
-	},
 }
 
-var Supported map[string]*Settings
+var Supported map[string]*DefaultSettings
 
 func init() {
-	Supported = make(map[string]*Settings, len(Languages))
+	Supported = make(map[string]*DefaultSettings, len(Languages))
 	for li := range Languages {
 		Supported[Languages[li].Name] = &Languages[li]
 	}
+}
+
+func GetLanguageByName(langName string) *DefaultSettings {
+	langSettings := Supported[langName]
+	if langSettings == nil {
+		langSettings = &DefaultSettings{
+			Regex: &[]string{
+				fmt.Sprintf("^.*?[\"']?(?P<version>%v)[\"']?", version.Regex),
+			},
+			Name: langName,
+		}
+	}
+	return langSettings
 }
 
 func (c *Config) GetDirectories() []string {
