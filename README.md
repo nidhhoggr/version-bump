@@ -45,7 +45,21 @@ In a manual mode, **version-bump** will read a configuration file to determine w
       
 3. Run **version-bump** in a root of the project: `version-bump [major|minor|patch] [flags]`
 
-*Simple Configuration Example:*
+### Generic Language
+
+You can also add additional supported languages by using the `[[generic]]` directive.
+
+```
+[[generic]]
+name = string
+enabled = bool
+directories = [ string, string, ... ]
+exclude_files = [ string, string, ... ]
+files = [ string, string, ... ]
+regex = [string, string, ...]
+```
+ 
+### Example
 
 ```toml
 [docker]
@@ -60,7 +74,21 @@ exclude_files = [ 'server/server_test.go', 'tools/qa/main_test.go' ]
 [javascript]
 enabled = true
 directories = [ 'client' ]
+
+[[generic]]
+name = "markdown"
+enabled = true
+files = [ "*.md" ]
+
+[[generic]]
+name = "yaml"
+enabled = false
+directories = [ "config" ]
+files = [ "*.yml" ]
+regex = [ '^version: (?P<version>{{SEMVER_REGEX}})' ]
 ```
+
+Note: the `{{SEMVER_REGEX}})`  variable is substituted for an actual regex pattern matching a semental versioning string.
 
 ## CLI Usage
 
