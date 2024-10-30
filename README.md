@@ -36,7 +36,7 @@ In a manual mode, **version-bump** will read a configuration file to determine w
     regex = [string, string, ...]
     ```
 
-    - `[ language_name ]` - one of `[ 'docker', 'go', 'javascript', 'generic' ]`
+    - `[ language_name ]` - one of `[ 'docker', 'go', 'javascript' ]`
     - `enabled` - default `false`
     - `directories` - path default `['.']`
     - `exclude_files` - path default `[]`

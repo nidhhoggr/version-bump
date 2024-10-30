@@ -352,6 +352,7 @@ type allFiles struct {
 	Docker     fileMap
 	Go         fileMap
 	JavaScript fileMap
+	Generic    fileMap
 }
 
 type testBumpTestSuite struct {
@@ -819,6 +820,128 @@ func main() {
 			},
 			VersionType:    version.Major,
 			PrereleaseType: version.NotAPrerelease,
+		},
+		"Generic - Single Constant": {
+			Version: "0.2.4-alpha.2",
+			Configuration: bump.Configuration{
+				langs.Config{
+					Name:    "Generic",
+					Enabled: true,
+					Files:   []string{"*.md"},
+				},
+			},
+			Files: allFiles{
+				Generic: map[string][]file{
+					".": {
+						{
+							Name:                "README.md",
+							ExpectedToBeChanged: true,
+							Content: `Welcome
+
+Version: 0.2.4-alpha.1`,
+						},
+					},
+				},
+			},
+			VersionType:    version.NotAVersion,
+			PrereleaseType: version.AlphaPrerelease,
+		},
+		"Generic - With Directory": {
+			Version: "0.2.4-alpha.2",
+			Configuration: bump.Configuration{
+				langs.Config{
+					Name:        "Generic",
+					Enabled:     true,
+					Directories: []string{"config"},
+					Files:       []string{"*.yml"},
+				},
+			},
+			Files: allFiles{
+				Generic: map[string][]file{
+					"config": {
+						{
+							Name:                "config.yml",
+							ExpectedToBeChanged: true,
+							Content: `name: version-bump-testing
+author:
+  name: Nobody
+  email: no.body@gmail.com
+version: 0.2.4-alpha.1
+description: used for testing the generic lang`,
+						},
+					},
+				},
+			},
+			VersionType:    version.NotAVersion,
+			PrereleaseType: version.AlphaPrerelease,
+		},
+		"Generic - Two Versions Fail without Custom Regex": {
+			Version: "0.2.4-alpha.2",
+			Configuration: bump.Configuration{
+				langs.Config{
+					Name:        "Generic",
+					Enabled:     true,
+					Directories: []string{"config"},
+					Files:       []string{"*.yml"},
+				},
+			},
+			Files: allFiles{
+				Generic: map[string][]file{
+					"config": {
+						{
+							Name:                "config.yml",
+							ExpectedToBeChanged: true,
+							Content: `name: version-bump-testing
+author:
+  name: Nobody
+  email: no.body@gmail.com
+comment: this will fail because the default regex will match database_version instead
+database_version: v1.3.5
+version: 0.2.4-alpha.1
+description: used for testing the generic lang`,
+						},
+					},
+				},
+			},
+			VersionType:    version.NotAVersion,
+			PrereleaseType: version.AlphaPrerelease,
+			ExpectedErrorContains: []string{
+				fmt.Sprintf(bump.ErrStrFormattedIncrementingInLangProject, "Generic"),
+				fmt.Sprintf(bump.ErrStrFormattedBumpingVersion, "config/config.yml"),
+				version.ErrStrPreReleasingNonPrerelease,
+			},
+		},
+		"Generic - Two Versions pass With Custom Regex": {
+			Version: "0.2.4-beta.0",
+			Configuration: bump.Configuration{
+				langs.Config{
+					Name:        "Generic",
+					Enabled:     true,
+					Directories: []string{"config"},
+					Files:       []string{"*.yml"},
+					Regex:       []string{"^version: (?P<version>{{SEMVER_REGEX}})"},
+				},
+			},
+			Files: allFiles{
+				Generic: map[string][]file{
+					"config": {
+						{
+							Name:                "config.yml",
+							ExpectedToBeChanged: true,
+							Content: `name: version-bump-testing
+author:
+  name: Nobody
+  email: no.body@gmail.com
+comment: this will fail because the default regex will match database_version instead
+database_version: v1.3.5
+version: 0.2.4-alpha.2
+description: used for testing the generic lang`,
+						},
+					},
+				},
+			},
+			VersionType:    version.NotAVersion,
+			PrereleaseType: version.BetaPrerelease,
 		},
 		"Docker - Get Files Error": {
 			Version: "2.0.0",
