@@ -1,6 +1,8 @@
 package gpg
 
 import (
+	"bytes"
+	"os/exec"
 	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -39,6 +41,9 @@ func (ea *EntityReader) ReadArmoredKeyRing(privateKey string) (openpgp.EntityLis
 	return openpgp.ReadArmoredKeyRing(strings.NewReader(privateKey))
 }
 
-func (ea *EntityReader) GetPrivateKey(keyPassphrase string, signingKey string) (string, error) {
-	return getPrivateKey(keyPassphrase, signingKey)
+func (ea *EntityReader) GetPrivateKey(passphrase string, keyring string) (string, error) {
+	cmd := exec.Command("gpg", "--armor", "--pinentry-mode=loopback", "--passphrase-fd", "0", "--export-secret-key", keyring)
+	cmd.Stdin = bytes.NewReader([]byte(passphrase))
+	output, err := cmd.Output()
+	return string(output), err
 }

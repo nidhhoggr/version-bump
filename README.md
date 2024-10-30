@@ -10,7 +10,7 @@
 ## Configuration
 
 **version-bump** has two modes of operation: automatic / manual.
-In automatic mode, **version-bump** will try to identify versions of all supported languages in a root of the project (wherever executed).
+In automatic mode, **version-bump** will try to identify versions of all supported languages in the root of a project (wherever executed).
 In a manual mode, **version-bump** will read a configuration file to determine which modifications to make. It is expected be executed in the root of the project where the configuration file is located.
 
 
@@ -24,7 +24,7 @@ In a manual mode, **version-bump** will read a configuration file to determine w
 
 ### Manual
 
-1. Create a configuration `.bump` file in a root of the project.
+1. Create a configuration `.bump` file in the root of a project.
 2. Add project languages and their configuration in a form of:
 
     ```
@@ -43,7 +43,7 @@ In a manual mode, **version-bump** will read a configuration file to determine w
     - `files` - an array of glob values to overide the settings default `declared in the langs module`
     - `regex` - an array of regex patterns to overide the settings default `declared in the langs module`
       
-3. Run **version-bump** in a root of the project: `version-bump [major|minor|patch] [flags]`
+3. Run **version-bump** in the root of a project: `version-bump [major|minor|patch] [flags]`
 
 ### Generic Language
 
