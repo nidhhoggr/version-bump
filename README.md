@@ -88,7 +88,7 @@ files = [ "*.yml" ]
 regex = [ '^version: (?P<version>{{SEMVER_REGEX}})' ]
 ```
 
-Note: the `{{SEMVER_REGEX}})`  variable is substituted for an actual regex pattern matching a semental versioning string.
+Note: the convenient `{{SEMVER_REGEX}})` variable is substituted for an actual regex pattern matching a semver string.
 
 ## Installation
 
