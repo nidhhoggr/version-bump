@@ -90,6 +90,12 @@ regex = [ '^version: (?P<version>{{SEMVER_REGEX}})' ]
 
 Note: the `{{SEMVER_REGEX}})`  variable is substituted for an actual regex pattern matching a semental versioning string.
 
+## Installation
+
+```
+go install github.com/joe-at-startupmedia/version-bump/v2/cmd/version-bump@latest
+```
+
 ## CLI Usage
 
 ```
