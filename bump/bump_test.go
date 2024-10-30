@@ -140,6 +140,97 @@ directories = [ 'client' ]`,
 				},
 			},
 		},
+		"Go With One Generic": {
+			ConfigFile: configFile{
+				Exists: true,
+				Content: `[go]
+enabled = true
+directories = [ 'server', 'tools/cli', 'tools/qa' ]
+				
+[[generic]]
+name = "markdown"
+enabled = true
+files = [ "*.md" ]`,
+			},
+			ExpectedConfiguration: bump.Configuration{
+				langs.Config{
+					Name:    "markdown",
+					Enabled: true,
+					Files:   []string{"*.md"},
+				},
+				langs.Config{
+					Name:        golang.Name,
+					Enabled:     true,
+					Directories: []string{"server", "tools/cli", "tools/qa"},
+				},
+			},
+		},
+		"Js Disabled With Two Generics": {
+			ConfigFile: configFile{
+				Exists: true,
+				Content: `[javascript]
+enabled = false
+directories = [ 'client' ]
+				
+[[generic]]
+name = "markdown"
+enabled = true
+files = [ "*.md" ]
+
+[[generic]]
+name = "yaml"
+enabled = true
+directories = [ "config" ]
+files = [ "*.yml" ]
+regex = [ '^version: (?P<version>{{SEMVER_REGEX}})' ]`,
+			},
+			ExpectedConfiguration: bump.Configuration{
+				langs.Config{
+					Name:    "markdown",
+					Enabled: true,
+					Files:   []string{"*.md"},
+				},
+				langs.Config{
+					Regex:       []string{"^version: (?P<version>{{SEMVER_REGEX}})"},
+					Name:        "yaml",
+					Enabled:     true,
+					Directories: []string{"config"},
+					Files:       []string{"*.yml"},
+				},
+			},
+		},
+		"Js With Two Generics One Disabled": {
+			ConfigFile: configFile{
+				Exists: true,
+				Content: `[javascript]
+enabled = true
+directories = [ 'client' ]
+				
+[[generic]]
+name = "markdown"
+enabled = true
+files = [ "*.md" ]
+
+[[generic]]
+name = "yaml"
+enabled = false
+directories = [ "config" ]
+files = [ "*.yml" ]
+regex = [ '^version: (?P<version>{{SEMVER_REGEX}})' ]`,
+			},
+			ExpectedConfiguration: bump.Configuration{
+				langs.Config{
+					Name:    "markdown",
+					Enabled: true,
+					Files:   []string{"*.md"},
+				},
+				langs.Config{
+					Name:        js.Name,
+					Enabled:     true,
+					Directories: []string{"client"},
+				},
+			},
+		},
 		"ComplexWithOneDisabled": {
 			ConfigFile: configFile{
 				Exists: true,
