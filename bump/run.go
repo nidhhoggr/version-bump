@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/joe-at-startupmedia/version-bump/v2/console"
+	"github.com/nidhhoggr/version-bump/v2/console"
 	"golang.org/x/mod/semver"
 )
 

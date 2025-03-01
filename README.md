@@ -1,10 +1,10 @@
 # version-bump
 
-[![CI](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/ci.yml/badge.svg)](https://github.com/joe-at-startupmedia/version-bump/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/joe-at-startupmedia/version-bump/graph/badge.svg?token=HHRUHCX1EJ)](https://codecov.io/gh/joe-at-startupmedia/version-bump)
-[![Go Report Card](https://goreportcard.com/badge/github.com/joe-at-startupmedia/version-bump/v2)](https://goreportcard.com/report/github.com/joe-at-startupmedia/version-bump/v2)
-[![Release](https://img.shields.io/github/v/release/joe-at-startupmedia/version-bump)](https://github.com/joe-at-startupmedia/version-bump/releases/latest)
-[![License](https://img.shields.io/github/license/joe-at-startupmedia/version-bump)](LICENSE.md)
+[![CI](https://github.com/nidhhoggr/version-bump/actions/workflows/ci.yml/badge.svg)](https://github.com/nidhhoggr/version-bump/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/nidhhoggr/version-bump/graph/badge.svg?token=HHRUHCX1EJ)](https://codecov.io/gh/nidhhoggr/version-bump)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nidhhoggr/version-bump/v2)](https://goreportcard.com/report/github.com/nidhhoggr/version-bump/v2)
+[![Release](https://img.shields.io/github/v/release/nidhhoggr/version-bump)](https://github.com/nidhhoggr/version-bump/releases/latest)
+[![License](https://img.shields.io/github/license/nidhhoggr/version-bump)](LICENSE.md)
 
 
 ## Configuration
@@ -93,7 +93,7 @@ Note: the convenient `{{SEMVER_REGEX}})` variable is substituted for an actual r
 ## Installation
 
 ```
-go install github.com/joe-at-startupmedia/version-bump/v2/cmd/version-bump@latest
+go install github.com/nidhhoggr/version-bump/v2/cmd/version-bump@latest
 ```
 
 ## CLI Usage
@@ -301,4 +301,4 @@ This will allow you to specify a new configuration directive in your `.bump` con
 The codebase has been refactored to a point to make this process as simple as possible. 
 In the future more refactoring can provide improvements. 
 
-See [issue #2](https://github.com/joe-at-startupmedia/version-bump/issues/2) for instructions and more specifically, this [commit](https://github.com/joe-at-startupmedia/version-bump/commit/505eb8c3f492bfd9f75be63cd3353354bef1dc46).
+See [issue #2](https://github.com/nidhhoggr/version-bump/issues/2) for instructions and more specifically, this [commit](https://github.com/nidhhoggr/version-bump/commit/505eb8c3f492bfd9f75be63cd3353354bef1dc46).

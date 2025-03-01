@@ -1,10 +1,10 @@
 package bump
 
 import (
-	"github.com/joe-at-startupmedia/version-bump/v2/git"
-	"github.com/joe-at-startupmedia/version-bump/v2/gpg"
-	"github.com/joe-at-startupmedia/version-bump/v2/langs"
-	"github.com/joe-at-startupmedia/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/v2/git"
+	"github.com/nidhhoggr/version-bump/v2/gpg"
+	"github.com/nidhhoggr/version-bump/v2/langs"
+	"github.com/nidhhoggr/version-bump/v2/version"
 	"github.com/spf13/afero"
 	"net/http"
 	"sync"
@@ -14,7 +14,7 @@ const (
 	Version string = "2.1.2"
 )
 
-var GhRepoName = "joe-at-startupmedia/version-bump"
+var GhRepoName = "nidhhoggr/version-bump"
 
 // #do better
 var (

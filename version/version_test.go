@@ -3,8 +3,8 @@ package version_test
 import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
-	"github.com/joe-at-startupmedia/version-bump/v2/mocks"
-	"github.com/joe-at-startupmedia/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/v2/mocks"
+	"github.com/nidhhoggr/version-bump/v2/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"regexp"

@@ -2,7 +2,7 @@ package golang
 
 import (
 	"fmt"
-	"github.com/joe-at-startupmedia/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/v2/version"
 )
 
 const Name = "Go"
