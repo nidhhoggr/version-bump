@@ -1,4 +1,4 @@
-module github.com/nidhhoggr/version-bump/v2
+module github.com/nidhhoggr/version-bump
 
 go 1.23
 
