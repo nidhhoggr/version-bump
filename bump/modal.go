@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Version string = "2.1.2"
+	Version string = "2.1.3"
 )
 
 var GhRepoName = "nidhhoggr/version-bump"
