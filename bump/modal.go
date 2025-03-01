@@ -1,10 +1,10 @@
 package bump
 
 import (
-	"github.com/nidhhoggr/version-bump/v2/git"
-	"github.com/nidhhoggr/version-bump/v2/gpg"
-	"github.com/nidhhoggr/version-bump/v2/langs"
-	"github.com/nidhhoggr/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/git"
+	"github.com/nidhhoggr/version-bump/gpg"
+	"github.com/nidhhoggr/version-bump/langs"
+	"github.com/nidhhoggr/version-bump/version"
 	"github.com/spf13/afero"
 	"net/http"
 	"sync"

@@ -2,7 +2,7 @@ package docker
 
 import (
 	"fmt"
-	"github.com/nidhhoggr/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/version"
 )
 
 const Name = "Docker"

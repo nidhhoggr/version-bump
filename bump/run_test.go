@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/nidhhoggr/version-bump/v2/git"
-	"github.com/nidhhoggr/version-bump/v2/langs"
-	"github.com/nidhhoggr/version-bump/v2/langs/golang"
-	"github.com/nidhhoggr/version-bump/v2/mocks"
-	"github.com/nidhhoggr/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/git"
+	"github.com/nidhhoggr/version-bump/langs"
+	"github.com/nidhhoggr/version-bump/langs/golang"
+	"github.com/nidhhoggr/version-bump/mocks"
+	"github.com/nidhhoggr/version-bump/version"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/mock"
 	"io"
@@ -19,7 +19,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/nidhhoggr/version-bump/v2/bump"
+	"github.com/nidhhoggr/version-bump/bump"
 	"github.com/stretchr/testify/assert"
 )
 

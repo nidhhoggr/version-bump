@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nidhhoggr/version-bump/actions/workflows/ci.yml/badge.svg)](https://github.com/nidhhoggr/version-bump/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/nidhhoggr/version-bump/graph/badge.svg?token=HHRUHCX1EJ)](https://codecov.io/gh/nidhhoggr/version-bump)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nidhhoggr/version-bump/v2)](https://goreportcard.com/report/github.com/nidhhoggr/version-bump/v2)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nidhhoggr/version-bump)](https://goreportcard.com/report/github.com/nidhhoggr/version-bump)
 [![Release](https://img.shields.io/github/v/release/nidhhoggr/version-bump)](https://github.com/nidhhoggr/version-bump/releases/latest)
 [![License](https://img.shields.io/github/license/nidhhoggr/version-bump)](LICENSE.md)
 
@@ -93,7 +93,7 @@ Note: the convenient `{{SEMVER_REGEX}})` variable is substituted for an actual r
 ## Installation
 
 ```
-go install github.com/nidhhoggr/version-bump/v2/cmd/version-bump@latest
+go install github.com/nidhhoggr/version-bump/cmd/version-bump@latest
 ```
 
 ## CLI Usage

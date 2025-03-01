@@ -2,8 +2,8 @@ package gpg_test
 
 import (
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/nidhhoggr/version-bump/v2/gpg"
-	"github.com/nidhhoggr/version-bump/v2/mocks"
+	"github.com/nidhhoggr/version-bump/gpg"
+	"github.com/nidhhoggr/version-bump/mocks"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

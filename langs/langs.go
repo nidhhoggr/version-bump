@@ -2,10 +2,10 @@ package langs
 
 import (
 	"fmt"
-	"github.com/nidhhoggr/version-bump/v2/langs/docker"
-	"github.com/nidhhoggr/version-bump/v2/langs/golang"
-	"github.com/nidhhoggr/version-bump/v2/langs/js"
-	"github.com/nidhhoggr/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/langs/docker"
+	"github.com/nidhhoggr/version-bump/langs/golang"
+	"github.com/nidhhoggr/version-bump/langs/js"
+	"github.com/nidhhoggr/version-bump/version"
 )
 
 // DefaultSettings these settings can be overridden by Config

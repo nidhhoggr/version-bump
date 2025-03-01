@@ -3,7 +3,7 @@ package version
 import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
-	"github.com/nidhhoggr/version-bump/v2/console"
+	"github.com/nidhhoggr/version-bump/console"
 	"github.com/pkg/errors"
 	"regexp"
 	"strings"

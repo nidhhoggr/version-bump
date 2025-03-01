@@ -1,4 +1,4 @@
-module github.com/nidhhoggr/version-bump/v2/build
+module github.com/nidhhoggr/version-bump/build
 
 go 1.23.2
 

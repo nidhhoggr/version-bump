@@ -1,12 +1,12 @@
 package langs_test
 
 import (
-	"github.com/nidhhoggr/version-bump/v2/langs/docker"
-	"github.com/nidhhoggr/version-bump/v2/langs/golang"
-	"github.com/nidhhoggr/version-bump/v2/langs/js"
+	"github.com/nidhhoggr/version-bump/langs/docker"
+	"github.com/nidhhoggr/version-bump/langs/golang"
+	"github.com/nidhhoggr/version-bump/langs/js"
 	"testing"
 
-	"github.com/nidhhoggr/version-bump/v2/langs"
+	"github.com/nidhhoggr/version-bump/langs"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/cqroot/prompt"
 	"github.com/cqroot/prompt/input"
-	"github.com/nidhhoggr/version-bump/v2/console"
-	"github.com/nidhhoggr/version-bump/v2/version"
+	"github.com/nidhhoggr/version-bump/console"
+	"github.com/nidhhoggr/version-bump/version"
 	"strings"
 
-	"github.com/nidhhoggr/version-bump/v2/bump"
+	"github.com/nidhhoggr/version-bump/bump"
 	"github.com/spf13/cobra"
 )
 
